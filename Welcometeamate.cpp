@@ -1,35 +1,68 @@
-#define SDL_MAIN_HANDLED
-#include <iostream>
-#include <SDL2/SDL.h>
+#include "first_page.h"
 
-int main( int argc, char *argv[] ){
-    std::cout << "hello my name is Sepehr" << std::endl;
-    std :: cout << "hello my name is Amirali" << std::endl;
-    //please print your name like me and me{amirali} :)
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-    SDL_Window * W1 = SDL_CreateWindow(
-        "WINDOW 1",
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        400,300,
-        SDL_WINDOW_SHOWN
+int main(int argc, char * argv[])
+{
+    //vizegi haye dokmeh file
+    Button file_button{};
+    file_button.rect = {140, 0, 50, 50};
+    file_button.first_color = {77, 151, 255, 150};
+    file_button.second_color = {66, 128, 217};
+    file_button.is_mouse_on = false;
+
+
+    SDL_Window* window = SDL_CreateWindow(
+            "Scratch",
+            SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED,
+            width, height,
+            SDL_WINDOW_SHOWN
     );
-    if (W1 == nullptr) {
-        std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
-        return -1;
+
+    // iconikeh dar bala dideh mishe.
+    SDL_Surface* iconSurface = IMG_Load("images/icon.png");
+    if (iconSurface) {
+        SDL_SetWindowIcon(window, iconSurface);
+        SDL_FreeSurface(iconSurface);
     }
-    bool quit = false;
+
+
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+
+    SDL_Texture* Scratch_logo = IMG_LoadTexture(renderer, "images/Scratch.png");
+    SDL_Texture* leftbar = IMG_LoadTexture(renderer, "images/code_bar.png");
+
+
+    bool running = true;
     SDL_Event e;
-    while (!quit) {
+
+    while (running) {
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
-                quit = true;
+                running = false;
             }
         }
+
+        SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
+        SDL_RenderClear(renderer);
+
+        // barresi inkeh age mouse roye file bashe rangesh avaz besheh
+        int mX, mY;
+        SDL_GetMouseState(&mX, &mY);
+        if (mX >= file_button.rect.x && mX<= file_button.rect.x + file_button.rect.w
+            && mY >= file_button.rect.y && mY<= file_button.rect.y + file_button.rect.h)
+        {
+            file_button.is_mouse_on = true;
+        }else
+            file_button.is_mouse_on = false;
+        blue_bar(renderer, Scratch_logo, file_button);
+        codebar(renderer, leftbar);
+
+        SDL_RenderPresent(renderer);
     }
+
+
+
     return 0;
 }
