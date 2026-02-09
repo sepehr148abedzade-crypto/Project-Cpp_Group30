@@ -3,12 +3,8 @@
 
 int main(int argc, char * argv[])
 {
-    //vizegi haye dokmeh file
-    Button file_button{};
-    file_button.rect = {140, 0, 50, 50};
-    file_button.first_color = {77, 151, 255, 150};
-    file_button.second_color = {66, 128, 217};
-    file_button.is_mouse_on = false;
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+
 
 
     SDL_Window* window = SDL_CreateWindow(
@@ -19,6 +15,17 @@ int main(int argc, char * argv[])
             SDL_WINDOW_SHOWN
     );
 
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    //vizegi haye dokmeh file
+    Button file_button{};
+    file_button.rect = {140, 0, 50, 50};
+    file_button.first_color = {77, 151, 255, 150};
+    file_button.second_color = {66, 128, 217};
+    file_button.is_mouse_on = false;
+
+
+
     // iconikeh dar bala dideh mishe.
     SDL_Surface* iconSurface = IMG_Load("images/icon.png");
     if (iconSurface) {
@@ -27,8 +34,7 @@ int main(int argc, char * argv[])
     }
 
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
+    Code_button categories[8];
 
     SDL_Texture* Scratch_logo = IMG_LoadTexture(renderer, "images/Scratch.png");
     SDL_Texture* leftbar = IMG_LoadTexture(renderer, "images/code_bar.png");
@@ -57,7 +63,7 @@ int main(int argc, char * argv[])
         }else
             file_button.is_mouse_on = false;
         blue_bar(renderer, Scratch_logo, file_button);
-        codebar(renderer, leftbar);
+        codebar(renderer, leftbar, categories);
 
         SDL_RenderPresent(renderer);
     }

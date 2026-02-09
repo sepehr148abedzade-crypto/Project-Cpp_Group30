@@ -17,7 +17,13 @@ struct Button{
     bool is_mouse_on;
 };
 
-const int width = 1300, height = 720;
+struct Code_button{
+    int x=30, y, r=15;
+    SDL_Color color;
+    string label;
+};
+
+const int width = 1300, height = 800;
 
 //tabeh baraye navar abi
 void blue_bar(SDL_Renderer* renderer, SDL_Texture* logo, Button file_button)
@@ -50,24 +56,61 @@ void blue_bar(SDL_Renderer* renderer, SDL_Texture* logo, Button file_button)
     SDL_RenderFillRect(renderer, &file_button.rect);
 
     // neveshtan matn "file" dar vasat dokmeh
-    SDL_Surface* textSurf = TTF_RenderText_Blended(font, "File", white);
-    SDL_Texture* textTex = SDL_CreateTextureFromSurface(renderer, textSurf);
-    int tw, th;
-    SDL_QueryTexture(textTex, nullptr, nullptr, &tw, &th);
-    SDL_Rect textPos = {
-            file_button.rect.x + (file_button.rect.w - tw) / 2,
-            file_button.rect.y + (file_button.rect.h - th) / 2,
-            tw, th};
-    SDL_RenderCopy(renderer, textTex, nullptr, &textPos);
+    if (font != nullptr) {
+        SDL_Color white = {255, 255, 255, 255};
+        SDL_Surface* textSurf = TTF_RenderText_Blended(font, "File", white);
+        if (textSurf) {
+            SDL_Texture* textTex = SDL_CreateTextureFromSurface(renderer, textSurf);
+            int tw, th;
+            SDL_QueryTexture(textTex, nullptr, nullptr, &tw, &th);
+            SDL_Rect textPos = {
+                    file_button.rect.x + (file_button.rect.w - tw) / 2,
+                    file_button.rect.y + (file_button.rect.h - th) / 2,
+                    tw, th
+            };
+            SDL_RenderCopy(renderer, textTex, nullptr, &textPos);
 
     SDL_FreeSurface(textSurf);
     SDL_DestroyTexture(textTex);
 }
+    }
+        }
 
-void codebar(SDL_Renderer* renderer, SDL_Texture* image)
+void codebar(SDL_Renderer* renderer, SDL_Texture* image, Code_button* codeButton)
 {
-    SDL_Rect left_bar = {0, 120, 90, 700};
-    SDL_RenderCopy(renderer, image, nullptr, &left_bar);
+    SDL_Rect left_bar = {0, 120, 60, 700};
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &left_bar);
+    SDL_Color colors[] = {
+            {76, 151, 255},
+            {153, 102, 255},
+            {214, 91, 229},
+            {255, 191, 0},
+            {255, 171, 25},
+            {76, 191, 230},
+            {89, 192, 89},
+            {255, 140, 26},
+    };
+    string label[] = {"Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables"};
+
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("fonts/Montserrat-Bold.ttf", 15);
+    SDL_Color black = {0, 0, 0, 0};
+
+    int x = 30, y = 150, r = 15;
+    for (int i = 0; i < 8; ++i)
+    {
+
+        codeButton[i].y = y;
+        codeButton[i].color = {colors[i].r, colors[i].g, colors[i].b, 255};
+        filledCircleRGBA(renderer, x, y, r, colors[i].r, colors[i].g,colors[i].b, 255);
+        aacircleRGBA(renderer, codeButton[i].x, codeButton[i].y, codeButton[i].r, 0, 0, 0, 50);
+        SDL_Color white = {255, 255, 255, 255};
+        SDL_Surface* textSurf = TTF_RenderText_Blended(font, "File", white);
+
+
+        y+= 60;
+    }
 }
 
 
