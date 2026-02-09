@@ -5,7 +5,7 @@
 int main( int argc, char *argv[] ){
     std::cout << "hello my name is Sepehr" << std::endl;
     std :: cout << "hello my name is Amirali" << std::endl;
-    //please print your name like me and me{AmirAli} :)
+    //please print your name like me and me{amirali} :)
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
