@@ -35,9 +35,15 @@ int main(int argc, char * argv[])
 
 
     Code_button categories[8];
+    Character sprite{"Sprite", 0, 0, 0, 0, true};
 
     SDL_Texture* Scratch_logo = IMG_LoadTexture(renderer, "images/Scratch.png");
     SDL_Texture* leftbar = IMG_LoadTexture(renderer, "images/code_bar.png");
+
+    TTF_Init();
+    TTF_Font* file_font = TTF_OpenFont("fonts/Montserrat-Bold.ttf", 15);
+    TTF_Font* circle_font = TTF_OpenFont("fonts/Montserrat-Bold.ttf", 10);
+    SDL_Color white = {255, 255, 255, 255};
 
 
     bool running = true;
@@ -62,8 +68,9 @@ int main(int argc, char * argv[])
             file_button.is_mouse_on = true;
         }else
             file_button.is_mouse_on = false;
-        blue_bar(renderer, Scratch_logo, file_button);
-        codebar(renderer, leftbar, categories);
+        blue_bar(renderer, Scratch_logo, file_button, file_font);
+        codebar(renderer, leftbar, categories, circle_font);
+        sprite_panel(renderer, file_font, sprite);
 
         SDL_RenderPresent(renderer);
     }
