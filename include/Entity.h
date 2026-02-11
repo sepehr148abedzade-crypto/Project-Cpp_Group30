@@ -1,21 +1,18 @@
+#pragma once
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include <iostream>
-#include "SDL2/SDL.h"
-
+#include <SDL2/SDL.h>
 
 struct Button{
     SDL_Rect rect;
+    SDL_Texture* Label_texture;
     SDL_Color first_color;
     SDL_Color second_color;
     bool is_mouse_on;
 };
+extern Button file_button;
 
-struct Code_Button{
-    int x=30, y, r=15;
-    SDL_Color color;
-    std::string label;
-};
+void Init_Button();
 
 #endif //ENTITY_H

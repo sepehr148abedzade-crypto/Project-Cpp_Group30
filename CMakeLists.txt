@@ -6,7 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories(include)
 file(GLOB ALL_SOURCES "sources/*.cpp" "main.cpp")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/asset" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-add_executable(Project_Cpp_Group30 sources/main.cpp include/constants.h)
+add_executable(Project_Cpp_Group30 sources/main.cpp
+        sources/Entity.cpp
+        sources/Graphic_Element.cpp
+        sources/TextureManager.cpp
+        sources/Game.cpp
+        sources/constants.cpp
+        )
 
 
 target_link_libraries(Project_Cpp_Group30 mingw32 SDL2main SDL2)

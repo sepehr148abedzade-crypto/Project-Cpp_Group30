@@ -1,15 +1,20 @@
-#ifndef PROJECT_CPP_GROUP30_GAME_H
-#define PROJECT_CPP_GROUP30_GAME_H
-#include "Game.h"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
-#include "SDL2/SDL2_gfx.h"
-#include "SDL2/SDL_ttf.h"
-#include <iostream>
+#pragma once
+#ifndef GAME_H
+#define GAME_H
+#include <SDL2/SDL.h>
+#include <string>
 
+struct _TTF_Font;
+typedef struct _TTF_Font TTF_Font;
+
+extern bool stop ;
+SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
+bool Loading();
 bool Init_Game();
-void Give_event();
-void clean();
+void Get_event();
+void Update();
+void Render();
+void Clean();
 void SDL_wait_key();
 
-#endif //PROJECT_CPP_GROUP30_GAME_H
+#endif //GAME_H
