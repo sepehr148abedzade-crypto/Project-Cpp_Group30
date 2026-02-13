@@ -23,58 +23,18 @@ struct Code_button{
     string label;
 };
 
-struct Character{
-    string name;
-    int x, y;
-    int size;
-    int direc;
-    bool visible;
-};
-
-
 const int width = 1300, height = 800;
 
-// tabeh baraye neveshtan matn
-void draw_text(SDL_Renderer* renderer, TTF_Font* font, string text, int x, int y) {
-    SDL_Color color = {0, 000, 000, 255};
-    SDL_Surface* surf = TTF_RenderText_Blended(font, text.c_str(), color);
-    SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
-
-    int w, h;
-    SDL_QueryTexture(tex, NULL, NULL, &w, &h);
-    SDL_Rect dst = { x, y - (h/2), w, h };
-    SDL_RenderCopy(renderer, tex, NULL, &dst);
-
-    SDL_FreeSurface(surf);
-    SDL_DestroyTexture(tex);
-}
-
-void sprite_panel(SDL_Renderer* renderer, TTF_Font* font, Character s) {
-
-    SDL_Rect panelRect = {790, 470, 400, 80};
-    roundedBoxRGBA(renderer, panelRect.x, panelRect.y,
-                   panelRect.x + panelRect.w, panelRect.y + panelRect.h,
-                   10, 255, 255, 255, 255); // سفید
-
-    draw_text(renderer, font, "Sprite", panelRect.x + 20, panelRect.y + 30);
-    roundedBoxRGBA(renderer, panelRect.x + 80, panelRect.y + 20,
-                   panelRect.x + 200, panelRect.y + 50, 5, 240, 240, 240, 255);
-    draw_text(renderer, font, s.name, panelRect.x + 90, panelRect.y + 35);
-
-    draw_text(renderer, font, "x", panelRect.x + 220, panelRect.y + 30);
-    draw_text(renderer, font, to_string(s.x), panelRect.x + 240, panelRect.y + 30);
-
-    draw_text(renderer, font, "y", panelRect.x + 300, panelRect.y + 30);
-    draw_text(renderer, font, to_string(s.y), panelRect.x + 320, panelRect.y + 30);
-}
-
 //tabeh baraye navar abi
-void blue_bar(SDL_Renderer* renderer, SDL_Texture* logo, Button file_button, TTF_Font* font)
+void blue_bar(SDL_Renderer* renderer, SDL_Texture* logo, Button file_button)
 {
     SDL_Rect bar = {0, 0, 1300, 50};
-    SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 77, 151, 255, 150);
     SDL_RenderFillRect(renderer, &bar);
 
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("fonts/Montserrat-Bold.ttf", 15);
+    SDL_Color white = {255, 255, 255, 255};
 
 
     if (logo != nullptr)
@@ -116,7 +76,7 @@ void blue_bar(SDL_Renderer* renderer, SDL_Texture* logo, Button file_button, TTF
     }
         }
 
-void codebar(SDL_Renderer* renderer, SDL_Texture* image, Code_button* codeButton, TTF_Font* font)
+void codebar(SDL_Renderer* renderer, SDL_Texture* image, Code_button* codeButton)
 {
     SDL_Rect left_bar = {0, 120, 60, 700};
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -133,6 +93,10 @@ void codebar(SDL_Renderer* renderer, SDL_Texture* image, Code_button* codeButton
     };
     string label[] = {"Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables"};
 
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("fonts/Montserrat-Bold.ttf", 15);
+    SDL_Color black = {0, 0, 0, 0};
+
     int x = 30, y = 150, r = 15;
     for (int i = 0; i < 8; ++i)
     {
@@ -141,16 +105,13 @@ void codebar(SDL_Renderer* renderer, SDL_Texture* image, Code_button* codeButton
         codeButton[i].color = {colors[i].r, colors[i].g, colors[i].b, 255};
         filledCircleRGBA(renderer, x, y, r, colors[i].r, colors[i].g,colors[i].b, 255);
         aacircleRGBA(renderer, codeButton[i].x, codeButton[i].y, codeButton[i].r, 0, 0, 0, 50);
-        int dx;
-        if (i>=0 && i<=3) dx = 15;
-        else if (i>=4 && i<=5) dx = 17;
-        else dx = 25;
-        draw_text(renderer, font, label[i], x - dx, y+25);
+        SDL_Color white = {255, 255, 255, 255};
+        SDL_Surface* textSurf = TTF_RenderText_Blended(font, "File", white);
+
+
         y+= 60;
     }
-
 }
-
 
 
 #endif //A_M_F_FIRST_PAGE_H
