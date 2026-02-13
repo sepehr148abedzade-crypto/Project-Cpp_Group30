@@ -1,5 +1,6 @@
 #include "Graphic_Element.h"
 #include "Entity.h"
+#include <SDL2/SDL2_gfx.h>
 
 //SDL_Color white = {255,255,255};
 SDL_Color Hex_To_rgb(uint32_t hexcolor){
@@ -54,3 +55,37 @@ void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
+void Draw_CodeBar(SDL_Renderer* renderer, Code_button* categories) {
+    SDL_Rect left_bar = {0, 130, 60, Get_height() - 48};
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &left_bar);
+
+    for (int i = 0; i < 8; i++) {
+        filledCircleRGBA(renderer, categories[i].x, categories[i].y, categories[i].r,
+                         categories[i].color.r, categories[i].color.g, categories[i].color.b, 255);
+
+        aacircleRGBA(renderer, categories[i].x, categories[i].y, categories[i].r, 0, 0, 0, 50);
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        if (mouseX >= categories[i].x - 15 && mouseX <= categories[i].x + categories[i].r && mouseY >= categories[i].y-30 &&
+        mouseY <= categories[i].y + 30)
+            categories[i].is_mouse_on = true;
+        else
+            categories[i].is_mouse_on = false;
+
+        if (categories[i].is_mouse_on)
+            SDL_SetTextureColorMod(categories[i].labelTexture, 151, 214, 255);
+        else
+            SDL_SetTextureColorMod(categories[i].labelTexture, 0, 0, 0);
+
+        int dx;
+        if (i <= 3) dx = 15;
+        else if (i <= 5) dx = 17;
+        else dx = 25;
+
+        int tw, th;
+        SDL_QueryTexture(categories[i].labelTexture, NULL, NULL, &tw, &th);
+        SDL_Rect textPos = { categories[i].x - dx, categories[i].y + 15, tw, th };
+        SDL_RenderCopy(renderer, categories[i].labelTexture, NULL, &textPos);
+    }
+}

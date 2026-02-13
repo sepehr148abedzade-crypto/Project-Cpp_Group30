@@ -4,7 +4,7 @@
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
 #include "constants.h"
-#include "Entity.h"
+//#include "Entity.h"
 
 SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
@@ -73,6 +73,10 @@ bool Init_Game(){
         SetWindowIcon(main_window,"asset/images/icon.png");
 
         Init_Button();
+        main_font = TTF_OpenFont("fonts/Montserrat-Bold.ttf", 10);
+        if (main_font != nullptr) {
+            Init_Categories(renderer, main_font);
+        }
         return true;
 }
 
@@ -85,7 +89,7 @@ void Get_event() {
 
 void Update(){
         Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
-        Draw_Button(renderer,file_button,File_Text);
+        Draw_CodeBar(renderer, categories);
 
 }
 void Render(){
