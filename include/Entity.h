@@ -3,6 +3,15 @@
 #define ENTITY_H
 
 #include <SDL2/SDL.h>
+#include <string>
+using namespace std;
+
+struct Code_button{
+    int x=30, y, r=15;
+    SDL_Color color;
+    string label;
+    bool is_mouse_on;
+};
 
 struct Button{
     SDL_Rect rect;
