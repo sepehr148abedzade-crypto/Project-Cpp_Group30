@@ -23,6 +23,7 @@ extern SDL_Color white;
 
 SDL_Color Hex_To_rgb(uint32_t hexcolor);
 void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo);
+void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_CodeBar(SDL_Renderer* renderer, Code_button* categories);
 
 #endif //GRAPHIC_ELEMENT_H

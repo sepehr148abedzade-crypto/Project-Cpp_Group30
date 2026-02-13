@@ -4,7 +4,7 @@
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
 #include "constants.h"
-//#include "Entity.h"
+#include "Entity.h"
 
 SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
@@ -89,6 +89,7 @@ void Get_event() {
 
 void Update(){
         Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
+        Draw_Button(renderer,file_button,File_Text);
         Draw_CodeBar(renderer, categories);
 
 }
