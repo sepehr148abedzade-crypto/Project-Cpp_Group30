@@ -63,11 +63,12 @@ void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
-void Draw_CodeBar(SDL_Renderer* renderer, Button code_button[]) {
+void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_Rect left_bar = {0, 95, 60, Get_height() - 48};
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer, 249, 249, 249, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &left_bar);
-
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&left_bar);
     for (int i = 0; i < 8; i++) {
         filledCircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2) - 10, code_button[i].radius,
                          code_button[i].first_color.r, code_button[i].first_color.g, code_button[i].first_color.b, SDL_ALPHA_OPAQUE);
@@ -101,5 +102,13 @@ void Draw_CodeBar(SDL_Renderer* renderer, Button code_button[]) {
         };
         SDL_RenderCopy(renderer, code_button[i].Label_texture, nullptr, &textPosition);
     }
+}
+
+void Draw_CodeBar(SDL_Renderer* renderer){
+    SDL_Rect main_bar = {60,95,970,Get_height()};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&main_bar);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&main_bar);
 }
 

@@ -128,7 +128,8 @@ void Get_event() {
 void Update(){
         Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
         Draw_Top_Button(renderer,Top_button,File_Text);
-        Draw_CodeBar(renderer, categories);
+        Draw_CodeBar_Item(renderer, categories);
+        Draw_CodeBar(renderer);
 }
 void Render(){
         SDL_RenderPresent(renderer);
