@@ -43,7 +43,7 @@ void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo){
     }
 }
 
-void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     if (Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h)) {
         SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
                                button.second_color.b, SDL_ALPHA_OPAQUE);
@@ -78,23 +78,28 @@ void Draw_CodeBar(SDL_Renderer* renderer, Button code_button[]) {
         aacircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2)-10, code_button[i].radius,
                      0, 0, 0, 150);
         if (Is_mouse_on(code_button[i].rect.x,code_button[i].rect.y,code_button[i].rect.w,code_button[i].rect.h))
-            SDL_SetTextureColorMod(categories[i].Label_texture, 151, 214, 255);
+            SDL_SetTextureColorMod(code_button[i].Label_texture, 151, 214, 255);
         else
-            SDL_SetTextureColorMod(categories[i].Label_texture, 50, 50, 50);
+            SDL_SetTextureColorMod(code_button[i].Label_texture, 100, 100, 100);
 
+        if (code_button[i].is_mouse_click_on) {
+            SDL_SetRenderDrawColor(renderer, code_button[i].second_color.r, code_button[i].second_color.g,
+                                   code_button[i].second_color.b, 50);
+            SDL_RenderFillRect(renderer, &code_button[i].rect);
+        }
         int dx;
         if (i <= 3) dx = 15;
         else if (i <= 5) dx = 17;
         else dx = 25;
 
         int texture_w, texture_h;
-        SDL_QueryTexture(categories[i].Label_texture, nullptr, nullptr, &texture_w, &texture_h);
+        SDL_QueryTexture(code_button[i].Label_texture, nullptr, nullptr, &texture_w, &texture_h);
         SDL_Rect textPosition = {
                 code_button[i].rect.x + (code_button[i].rect.w - texture_w) / 2,
                 code_button[i].rect.y + (code_button[i].rect.h - texture_h) / 2 + code_button[i].radius,
                 texture_w, texture_h
         };
-        SDL_RenderCopy(renderer, categories[i].Label_texture, nullptr, &textPosition);
+        SDL_RenderCopy(renderer, code_button[i].Label_texture, nullptr, &textPosition);
     }
 }
 
