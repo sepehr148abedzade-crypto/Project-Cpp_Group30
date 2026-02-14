@@ -1,0 +1,30 @@
+#pragma once
+#include "TextureManager.h"
+#include "iostream"
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_image.h"
+
+
+
+//struct _TTF_Font;
+//typedef struct _TTF_Font TTF_Font;
+
+SDL_Texture* LoadTexture(SDL_Renderer* renderer,const char* path){
+    SDL_Texture* texture = IMG_LoadTexture(renderer,path);
+    if(texture== nullptr){
+        std::cout << "Picture could not ne load! path = "<< path <<" SDL_Error: " << SDL_GetError() << std::endl;
+        return nullptr;
+    }
+    return texture;
+}
+
+void SetWindowIcon(SDL_Window* window,const char* path){
+    SDL_Surface* icon_surface= IMG_Load(path);
+    if(icon_surface == nullptr){
+        std::cout << "Window_Icon could not be load! SDL_Error: " << IMG_GetError() << std::endl;
+    }
+    SDL_SetWindowIcon(window,icon_surface);
+    SDL_FreeSurface(icon_surface);
+}
+
+
