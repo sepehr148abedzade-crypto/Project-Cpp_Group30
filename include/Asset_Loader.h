@@ -1,0 +1,16 @@
+#ifndef PROJECT_CPP_GROUP30_ASSET_LOADER_H
+#define PROJECT_CPP_GROUP30_ASSET_LOADER_H
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <map>
+#include <string>
+#include "Entity.h"
+
+extern std::map<std::string, SDL_Texture*> blockLibrary;
+bool LoadAllAssets(SDL_Renderer* renderer);
+SDL_Texture* GetBlockTexture(std::string name);
+void CleanUpAssets();
+void CreateTestBlock();
+
+#endif //PROJECT_CPP_GROUP30_ASSET_LOADER_H

@@ -5,12 +5,17 @@
 #include "Graphic_Element.h"
 #include "constants.h"
 #include "Entity.h"
+#include <Asset_Loader.h>
+#include <map>
+using namespace std;
+
 
 SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
 TTF_Font* main_font = nullptr;
+
 bool stop = false;
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
@@ -59,6 +64,7 @@ bool Loading(){
 bool Init_Game(){
         SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
         SDL_RenderClear(renderer);
+
         if(TTF_Init()==-1){
                 std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
                 return false;
@@ -91,7 +97,6 @@ void Update(){
         Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
         Draw_Button(renderer,file_button,File_Text);
         Draw_CodeBar(renderer, categories);
-
 }
 void Render(){
         SDL_RenderPresent(renderer);

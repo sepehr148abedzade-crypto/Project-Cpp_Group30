@@ -11,6 +11,7 @@ extern bool stop ;
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
 bool Loading();
 bool Init_Game();
+void CreateTestBlock();
 void Get_event();
 void Update();
 void Render();

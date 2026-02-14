@@ -10,6 +10,15 @@ using namespace std;
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 
+struct Blocks{
+    string id;
+    SDL_Rect rect;
+    SDL_Texture* image;
+    string value;
+
+    Blocks* next = nullptr;
+};
+
 struct Code_button{
     int x=30, y, r=15;
     SDL_Color color;
@@ -28,7 +37,6 @@ struct Button{
     bool is_mouse_on;
 };
 extern Button file_button;
-
 void Init_Button();
 
 #endif //ENTITY_H

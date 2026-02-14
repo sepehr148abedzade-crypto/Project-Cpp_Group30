@@ -89,3 +89,4 @@ void Draw_CodeBar(SDL_Renderer* renderer, Code_button* categories) {
         SDL_RenderCopy(renderer, categories[i].labelTexture, NULL, &textPos);
     }
 }
+
