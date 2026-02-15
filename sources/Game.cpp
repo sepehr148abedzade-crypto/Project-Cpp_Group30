@@ -7,6 +7,7 @@
 #include "Entity.h"
 #include <Asset_Loader.h>
 #include <map>
+#include <vector>
 using namespace std;
 
 
@@ -16,7 +17,99 @@ SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
 TTF_Font* main_font = nullptr;
 
+vector<Blocks> active_blocks;
 bool stop = false;
+
+void AddBlock(string type, int x, int y){
+    Blocks block;
+    block.image = blockLibrary[type];
+    block.id = type;
+    block.rect = {x, y, 160, 45};
+    block.values.emplace_back("0");
+    block.active_value_index = 0;
+    block.is_editing = false;
+    block.is_menu_open = false;
+    active_blocks.push_back(block);
+}
+
+void HandleEvents(SDL_Event& e){
+    if (e.type == SDL_MOUSEBUTTONDOWN){
+        int mx = e.button.x;
+        int my = e.button.y;
+        bool click = false;
+
+        for (auto &block : active_blocks){
+            for (size_t i=0; i < block.values.size(); i++){
+                SDL_Rect inputRect = { block.rect.x + 75 + (int)(i * 55) - 20, block.rect.y + 10, 40, 25 };
+                SDL_Point mPos = { mx, my };
+
+                if (SDL_PointInRect(&mPos, &inputRect)) {
+                    block.is_editing = true;
+                    block.active_value_index = i;
+                    SDL_StartTextInput();
+                    click = true;
+                }
+            }
+            if (!click) block.is_editing = false;
+        }
+        if (!click) SDL_StopTextInput();
+    }
+    if (e.type == SDL_TEXTINPUT) {
+        for (auto& b : active_blocks) {
+            if (b.is_editing) {
+                if (isdigit(e.text.text[0]) || e.text.text[0] == '-') {
+                    b.values[b.active_value_index] += e.text.text;
+                }
+            }
+        }
+    }
+
+    if (e.type == SDL_KEYDOWN) {
+        for (auto& b : active_blocks) {
+            if (b.is_editing && e.key.keysym.sym == SDLK_BACKSPACE) {
+                string& s = b.values[b.active_value_index];
+                if (!s.empty()) s.pop_back();
+            }
+        }
+    }
+}
+
+
+void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font){
+    for (auto &block : active_blocks){
+        if (block.image) {
+            SDL_RenderCopy(renderer, block.image, NULL, &block.rect);
+        } else {
+            cout<<"error loading image!";
+        }
+        SDL_Color black = {0, 0, 0, 255};
+
+        int startX = 75;
+        int gap = 55;
+        for (size_t i = 0; i < block.values.size(); ++i) {
+            string textToShow = block.values[i];
+
+            if (block.is_editing && block.active_value_index == i) {
+                textToShow += "|";
+            }
+
+            SDL_Texture* txtTex = LoadText(renderer, font, textToShow, black);
+            if (txtTex) {
+                int tw, th;
+                SDL_QueryTexture(txtTex, NULL, NULL, &tw, &th);
+
+                SDL_Rect txtRect;
+                txtRect.x = block.rect.x + startX + (i * gap) - (tw / 2);
+                txtRect.y = block.rect.y + 22 - (th / 2);
+                txtRect.w = tw;
+                txtRect.h = th;
+
+                SDL_RenderCopy(renderer, txtTex, NULL, &txtRect);
+                SDL_DestroyTexture(txtTex);
+            }
+        }
+    }
+}
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
         if(!font) {
@@ -83,21 +176,33 @@ bool Init_Game(){
         if (main_font != nullptr) {
             Init_Categories(renderer, main_font);
         }
-        return true;
+        LoadAllAssets(renderer);
+        AddBlock("go_to_x_y", 300, 200);
+        AddBlock("turn_left", 300, 260);
+        AddBlock("turn_right", 300, 320);
+        AddBlock("set_x", 300, 380);
+
+
+    return true;
 }
 
-void Get_event() {
-        SDL_Event e;
-        while (SDL_PollEvent(&e) != 0) {
-                if (e.type == SDL_QUIT) stop = true;
-        }
-}
+
 
 void Update(){
         Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
         Draw_Button(renderer,file_button,File_Text);
         Draw_CodeBar(renderer, categories);
+        DrawALLBlocks(renderer, main_font);
 }
+
+void Get_event() {
+    SDL_Event e;
+    while (SDL_PollEvent(&e) != 0) {
+        if (e.type == SDL_QUIT) stop = true;
+        HandleEvents(e);
+    }
+}
+
 void Render(){
         SDL_RenderPresent(renderer);
 }

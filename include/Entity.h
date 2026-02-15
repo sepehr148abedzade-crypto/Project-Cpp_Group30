@@ -4,7 +4,7 @@
 
 #include <SDL2/SDL.h>
 #include <string>
-
+#include <vector>
 using namespace std;
 
 struct _TTF_Font;
@@ -14,8 +14,10 @@ struct Blocks{
     string id;
     SDL_Rect rect;
     SDL_Texture* image;
-    string value;
-
+    vector<string>values;
+    int active_value_index = 0;
+    bool is_editing;
+    bool is_menu_open;
     Blocks* next = nullptr;
 };
 
