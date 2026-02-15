@@ -2,7 +2,7 @@
 #include "Entity.h"
 #include <SDL2/SDL2_gfx.h>
 
-//SDL_Color white = {255,255,255};
+SDL_Color white = {255,255,255};
 SDL_Color Hex_To_rgb(uint32_t hexcolor){
     SDL_Color color;
     color.r = (hexcolor >> 16) & 0xFF;
@@ -12,47 +12,25 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     return color;
 }
 
-void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &BlockBar);
-
-    SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
-    SDL_RenderDrawLine(renderer, 60, 100, 60, 900);
-    SDL_RenderDrawLine(renderer, 310, 100, 310, 900);
-
-
-    for (auto &block : active_blocks) {
-        SDL_RenderCopy(renderer, block.image, NULL, &block.rect);
-
-        if (blockMap.count(block.id)) {
-            for (size_t i = 0; i < block.values.size(); i++) {
-
-                if (i >= blockMap[block.id].inputs.size()) break;
-
-                int posX = blockMap[block.id].inputs[i].posx;
-                string textToShow = block.values[i];
-
-                if (block.is_editing && block.active_value_index == i) {
-                    textToShow += "|";
-                }
-
-                SDL_Texture* txtTex = LoadText(renderer, font, textToShow, {0, 0, 0, 255});
-                if (txtTex) {
-                    int tw, th;
-                    SDL_QueryTexture(txtTex, NULL, NULL, &tw, &th);
-
-                    SDL_Rect txtRect = {
-                            block.rect.x + posX - (tw / 2),
-                            block.rect.y + 22 - (th / 2),
-                            tw, th
-                    };
-                    SDL_RenderCopy(renderer, txtTex, NULL, &txtRect);
-                    SDL_DestroyTexture(txtTex);
-                }
-            }
-        }
+bool Is_mouse_on(int x,int y,int w,int h) {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+        return true;
     }
+    else {
+        return false;
+    }
+}
+void Draw_loading_window(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
 void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo){
@@ -65,20 +43,8 @@ void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo){
     }
 }
 
-void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
-    // barresi inkeh age mouse roye file bashe rangesh avaz besheh
-    int mouseX, mouseY;
-    SDL_GetMouseState(&mouseX, &mouseY);
-    if (mouseX >= file_button.rect.x && mouseX<= file_button.rect.x + file_button.rect.w
-        && mouseY >= file_button.rect.y && mouseY<= file_button.rect.y + file_button.rect.h)
-    {
-        file_button.is_mouse_on = true;
-    }
-    else {
-        file_button.is_mouse_on = false;
-    }
-
-    if (button.is_mouse_on) {
+void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+    if (Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h)) {
         SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
                                button.second_color.b, SDL_ALPHA_OPAQUE);
     }
@@ -94,42 +60,88 @@ void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
             button.rect.y + (button.rect.h - texture_h) / 2,
             texture_w, texture_h
     };
-
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
-void Draw_CodeBar(SDL_Renderer* renderer, Code_button* categories) {
-    SDL_Rect left_bar = {0, 100, 60, Get_height() - 48};
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
+    SDL_Rect left_bar = {0, 95, 60, Get_height() - 48};
+    SDL_SetRenderDrawColor(renderer, 249, 249, 249, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &left_bar);
-
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&left_bar);
     for (int i = 0; i < 8; i++) {
-        filledCircleRGBA(renderer, categories[i].x, categories[i].y, categories[i].r,
-                         categories[i].color.r, categories[i].color.g, categories[i].color.b, 255);
+        filledCircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2) - 10, code_button[i].radius,
+                         code_button[i].first_color.r, code_button[i].first_color.g, code_button[i].first_color.b, SDL_ALPHA_OPAQUE);
 
-        aacircleRGBA(renderer, categories[i].x, categories[i].y, categories[i].r, 0, 0, 0, 50);
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
-        if (mouseX >= categories[i].x - 15 && mouseX <= categories[i].x + categories[i].r && mouseY >= categories[i].y-30 &&
-        mouseY <= categories[i].y + 30)
-            categories[i].is_mouse_on = true;
+        aacircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2)-10, code_button[i].radius,
+                     code_button[i].first_color.r, code_button[i].first_color.g, code_button[i].first_color.b, SDL_ALPHA_OPAQUE);
+
+        aacircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2)-10, code_button[i].radius,
+                     0, 0, 0, 150);
+        if (Is_mouse_on(code_button[i].rect.x,code_button[i].rect.y,code_button[i].rect.w,code_button[i].rect.h))
+            SDL_SetTextureColorMod(code_button[i].Label_texture, 151, 214, 255);
         else
-            categories[i].is_mouse_on = false;
+            SDL_SetTextureColorMod(code_button[i].Label_texture, 80, 80, 80);
 
-        if (categories[i].is_mouse_on)
-            SDL_SetTextureColorMod(categories[i].labelTexture, 151, 214, 255);
-        else
-            SDL_SetTextureColorMod(categories[i].labelTexture, 0, 0, 0);
-
+        if (code_button[i].is_mouse_click_on) {
+            SDL_SetRenderDrawColor(renderer, code_button[i].second_color.r, code_button[i].second_color.g,
+                                   code_button[i].second_color.b, 50);
+            SDL_RenderFillRect(renderer, &code_button[i].rect);
+        }
         int dx;
         if (i <= 3) dx = 15;
         else if (i <= 5) dx = 17;
         else dx = 25;
 
-        int tw, th;
-        SDL_QueryTexture(categories[i].labelTexture, NULL, NULL, &tw, &th);
-        SDL_Rect textPos = { categories[i].x - dx, categories[i].y + 15, tw, th };
-        SDL_RenderCopy(renderer, categories[i].labelTexture, NULL, &textPos);
+        int texture_w, texture_h;
+        SDL_QueryTexture(code_button[i].Label_texture, nullptr, nullptr, &texture_w, &texture_h);
+        SDL_Rect textPosition = {
+                code_button[i].rect.x + (code_button[i].rect.w - texture_w) / 2,
+                code_button[i].rect.y + (code_button[i].rect.h - texture_h) / 2 + code_button[i].radius,
+                texture_w, texture_h
+        };
+        SDL_RenderCopy(renderer, code_button[i].Label_texture, nullptr, &textPosition);
     }
 }
 
+void Draw_CodeBar(SDL_Renderer* renderer){
+    SDL_Rect code_bar = {60,95,250,Get_height()};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&code_bar);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&code_bar);
+}
+void Draw_RunningBar(SDL_Renderer* renderer){
+    SDL_Rect rect = {60,95,970,Get_height()};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}
+
+void Draw_Character_Show_Bar(SDL_Renderer* renderer){
+    SDL_Rect rect = {1040,95,Get_width()-1040-10,Get_height()/2-80};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+
+}
+
+void Draw_Information_of_Character(SDL_Renderer* renderer){
+    SDL_Rect main_bar = {1040,Get_height()/2+30,Get_width()-1040-100,100};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&main_bar);
+    SDL_Rect rect = {1040,Get_height()/2+30,Get_width()-1040-100,340};
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_RenderDrawLine(renderer,1040,Get_height()/2+30+100,1040+(Get_width()-1040-100),Get_height()/2+30+100);
+}
+
+void Draw_Stage_Bar(SDL_Renderer* renderer){
+    SDL_Rect rect = {Get_width()-100+5,Get_height()/2+30,85,Get_height()/2-80};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}
