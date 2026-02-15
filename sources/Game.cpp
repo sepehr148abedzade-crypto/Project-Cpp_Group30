@@ -73,7 +73,7 @@ bool Loading(){
         Init_Load_button();
         Draw_loading_window(renderer,Load_button,Loading_text);
         SDL_RenderPresent(renderer);
-        //SDL_Delay(3000);
+        SDL_Delay(3000);
 }
 
 bool Init_Game(){
