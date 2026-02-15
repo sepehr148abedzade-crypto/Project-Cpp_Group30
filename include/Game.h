@@ -13,7 +13,7 @@ bool Loading();
 bool Init_Game();
 void AddBlock(std::string type, int x, int y);
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font);
-void HandleEvents(SDL_Event& e);
+void HandleBlockEvent(SDL_Event& e);
 void Get_event();
 void Update();
 void Render();
