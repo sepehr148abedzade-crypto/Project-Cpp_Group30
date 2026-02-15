@@ -24,8 +24,14 @@ void AddBlock(string type, int x, int y){
     Blocks block;
     block.image = blockLibrary[type];
     block.id = type;
-    block.rect = {x, y, 160, 45};
-    block.values.emplace_back("0");
+    block.rect = {x, y, blockMap[type].width, blockMap[type].height};
+    if (blockMap.count(type)) {
+        for (auto & i : blockMap[type].inputs) {
+            block.values.push_back(i.default_value);
+        }
+    } else {
+        block.values.emplace_back("0");
+    }
     block.active_value_index = 0;
     block.is_editing = false;
     block.is_menu_open = false;
@@ -38,19 +44,30 @@ void HandleEvents(SDL_Event& e){
         int my = e.button.y;
         bool click = false;
 
-        for (auto &block : active_blocks){
-            for (size_t i=0; i < block.values.size(); i++){
-                SDL_Rect inputRect = { block.rect.x + 75 + (int)(i * 55) - 20, block.rect.y + 10, 40, 25 };
-                SDL_Point mPos = { mx, my };
+        for (auto &block : active_blocks) {
+            bool foundInThisBlock = false;
 
-                if (SDL_PointInRect(&mPos, &inputRect)) {
-                    block.is_editing = true;
-                    block.active_value_index = i;
-                    SDL_StartTextInput();
-                    click = true;
+            if (blockMap.count(block.id)) {
+                for (size_t i = 0; i < block.values.size(); i++) {
+                    int px = blockMap[block.id].inputs[i].posx;
+                    SDL_Rect inputRect = { block.rect.x + px - 20, block.rect.y + 10, 40, 25 };
+
+                    SDL_Point mPos = { mx, my };
+
+                    if (SDL_PointInRect(&mPos, &inputRect)) {
+                        for(auto &other : active_blocks) other.is_editing = false;
+
+                        block.is_editing = true;
+                        block.active_value_index = (int)i;
+                        SDL_StartTextInput();
+                        click = true;
+                        foundInThisBlock = true;
+                        break;
+                    }
                 }
             }
-            if (!click) block.is_editing = false;
+            if (!foundInThisBlock) block.is_editing = false;
+            if (click) break;
         }
         if (!click) SDL_StopTextInput();
     }
@@ -75,41 +92,7 @@ void HandleEvents(SDL_Event& e){
 }
 
 
-void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font){
-    for (auto &block : active_blocks){
-        if (block.image) {
-            SDL_RenderCopy(renderer, block.image, NULL, &block.rect);
-        } else {
-            cout<<"error loading image!";
-        }
-        SDL_Color black = {0, 0, 0, 255};
 
-        int startX = 75;
-        int gap = 55;
-        for (size_t i = 0; i < block.values.size(); ++i) {
-            string textToShow = block.values[i];
-
-            if (block.is_editing && block.active_value_index == i) {
-                textToShow += "|";
-            }
-
-            SDL_Texture* txtTex = LoadText(renderer, font, textToShow, black);
-            if (txtTex) {
-                int tw, th;
-                SDL_QueryTexture(txtTex, NULL, NULL, &tw, &th);
-
-                SDL_Rect txtRect;
-                txtRect.x = block.rect.x + startX + (i * gap) - (tw / 2);
-                txtRect.y = block.rect.y + 22 - (th / 2);
-                txtRect.w = tw;
-                txtRect.h = th;
-
-                SDL_RenderCopy(renderer, txtTex, NULL, &txtRect);
-                SDL_DestroyTexture(txtTex);
-            }
-        }
-    }
-}
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
         if(!font) {

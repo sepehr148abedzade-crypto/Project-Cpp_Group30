@@ -16,7 +16,7 @@ void Init_Categories(SDL_Renderer* renderer, TTF_Font* font) {
     string labels[] = {"Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables"};
     uint32_t colors[] = {0x4C97FF, 0x9966FF, 0xD65BE5, 0xFFBF00, 0xFFAB19, 0x4CBFE6, 0x59C059, 0xFF8C1A};
 
-    int currentY = 150;
+    int currentY = 120;
     for (int i = 0; i < 8; i++) {
         categories[i].x = 30;
         categories[i].y = currentY;

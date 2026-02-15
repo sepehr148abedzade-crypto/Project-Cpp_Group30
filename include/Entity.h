@@ -10,6 +10,21 @@ using namespace std;
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 
+const SDL_Rect BlockBar = {60, 100, 250, 720};
+
+enum InputType {NUMBER, DROPDOWN, TEXT};
+struct InputField{
+    int posx;
+    InputType type;
+    string default_value;
+};
+
+struct BlockTemplate {
+    int width;
+    int height;
+    std::vector<InputField> inputs;
+};
+
 struct Blocks{
     string id;
     SDL_Rect rect;
