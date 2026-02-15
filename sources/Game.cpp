@@ -73,7 +73,7 @@ bool Loading(){
         Init_Load_button();
         Draw_loading_window(renderer,Load_button,Loading_text);
         SDL_RenderPresent(renderer);
-        SDL_Delay(3000);
+        //SDL_Delay(3000);
 }
 
 bool Init_Game(){
@@ -109,13 +109,31 @@ void Get_event() {
         SDL_Event e;
         while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) stop = true;
+                if (e.type == SDL_MOUSEBUTTONDOWN){
+                        if(e.button.button == SDL_BUTTON_LEFT){
+                                for (int i=0;i<8;i++){
+                                        if(Is_mouse_on(categories[i].rect.x,categories[i].rect.y,categories[i].rect.w,categories[i].rect.h)){
+                                                for(int j=0;j<8;j++){
+                                                        categories[j].is_mouse_click_on = false;
+                                                }
+                                                categories[i].is_mouse_click_on = true;
+                                        }
+
+                                }
+                        }
+                }
         }
 }
 
 void Update(){
         Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
-        Draw_Button(renderer,Top_button,File_Text);
-        Draw_CodeBar(renderer, categories);
+        Draw_Top_Button(renderer,Top_button,File_Text);
+        Draw_CodeBar_Item(renderer, categories);
+        Draw_RunningBar(renderer);
+        Draw_CodeBar(renderer);
+        Draw_Character_Show_Bar(renderer);
+        Draw_Information_of_Character(renderer);
+        Draw_Stage_Bar(renderer);
 }
 void Render(){
         SDL_RenderPresent(renderer);

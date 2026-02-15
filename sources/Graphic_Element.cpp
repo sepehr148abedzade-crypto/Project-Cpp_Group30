@@ -43,7 +43,7 @@ void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo){
     }
 }
 
-void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     if (Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h)) {
         SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
                                button.second_color.b, SDL_ALPHA_OPAQUE);
@@ -63,11 +63,12 @@ void Draw_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
-void Draw_CodeBar(SDL_Renderer* renderer, Button code_button[]) {
+void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_Rect left_bar = {0, 95, 60, Get_height() - 48};
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer, 249, 249, 249, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &left_bar);
-
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&left_bar);
     for (int i = 0; i < 8; i++) {
         filledCircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2) - 10, code_button[i].radius,
                          code_button[i].first_color.r, code_button[i].first_color.g, code_button[i].first_color.b, SDL_ALPHA_OPAQUE);
@@ -78,23 +79,69 @@ void Draw_CodeBar(SDL_Renderer* renderer, Button code_button[]) {
         aacircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2)-10, code_button[i].radius,
                      0, 0, 0, 150);
         if (Is_mouse_on(code_button[i].rect.x,code_button[i].rect.y,code_button[i].rect.w,code_button[i].rect.h))
-            SDL_SetTextureColorMod(categories[i].Label_texture, 151, 214, 255);
+            SDL_SetTextureColorMod(code_button[i].Label_texture, 151, 214, 255);
         else
-            SDL_SetTextureColorMod(categories[i].Label_texture, 50, 50, 50);
+            SDL_SetTextureColorMod(code_button[i].Label_texture, 80, 80, 80);
 
+        if (code_button[i].is_mouse_click_on) {
+            SDL_SetRenderDrawColor(renderer, code_button[i].second_color.r, code_button[i].second_color.g,
+                                   code_button[i].second_color.b, 50);
+            SDL_RenderFillRect(renderer, &code_button[i].rect);
+        }
         int dx;
         if (i <= 3) dx = 15;
         else if (i <= 5) dx = 17;
         else dx = 25;
 
         int texture_w, texture_h;
-        SDL_QueryTexture(categories[i].Label_texture, nullptr, nullptr, &texture_w, &texture_h);
+        SDL_QueryTexture(code_button[i].Label_texture, nullptr, nullptr, &texture_w, &texture_h);
         SDL_Rect textPosition = {
                 code_button[i].rect.x + (code_button[i].rect.w - texture_w) / 2,
                 code_button[i].rect.y + (code_button[i].rect.h - texture_h) / 2 + code_button[i].radius,
                 texture_w, texture_h
         };
-        SDL_RenderCopy(renderer, categories[i].Label_texture, nullptr, &textPosition);
+        SDL_RenderCopy(renderer, code_button[i].Label_texture, nullptr, &textPosition);
     }
 }
 
+void Draw_CodeBar(SDL_Renderer* renderer){
+    SDL_Rect code_bar = {60,95,250,Get_height()};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&code_bar);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&code_bar);
+}
+void Draw_RunningBar(SDL_Renderer* renderer){
+    SDL_Rect rect = {60,95,970,Get_height()};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}
+
+void Draw_Character_Show_Bar(SDL_Renderer* renderer){
+    SDL_Rect rect = {1040,95,Get_width()-1040-10,Get_height()/2-80};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+
+}
+
+void Draw_Information_of_Character(SDL_Renderer* renderer){
+    SDL_Rect main_bar = {1040,Get_height()/2+30,Get_width()-1040-100,100};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&main_bar);
+    SDL_Rect rect = {1040,Get_height()/2+30,Get_width()-1040-100,340};
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_RenderDrawLine(renderer,1040,Get_height()/2+30+100,1040+(Get_width()-1040-100),Get_height()/2+30+100);
+}
+
+void Draw_Stage_Bar(SDL_Renderer* renderer){
+    SDL_Rect rect = {Get_width()-100+5,Get_height()/2+30,85,Get_height()/2-80};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}

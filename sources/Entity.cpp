@@ -1,7 +1,6 @@
 #include "Entity.h"
 #include "Graphic_Element.h"
 #include "constants.h"
-//#include "Game.h"
 
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 
@@ -27,7 +26,9 @@ void Init_code_button(SDL_Renderer* renderer, TTF_Font* font) {
         categories[i].radius = 10;
         categories[i].Label_texture = LoadText(renderer, font, labels[i], white);
         categories[i].first_color = Hex_To_rgb(colors[i]);
+        categories[i].second_color = {33,64,105,SDL_ALPHA_OPAQUE};
         categories[i].is_mouse_on = Is_mouse_on(categories[i].rect.x,categories[i].rect.y,categories[i].rect.w,categories[i].rect.h);
+        categories[i].is_mouse_click_on = false;
         currentY += 60;
     }
 }

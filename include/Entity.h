@@ -10,6 +10,16 @@ using namespace std;
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 
+struct character{
+    int x;
+    int y;
+    int degree;
+    int size;
+    std::string monologue;
+    std::string think;
+    bool show;
+
+};
 struct Blocks{
     string id;
     SDL_Rect rect;
