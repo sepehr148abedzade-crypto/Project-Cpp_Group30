@@ -3,6 +3,7 @@
 #define GAME_H
 #include <SDL2/SDL.h>
 #include <string>
+#include "Entity.h"
 
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
@@ -14,6 +15,9 @@ bool Init_Game();
 void AddBlock(std::string type, int x, int y);
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font);
 void HandleBlockEvent(SDL_Event& e);
+void CheckInputClick(int mx, int my);
+bool IsValidChar(char c, InputType type);
+void HandleKeyboardInput(SDL_Event& e);
 void Get_event();
 void Update();
 void Render();

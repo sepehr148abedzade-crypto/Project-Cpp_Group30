@@ -41,10 +41,26 @@ struct Blocks{
     SDL_Rect rect;
     SDL_Texture* image;
     vector<string> values;
-    bool is_editing;int active_value_index = -1;
+    bool is_editing;
+    int active_value_index = -1;
 
 
     Blocks* next = nullptr;
+};
+
+struct Backdrop {
+    string name;
+    SDL_Texture* texture;
+};
+
+struct BackdropItem{
+    SDL_Texture* texture;
+    std::string name;
+};
+
+struct BackdropMenu{
+    SDL_Rect BackDropCircle;
+    bool is_open;
 };
 
 
@@ -68,6 +84,7 @@ extern Blocks* draggedBlock;
 extern int offsetX, offsetY;
 extern std::map<std::string, BlockTemplate> blockMap;
 extern std::map<std::string, SDL_Texture*> blockLibrary;
+
 
 void Init_Button();
 void Init_Load_button();
