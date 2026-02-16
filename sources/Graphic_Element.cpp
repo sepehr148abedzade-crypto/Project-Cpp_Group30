@@ -199,7 +199,8 @@ void Draw_Character(SDL_Renderer* renderer,Character &sprite){
     dest.x = (int)(centerX + sprite.x - ((double)dest.w/2));
     dest.y = (int)(centerY + sprite.y - ((double)dest.h/2));
 
-    SDL_RenderCopyEx(renderer,sprite.texture, nullptr,&dest,-sprite.degree, nullptr,SDL_FLIP_NONE);
+    if(sprite.isvisible)
+        SDL_RenderCopyEx(renderer,sprite.texture, nullptr,&dest,-sprite.degree, nullptr,SDL_FLIP_NONE);
 }
 
 void Handle_event_for_code_button(SDL_Event &e) {

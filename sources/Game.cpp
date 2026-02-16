@@ -188,6 +188,9 @@ void Get_event() {
         HandleBlockEvent(e);
         Handle_event_for_code_button(e);
         Handle_event_for_motion_sprite(e,cat);
+        if(e.type == SDL_KEYDOWN){
+            go_to_random_position(cat);
+        }
     }
 }
 
