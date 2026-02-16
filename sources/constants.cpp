@@ -21,6 +21,6 @@ bool Limit_CharacterX (Character &sprite){
 }
 
 bool Limit_CharacterY(Character &sprite){
-    if(sprite.y <= stage.h / 2 - sprite.height / 2 && sprite.y >= -stage.h / 2 + sprite.height / 2) return true;
+    if(sprite.y <= (double)stage.h / 2 - sprite.height / 2 && sprite.y >= -(double)stage.h / 2 + sprite.height / 2) return true;
     return false;
 }
