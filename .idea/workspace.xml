@@ -90,7 +90,7 @@
     "RunOnceActivity.west.config.association.type.startup.service": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "Fasanghari",
+    "git-widget-placeholder": "main",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -108,12 +108,12 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
       <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -291,6 +291,7 @@
     <MESSAGE value="define constant variable in constants.h &amp; constants.cpp (2)" />
     <MESSAGE value="define struct in Entity.cpp &amp; Entity.h" />
     <MESSAGE value="define functions &#10;create Loading window(0.5)&#10;cleaning code in all file&#10;and create main struct of program" />
-    <option name="LAST_COMMIT_MESSAGE" value="define functions &#10;create Loading window(0.5)&#10;cleaning code in all file&#10;and create main struct of program" />
+    <MESSAGE value="change NULL to nullptr" />
+    <option name="LAST_COMMIT_MESSAGE" value="change NULL to nullptr" />
   </component>
 </project>
