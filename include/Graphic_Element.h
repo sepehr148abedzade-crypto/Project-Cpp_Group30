@@ -37,4 +37,7 @@ void Draw_RunningBar(SDL_Renderer* renderer);
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer);
+void Draw_Character(SDL_Renderer* renderer,Character &sprite);
+void Handle_event_for_code_button(SDL_Event &e);
+void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);
 #endif //GRAPHIC_ELEMENT_H

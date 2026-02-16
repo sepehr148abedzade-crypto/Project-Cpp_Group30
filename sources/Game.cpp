@@ -3,6 +3,7 @@
 #include "iostream"
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
+#include "motion_functions.h"
 #include "constants.h"
 #include "Entity.h"
 #include <Asset_Loader.h>
@@ -15,6 +16,7 @@ SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
+SDL_Texture* cat_texture = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
@@ -145,7 +147,7 @@ bool Loading(){
         Init_Load_button();
         Draw_loading_window(renderer,Load_button,Loading_text);
         SDL_RenderPresent(renderer);
-        SDL_Delay(3000);
+        //SDL_Delay(3000);
 }
 
 bool Init_Game(){
@@ -164,8 +166,8 @@ bool Init_Game(){
         Init_Button();
 
         File_Text = LoadText(renderer,main_font,"File",white);
-        Scratch_logo = LoadTexture(renderer,"asset/images/scratch.png");
-        SetWindowIcon(main_window,"asset/images/icon.png");
+        Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
+        SetWindowIcon(main_window,"asset/images/logo/icon.png");
 
         code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
         if(code_bar_font == nullptr){
@@ -175,29 +177,18 @@ bool Init_Game(){
         Init_code_button(renderer,code_bar_font);
         LoadAllAssets(renderer);
         Init_Menu_Blocks();
-
+        Load_Character(renderer,cat,"asset/images/sprite/cat.png");
         return true;
 }
 
 void Get_event() {
-        SDL_Event e;
-        while (SDL_PollEvent(&e) != 0) {
-                if (e.type == SDL_QUIT) stop = true;
-                HandleBlockEvent(e);
-                if (e.type == SDL_MOUSEBUTTONDOWN){
-                        if(e.button.button == SDL_BUTTON_LEFT){
-                                for (int i=0;i<8;i++){
-                                        if(Is_mouse_on(categories[i].rect.x,categories[i].rect.y,categories[i].rect.w,categories[i].rect.h)){
-                                                for(int j=0;j<8;j++){
-                                                        categories[j].is_mouse_click_on = false;
-                                                }
-                                                categories[i].is_mouse_click_on = true;
-                                        }
-
-                                }
-                        }
-                }
-        }
+    SDL_Event e;
+    while (SDL_PollEvent(&e) != 0) {
+        if (e.type == SDL_QUIT) stop = true;
+        HandleBlockEvent(e);
+        Handle_event_for_code_button(e);
+        Handle_event_for_motion_sprite(e,cat);
+    }
 }
 
 void Update(){
@@ -213,6 +204,7 @@ void Update(){
     Draw_Top_Button(renderer, Top_button, File_Text);
     Draw_Character_Show_Bar(renderer);
     Draw_Information_of_Character(renderer);
+    Draw_Character(renderer,cat);
 }
 void Render(){
         SDL_RenderPresent(renderer);

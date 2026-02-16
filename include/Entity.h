@@ -26,16 +26,22 @@ struct BlockTemplate {
     std::vector<InputField> inputs;
 };
 
-struct character{
-    int x;
-    int y;
-    int degree;
-    int size;
+struct Character{
+    double x = 0;
+    double y = 0;
+    double degree = 0;
+    double size = 0.25;
+    double width=0;
+    double height=0;
+    bool isvisible = true;
+    bool is_mouse_on = false;
     std::string monologue;
     std::string think;
-    bool show;
-
+    SDL_Texture* texture= nullptr;
 };
+
+extern Character cat;
+
 struct Blocks{
     string id;
     SDL_Rect rect;

@@ -1,5 +1,6 @@
 #include "Graphic_Element.h"
 #include "Entity.h"
+#include "constants.h"
 #include <SDL2/SDL2_gfx.h>
 
 Blocks* draggedBlock = nullptr;
@@ -163,11 +164,10 @@ void Draw_RunningBar(SDL_Renderer* renderer){
 }
 
 void Draw_Character_Show_Bar(SDL_Renderer* renderer){
-    SDL_Rect rect = {1040,95,Get_width()-1040-10,Get_height()/2-80};
     SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer,&rect);
+    SDL_RenderFillRect(renderer,&stage);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer,&rect);
+    SDL_RenderDrawRect(renderer,&stage);
 
 }
 
@@ -187,4 +187,59 @@ void Draw_Stage_Bar(SDL_Renderer* renderer){
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
+}
+
+void Draw_Character(SDL_Renderer* renderer,Character &sprite){
+    double centerX = stage.x + ((double )stage.w/2);
+    double centerY = stage.y + ((double)stage.h/2);
+
+    SDL_Rect dest;
+    dest.w = (int)(sprite.width);
+    dest.h = (int)(sprite.height);
+    dest.x = (int)(centerX + sprite.x - ((double)dest.w/2));
+    dest.y = (int)(centerY + sprite.y - ((double)dest.h/2));
+
+    SDL_RenderCopyEx(renderer,sprite.texture, nullptr,&dest,-sprite.degree, nullptr,SDL_FLIP_NONE);
+}
+
+void Handle_event_for_code_button(SDL_Event &e) {
+    if (e.type == SDL_MOUSEBUTTONDOWN) {
+        if (e.button.button == SDL_BUTTON_LEFT) {
+            for (int i = 0; i < 8; i++) {
+                if (Is_mouse_on(categories[i].rect.x, categories[i].rect.y, categories[i].rect.w,
+                                categories[i].rect.h)) {
+                    for (int j = 0; j < 8; j++) {
+                        categories[j].is_mouse_click_on = false;
+                    }
+                    categories[i].is_mouse_click_on = true;
+                }
+            }
+        }
+    }
+}
+
+void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        double stage_centerX = stage.x + (stage.w/2);
+        double stage_centerY = stage.y + (stage.h/2);
+        if(Is_mouse_on((int)(sprite.x+stage_centerX-(sprite.width/2)),(int)(sprite.y+stage_centerY-(sprite.height/2)),
+                       (int)sprite.width,(int)sprite.height)) sprite.is_mouse_on = true;
+    }
+    if(e.type==SDL_MOUSEBUTTONUP){
+        if(e.button.button == SDL_BUTTON_LEFT) {
+            if(!Limit_CharacterY(sprite) || !Limit_CharacterX(sprite)){
+                sprite.x=0;
+                sprite.y=0;
+            }
+            sprite.is_mouse_on = false;
+        }
+    }
+    if(e.type == SDL_MOUSEMOTION && sprite.is_mouse_on) {
+        int mouseX = e.motion.x;
+        int mouseY = e.motion.y;
+        double stage_centerX = stage.x + (stage.w/2);
+        double stage_centerY = stage.y + (stage.h/2);
+        sprite.x = mouseX - stage_centerX;
+        sprite.y = mouseY - stage_centerY;
+    }
 }

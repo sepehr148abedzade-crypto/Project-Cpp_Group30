@@ -37,3 +37,5 @@ void Init_code_button(SDL_Renderer* renderer, TTF_Font* font) {
         currentY += 60;
     }
 }
+
+Character cat;
