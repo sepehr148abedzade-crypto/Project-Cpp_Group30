@@ -2,6 +2,11 @@
 #include "Entity.h"
 #include <SDL2/SDL2_gfx.h>
 
+Blocks* draggedBlock = nullptr;
+int offsetX = 0, offsetY = 0;
+int sidebar_scroll_y = 0;
+
+
 SDL_Color white = {255,255,255};
 SDL_Color Hex_To_rgb(uint32_t hexcolor){
     SDL_Color color;
@@ -10,6 +15,44 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     color.b = hexcolor & 0xFF;
     color.a = SDL_ALPHA_OPAQUE;
     return color;
+}
+
+void DrawBlockInputs(SDL_Renderer* renderer, TTF_Font* font, Blocks& block) {
+    if (blockMap.count(block.id)) {
+        for (size_t i = 0; i < block.values.size(); i++) {
+            int px = blockMap[block.id].inputs[i].posX;
+            string text = block.values[i];
+            if (block.is_editing && block.active_value_index == (int)i) {
+                text += "|";
+            }
+            SDL_Texture* t = LoadText(renderer, font, text, {0, 0, 0, 255});
+            if (t) {
+                int tw, th;
+                SDL_QueryTexture(t, nullptr, nullptr, &tw, &th);
+                SDL_Rect textRect = { block.rect.x + px - (tw / 2), block.rect.y + 22 - (th / 2), tw, th };
+                SDL_RenderCopy(renderer, t, nullptr, &textRect);
+                SDL_DestroyTexture(t);
+            }
+        }
+    }
+}
+
+void Draw_Menu_Blocks(SDL_Renderer* renderer) {
+    for (auto& mb : menu_blocks) {
+        SDL_Rect renderPos = mb.rect;
+        renderPos.y += sidebar_scroll_y;
+
+        if (renderPos.y > 90 && renderPos.y < Get_height()) {
+            SDL_RenderCopy(renderer, mb.image, nullptr, &renderPos);
+        }
+    }
+}
+
+void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
+    for (auto& b : active_blocks) {
+        SDL_RenderCopy(renderer, b.image, nullptr, &b.rect);
+        DrawBlockInputs(renderer, font, b);
+    }
 }
 
 bool Is_mouse_on(int x,int y,int w,int h) {

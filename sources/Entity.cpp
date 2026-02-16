@@ -1,8 +1,13 @@
 #include "Entity.h"
 #include "Graphic_Element.h"
 #include "constants.h"
+//#include "Asset_Loader.h"
 
-extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
+
+vector<Blocks> active_blocks;
+std::vector<Blocks> menu_blocks;
+std::map<std::string, BlockTemplate> blockMap;
+std::map<std::string, SDL_Texture*> blockLibrary;
 
 Button Top_button{};
 void Init_Button() {
