@@ -28,9 +28,9 @@ void DrawBlockInputs(SDL_Renderer* renderer, TTF_Font* font, Blocks& block) {
             SDL_Texture* t = LoadText(renderer, font, text, {0, 0, 0, 255});
             if (t) {
                 int tw, th;
-                SDL_QueryTexture(t, NULL, NULL, &tw, &th);
+                SDL_QueryTexture(t, nullptr, nullptr, &tw, &th);
                 SDL_Rect textRect = { block.rect.x + px - (tw / 2), block.rect.y + 22 - (th / 2), tw, th };
-                SDL_RenderCopy(renderer, t, NULL, &textRect);
+                SDL_RenderCopy(renderer, t, nullptr, &textRect);
                 SDL_DestroyTexture(t);
             }
         }
@@ -43,14 +43,14 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer) {
         renderPos.y += sidebar_scroll_y;
 
         if (renderPos.y > 90 && renderPos.y < Get_height()) {
-            SDL_RenderCopy(renderer, mb.image, NULL, &renderPos);
+            SDL_RenderCopy(renderer, mb.image, nullptr, &renderPos);
         }
     }
 }
 
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
     for (auto& b : active_blocks) {
-        SDL_RenderCopy(renderer, b.image, NULL, &b.rect);
+        SDL_RenderCopy(renderer, b.image, nullptr, &b.rect);
         DrawBlockInputs(renderer, font, b);
     }
 }

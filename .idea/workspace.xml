@@ -3,13 +3,16 @@
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
+  <component name="CMakePresetLoader">{
+  &quot;useNewFormat&quot;: true
+}</component>
   <component name="CMakeProjectFlavorService">
     <option name="flavorId" value="CMakePlainProjectFlavor" />
   </component>
   <component name="CMakeReloadState">
     <option name="reloaded" value="true" />
   </component>
-  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+  <component name="CMakeRunConfigurationManager">
     <generated>
       <config projectName="Project_Cpp_Group30" targetName="Project_Cpp_Group30" />
     </generated>
@@ -20,17 +23,8 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="test2">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" afterDir="false" />
+    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="add detail in loading page">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Asset_Loader.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Asset_Loader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Entity.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Entity.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Graphic_Element.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Graphic_Element.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Asset_Loader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Asset_Loader.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Entity.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Entity.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -56,15 +50,34 @@
     <option name="minorVersion" value="2.4" />
     <option name="productBranch" value="Classic" />
   </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 3
+}]]></component>
   <component name="ProjectId" id="392YB7Owpb2Lt02m4fYNTYZC7va" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="cmake.loaded.for.project" value="true" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake Application.Project_Cpp_Group30.executor": "Run",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "checkbranch__fasanghari",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\sepeh\CLionProjects\Project-Cpp_Group30\include" />
@@ -72,18 +85,14 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
+    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -105,6 +114,7 @@
     </configuration>
     <configuration default="true" type="Tox" factoryName="Tox">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -116,6 +126,7 @@
     </configuration>
     <configuration default="true" type="tests" factoryName="Autodetect">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -130,6 +141,7 @@
     </configuration>
     <configuration default="true" type="tests" factoryName="Doctests">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -148,6 +160,7 @@
     </configuration>
     <configuration default="true" type="tests" factoryName="Nosetests">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -163,6 +176,7 @@
     </configuration>
     <configuration default="true" type="tests" factoryName="Twisted Trial">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -177,6 +191,7 @@
     </configuration>
     <configuration default="true" type="tests" factoryName="Unittests">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -191,6 +206,7 @@
     </configuration>
     <configuration default="true" type="tests" factoryName="py.test">
       <module name="untitled13" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
@@ -238,6 +254,7 @@
       <workItem from="1771069622815" duration="225000" />
       <workItem from="1771069924274" duration="184000" />
       <workItem from="1771070134178" duration="937000" />
+      <workItem from="1771232727998" duration="443000" />
     </task>
     <task id="LOCAL-00001" summary="create Welcometeamate.cpp">
       <option name="closed" value="true" />
@@ -339,15 +356,6 @@
     <isAutomaticReloadCMake value="true" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
     <option name="RECENT_FILTERS">
       <map>
         <entry key="Branch">
@@ -364,6 +372,15 @@
                 </option>
               </RecentGroup>
             </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
           </value>
         </entry>
       </map>
