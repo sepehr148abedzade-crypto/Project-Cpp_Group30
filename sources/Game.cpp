@@ -10,6 +10,7 @@
 using namespace std;
 
 
+
 SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
@@ -19,6 +20,77 @@ TTF_Font* main_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 
 bool stop = false;
+
+void HandleBlockEvent(SDL_Event& e){
+    int mx, my;
+    SDL_GetMouseState(&mx, &my);
+    SDL_Point mPos = {mx, my};
+    if (e.type == SDL_MOUSEWHEEL) {
+        if (mx > 60 && mx < 310) {
+            sidebar_scroll_y += e.wheel.y * 25;
+            if (sidebar_scroll_y > 0) sidebar_scroll_y = 0;
+            if (sidebar_scroll_y < -1000) sidebar_scroll_y = -1000;
+        }
+    }
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        bool clickedOnMenu = false;
+        if (mx > 60 && mx < 310 && my > 95) {
+            for (auto& mb : menu_blocks) {
+                SDL_Rect actual_pos = mb.rect;
+                actual_pos.y += sidebar_scroll_y;
+                if (SDL_PointInRect(&mPos, &actual_pos)) {
+                    AddBlock(mb.id, mx - blockMap[mb.id].width/2, my - blockMap[mb.id].height/2, mb.image);
+                    draggedBlock = &active_blocks.back();
+                    offsetX = mx - draggedBlock->rect.x;
+                    offsetY = my - draggedBlock->rect.y;
+                    clickedOnMenu = true;
+                    break;
+                }
+            }
+        }
+        if (!clickedOnMenu) {
+            for (int i = active_blocks.size() - 1; i >= 0; i--) {
+                if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
+                    draggedBlock = &active_blocks[i];
+                    offsetX = mx - active_blocks[i].rect.x;
+                    offsetY = my - active_blocks[i].rect.y;
+                    Blocks temp = active_blocks[i];
+                    active_blocks.erase(active_blocks.begin() + i);
+                    active_blocks.push_back(temp);
+                    draggedBlock = &active_blocks.back();
+                    break;
+                }
+            }
+        }
+    }
+    if (e.type == SDL_MOUSEMOTION && draggedBlock != nullptr) {
+        draggedBlock->rect.x = mx - offsetX;
+        draggedBlock->rect.y = my - offsetY;
+    }
+    if (e.type == SDL_MOUSEBUTTONUP) {
+        if (draggedBlock != nullptr) {
+            int safeZoneX_Start = 310;
+            int safeZoneY_Start = 95;
+
+            bool shouldDelete = false;
+            if (draggedBlock->rect.x < safeZoneX_Start ||
+                draggedBlock->rect.y < safeZoneY_Start ||
+                draggedBlock->rect.x > 900) {
+                shouldDelete = true;
+            }
+            if (shouldDelete) {
+                for (auto it = active_blocks.begin(); it != active_blocks.end(); ++it) {
+                    if (&(*it) == draggedBlock) {
+                        draggedBlock = nullptr;
+                        active_blocks.erase(it);
+                        break;
+                    }
+                }
+            }
+             draggedBlock = nullptr;
+        }
+    }
+}
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
         if(!font) {
@@ -73,7 +145,7 @@ bool Loading(){
         Init_Load_button();
         Draw_loading_window(renderer,Load_button,Loading_text);
         SDL_RenderPresent(renderer);
-        SDL_Delay(3000);
+        //SDL_Delay(3000);
 }
 
 bool Init_Game(){
@@ -101,6 +173,8 @@ bool Init_Game(){
                 return false;
         }
         Init_code_button(renderer,code_bar_font);
+        LoadAllAssets(renderer);
+        Init_Menu_Blocks();
 
         return true;
 }
@@ -109,13 +183,36 @@ void Get_event() {
         SDL_Event e;
         while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) stop = true;
+                HandleBlockEvent(e);
+                if (e.type == SDL_MOUSEBUTTONDOWN){
+                        if(e.button.button == SDL_BUTTON_LEFT){
+                                for (int i=0;i<8;i++){
+                                        if(Is_mouse_on(categories[i].rect.x,categories[i].rect.y,categories[i].rect.w,categories[i].rect.h)){
+                                                for(int j=0;j<8;j++){
+                                                        categories[j].is_mouse_click_on = false;
+                                                }
+                                                categories[i].is_mouse_click_on = true;
+                                        }
+
+                                }
+                        }
+                }
         }
 }
 
 void Update(){
-        Draw_BlueBar_Top(renderer,Get_width(),Scratch_logo);
-        Draw_Button(renderer,Top_button,File_Text);
-        Draw_CodeBar(renderer, categories);
+    SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
+    SDL_RenderClear(renderer);
+    Draw_Stage_Bar(renderer);
+    Draw_RunningBar(renderer);
+    Draw_CodeBar(renderer);
+    Draw_CodeBar_Item(renderer, categories);
+    Draw_Menu_Blocks(renderer);
+    DrawALLBlocks(renderer, code_bar_font);
+    Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
+    Draw_Top_Button(renderer, Top_button, File_Text);
+    Draw_Character_Show_Bar(renderer);
+    Draw_Information_of_Character(renderer);
 }
 void Render(){
         SDL_RenderPresent(renderer);
