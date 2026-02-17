@@ -20,18 +20,8 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="adding drag and scroll option">
-      <change afterPath="$PROJECT_DIR$/asset/images/Basketball 3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Bench With View.png" afterDir="false" />
+    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="complete backdrop menu and upload from sys and random backdrop">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Asset_Loader.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Asset_Loader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Entity.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Entity.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Graphic_Element.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Graphic_Element.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Asset_Loader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Asset_Loader.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,7 +133,7 @@
       <workItem from="1771069924274" duration="184000" />
       <workItem from="1771070134178" duration="937000" />
       <workItem from="1771222719500" duration="27446000" />
-      <workItem from="1771306555759" duration="26584000" />
+      <workItem from="1771306555759" duration="28392000" />
     </task>
     <task id="LOCAL-00001" summary="create Welcometeamate.cpp">
       <option name="closed" value="true" />
@@ -240,7 +230,14 @@
       <option name="project" value="LOCAL" />
       <updated>1771185815422</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="complete backdrop menu and upload from sys and random backdrop">
+      <created>1771357177776</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1771357177776</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -292,6 +289,7 @@
     <MESSAGE value="define struct in Entity.cpp &amp; Entity.h" />
     <MESSAGE value="define functions &#10;create Loading window(0.5)&#10;cleaning code in all file&#10;and create main struct of program" />
     <MESSAGE value="adding drag and scroll option" />
-    <option name="LAST_COMMIT_MESSAGE" value="adding drag and scroll option" />
+    <MESSAGE value="complete backdrop menu and upload from sys and random backdrop" />
+    <option name="LAST_COMMIT_MESSAGE" value="complete backdrop menu and upload from sys and random backdrop" />
   </component>
 </project>
