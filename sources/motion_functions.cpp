@@ -1,3 +1,4 @@
+#include "motion_functions.h"
 #include "Entity.h"
 #include "cmath"
 #include "constants.h"
