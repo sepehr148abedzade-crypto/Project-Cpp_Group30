@@ -9,13 +9,20 @@ struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 
 extern bool stop ;
+extern bool isBackdropMenuOpen;
+
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
 bool Loading();
 bool Init_Game();
 void AddBlock(std::string type, int x, int y);
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font);
 void HandleBlockEvent(SDL_Event& e);
+void SetRandomBackdrop();
+bool IsCircleClicked(int mx, int my, int cx, int cy, int radius);
+void AddBackdropToProject(SDL_Texture *tex, std::string name, bool forceSwitch, bool b);
 void CheckInputClick(int mx, int my);
+void CreateNewPaintBackdrop();
+void UploadBackdrop();
 bool IsValidChar(char c, InputType type);
 void HandleKeyboardInput(SDL_Event& e);
 void Get_event();

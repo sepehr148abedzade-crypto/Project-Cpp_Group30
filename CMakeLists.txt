@@ -16,4 +16,4 @@ add_executable(Project_Cpp_Group30 sources/main.cpp
 
 
 target_link_libraries(Project_Cpp_Group30 mingw32 SDL2main SDL2)
-target_link_libraries(Project_Cpp_Group30 SDL2_image SDL2_ttf)
+target_link_libraries(Project_Cpp_Group30 SDL2_image SDL2_ttf comdlg32)

@@ -9,11 +9,24 @@
 #include <vector>
 //#include <Game.h>
 
+
+
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
+extern SDL_Texture* currentBackdropTexture;
+extern bool isStageSelected;
+enum Tab { CODE, BACKDROPS, SOUNDS , COSTUMES};
+extern Tab currentTab;
+extern std::vector<Backdrop> projectBackdrops;
+extern int selectedBackdropIndex;
+extern int backdropScrollY;
 
 struct Button;
+
+
+
+
 
 extern SDL_Color white;
 
@@ -30,10 +43,13 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer);
 void Draw_RunningBar(SDL_Renderer* renderer);
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
-void Draw_Stage_Bar(SDL_Renderer* renderer);
+void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropThumbnail(SDL_Renderer* renderer, SDL_Texture* tex, SDL_Rect area);
+void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName);
 void DrawBackdropCircleButton(SDL_Renderer* renderer);
+void DrawBackdropSubMenu(SDL_Renderer* renderer);
+void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();
 void DrawBackdropLibrary(SDL_Renderer* renderer, TTF_Font* font);
 #endif //GRAPHIC_ELEMENT_H

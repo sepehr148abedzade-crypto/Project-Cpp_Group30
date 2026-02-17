@@ -21,32 +21,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="adding drag and scroll option">
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/change_color_effect_by.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/clear_graphic_effect.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/go_forward_layers.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/go_to_front_layer.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/hide.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/next_backdrop.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/next_costume.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/say.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/say_for_seconds.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/set_color_effect_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/set_size_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/show.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/switch_backdrop_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/switch_costume_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/think.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/think_for_seconds.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/go_to_random_position.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/point_in_direction.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/point_towards.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Castle 2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Castle 3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_gallery.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_paint.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_surprise.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_upload.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Basketball 3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Bench With View.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/Asset_Loader.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Asset_Loader.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/Entity.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Entity.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
@@ -120,12 +98,12 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -165,6 +143,7 @@
       <workItem from="1771069924274" duration="184000" />
       <workItem from="1771070134178" duration="937000" />
       <workItem from="1771222719500" duration="27446000" />
+      <workItem from="1771306555759" duration="26584000" />
     </task>
     <task id="LOCAL-00001" summary="create Welcometeamate.cpp">
       <option name="closed" value="true" />

@@ -1,6 +1,7 @@
 #include "Asset_Loader.h"
 #include "Graphic_Element.h"
 #include <SDL2/SDL_image.h>
+#include <iostream>
 using namespace std;
 
 extern SDL_Renderer* renderer;
@@ -8,12 +9,30 @@ extern SDL_Texture* icon_gallery;
 extern SDL_Texture* icon_paint;
 extern SDL_Texture* icon_upload;
 extern SDL_Texture* icon_surprise;
+extern SDL_Texture* currentBackdropTexture;
+extern void AddBackdropToProject(SDL_Texture *tex, std::string name, bool forceSwitch, bool b);
 
-
-
+string OpenFileDialog() {
+    char fileName[MAX_PATH] = "";
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = nullptr;
+    ofn.lpstrFilter = "Image Files\0*.png;*.jpg;*.jpeg;*.bmp\0All Files\0*.*\0";
+    ofn.lpstrFile = fileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.lpstrDefExt = "png";
+    if (GetOpenFileNameA(&ofn)) {
+        return string(fileName);
+    }
+    return "";
+}
 
 void LoadBackdropLibraryManual(SDL_Renderer* renderer) {
-    std::vector<std::string> fileNames = {"Castle 2.png", "Castle 3.png"};
+    libraryItems.clear();
+    std::vector<std::string> fileNames = {"Castle 2.png", "Castle 3.png", "Basketball 3.png", "Bench With View.png"};
+
     for (const std::string& name : fileNames) {
         std::string fullPath = "asset/images/" + name;
         SDL_Texture* tex = IMG_LoadTexture(renderer, fullPath.c_str());
@@ -21,6 +40,9 @@ void LoadBackdropLibraryManual(SDL_Renderer* renderer) {
             libraryItems.push_back({tex, name});
         }
     }
+
+    if (!libraryItems.empty() && projectBackdrops.empty()) {
+        AddBackdropToProject(libraryItems[0].texture, libraryItems[0].name, false, false);    }
 }
 
 void AddBlock(const string& id, int x, int y, SDL_Texture* tex) {
@@ -118,9 +140,6 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap["next_costume"] = {78, 40,{{50, DROPDOWN, ""}}};
     blockLibrary["next_costume"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/next_costume.png");
-
-
-
     return true;
 }
 

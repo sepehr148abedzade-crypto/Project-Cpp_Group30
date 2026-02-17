@@ -35,6 +35,9 @@ struct character{
     std::string think;
     bool show;
 
+    std::string name;
+    std::vector<SDL_Texture*> costumes;
+    int currentCostumeIndex;
 };
 struct Blocks{
     string id;
@@ -52,6 +55,9 @@ struct Backdrop {
     string name;
     SDL_Texture* texture;
 };
+extern std::vector<Backdrop> projectBackdrops;
+extern int selectedBackdropIndex;
+extern SDL_Texture* currentBackdropTexture;
 
 struct BackdropItem{
     SDL_Texture* texture;
