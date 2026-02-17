@@ -9,6 +9,7 @@ int sidebar_scroll_y = 0;
 
 
 SDL_Color white = {255,255,255};
+SDL_Color black = {0,0,0};
 SDL_Color Hex_To_rgb(uint32_t hexcolor){
     SDL_Color color;
     color.r = (hexcolor >> 16) & 0xFF;
@@ -220,7 +221,10 @@ void Handle_event_for_code_button(SDL_Event &e) {
 }
 
 void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
+    static int mouse_firstX , mouse_firstY;
     if(e.type == SDL_MOUSEBUTTONDOWN){
+        mouse_firstX = e.button.x;
+        mouse_firstY = e.button.y;
         double stage_centerX = stage.x + (stage.w/2);
         double stage_centerY = stage.y + (stage.h/2);
         if(Is_mouse_on((int)(sprite.x+stage_centerX-(sprite.width/2)),(int)(sprite.y+stage_centerY-(sprite.height/2)),
@@ -229,8 +233,10 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
     if(e.type==SDL_MOUSEBUTTONUP){
         if(e.button.button == SDL_BUTTON_LEFT) {
             if(!Limit_CharacterY(sprite) || !Limit_CharacterX(sprite)){
-                sprite.x=0;
-                sprite.y=0;
+                double stage_centerX = stage.x + (stage.w/2);
+                double stage_centerY = stage.y + (stage.h/2);
+                sprite.x = mouse_firstX - stage_centerX;
+                sprite.y = mouse_firstY - stage_centerY;
             }
             sprite.is_mouse_on = false;
         }
@@ -243,4 +249,22 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
         sprite.x = mouseX - stage_centerX;
         sprite.y = mouseY - stage_centerY;
     }
+}
+
+void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
+    std::string message = sprite.name + " " + "size is : " + to_string(sprite.size*1000);
+    SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
+    int texture_w,texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
+    SDL_Rect rect = {stage.x+5,stage.y+5,texture_w+10,25};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2 ,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
