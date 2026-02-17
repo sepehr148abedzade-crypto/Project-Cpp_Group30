@@ -4,6 +4,7 @@
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
 #include "motion_functions.h"
+#include "looks_functions.h"
 #include "constants.h"
 #include "Entity.h"
 #include <Asset_Loader.h>
@@ -19,6 +20,7 @@ SDL_Texture* File_Text = nullptr;
 SDL_Texture* cat_texture = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
+TTF_Font* report_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 
 bool stop = false;
@@ -164,7 +166,11 @@ bool Init_Game(){
                 return false;
         }
         Init_Button();
-
+        report_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",10);
+        if(report_font== nullptr){
+            std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
+            return false;
+        }
         File_Text = LoadText(renderer,main_font,"File",white);
         Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
         SetWindowIcon(main_window,"asset/images/logo/icon.png");
@@ -177,7 +183,9 @@ bool Init_Game(){
         Init_code_button(renderer,code_bar_font);
         LoadAllAssets(renderer);
         Init_Menu_Blocks();
-        Load_Character(renderer,cat,"asset/images/sprite/cat.png");
+        Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
+        Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
+        now_sprite = cat_running;
         return true;
 }
 
@@ -187,11 +195,16 @@ void Get_event() {
         if (e.type == SDL_QUIT) stop = true;
         HandleBlockEvent(e);
         Handle_event_for_code_button(e);
-        Handle_event_for_motion_sprite(e,cat);
+        Handle_event_for_motion_sprite(e,now_sprite);
+        if(e.type==SDL_KEYDOWN){
+            if(e.key.keysym.sym == SDLK_SPACE) {
+            }
+        }
     }
 }
 
 void Update(){
+
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
     Draw_Stage_Bar(renderer);
@@ -204,7 +217,8 @@ void Update(){
     Draw_Top_Button(renderer, Top_button, File_Text);
     Draw_Character_Show_Bar(renderer);
     Draw_Information_of_Character(renderer);
-    Draw_Character(renderer,cat);
+    Draw_size_report(renderer,main_font,now_sprite);
+    Draw_Character(renderer,now_sprite);
 }
 void Render(){
         SDL_RenderPresent(renderer);

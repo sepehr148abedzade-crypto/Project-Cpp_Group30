@@ -27,6 +27,7 @@ struct BlockTemplate {
 };
 
 struct Character{
+    std::string name;
     double x = 0;
     double y = 0;
     double degree = 0;
@@ -38,9 +39,12 @@ struct Character{
     std::string monologue;
     std::string think;
     SDL_Texture* texture= nullptr;
+    const char* path;
 };
 
 extern Character cat;
+extern Character cat_running;
+extern Character now_sprite;
 
 struct Blocks{
     string id;

@@ -39,3 +39,5 @@ void Init_code_button(SDL_Renderer* renderer, TTF_Font* font) {
 }
 
 Character cat;
+Character cat_running;
+Character now_sprite = cat_running;
