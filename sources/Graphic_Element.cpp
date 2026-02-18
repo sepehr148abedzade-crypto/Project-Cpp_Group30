@@ -118,8 +118,10 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
     for (int i = 0; i < 8; i++) {
         SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
         bool isActive = false;
+
         if (i == 1 && globalEditor.activeTool == TOOL_PEN) isActive = true;
         else if (i == 3 && globalEditor.activeTool == TOOL_LINE) isActive = true;
+        else if (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) isActive = true; // اضافه شد
         else if (i == 7 && globalEditor.activeTool == TOOL_ERASER) isActive = true;
 
         if (isActive) SDL_SetRenderDrawColor(renderer, 210, 230, 255, 255);
@@ -162,6 +164,44 @@ void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
     SDL_Rect r = { x - globalEditor.brushSize / 2, y - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
     SDL_RenderFillRect(renderer, &r);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, NULL);
+}
+
+void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill) {
+    if (!target || radius <= 0) return;
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+
+    if (fill) {
+        for (int w = 0; w < radius * 2; w++) {
+            for (int h = 0; h < radius * 2; h++) {
+                int dx = radius - w;
+                int dy = radius - h;
+                if ((dx * dx + dy * dy) <= (radius * radius)) {
+                    SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
+                }
+            }
+        }
+    } else {
+        int x = radius - 1;
+        int y = 0;
+        int dx = 1;
+        int dy = 1;
+        int err = dx - (radius << 1);
+        while (x >= y) {
+            SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
+            SDL_RenderDrawPoint(renderer, centerX + y, centerY + x);
+            SDL_RenderDrawPoint(renderer, centerX - y, centerY + x);
+            SDL_RenderDrawPoint(renderer, centerX - x, centerY + y);
+            SDL_RenderDrawPoint(renderer, centerX - x, centerY - y);
+            SDL_RenderDrawPoint(renderer, centerX - y, centerY - x);
+            SDL_RenderDrawPoint(renderer, centerX + y, centerY - x);
+            SDL_RenderDrawPoint(renderer, centerX + x, centerY - y);
+            if (err <= 0) { y++; err += dy; dy += 2; }
+            if (err > 0) { x--; dx += 2; err += dx - (radius << 1); }
+        }
+    }
     SDL_SetRenderTarget(renderer, NULL);
 }
 

@@ -20,63 +20,9 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="lightening update and get event functions">
-      <change afterPath="$PROJECT_DIR$/asset/asset/fonts/Montserrat-Bold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/change_x.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/change_y.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/go_to_x_y.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/move.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/set_x.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/set_y.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/turn_left.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/turn_right.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/Scratch.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/code_bar.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/asset/images/icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/fonts/Montserrat-Bold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Basketball 3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Bench With View.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/change_color_effect_by.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/clear_graphic_effect.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/go_forward_layers.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/go_to_front_layer.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/hide.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/next_backdrop.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/next_costume.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/say.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/say_for_seconds.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/set_color_effect_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/set_size_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/show.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/switch_backdrop_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/switch_costume_to.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/think.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/think_for_seconds.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/change_x.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/change_y.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/go_to_random_position.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/go_to_x_y.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/move.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/point_in_direction.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/point_towards.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/set_x.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/set_y.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/turn_left.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/turn_right.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Castle 2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Castle 3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/Scratch.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/code_bar.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/effect_preset_tool_edit_selector_icon_196304.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/gallery_icon_148533.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_gallery.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_paint.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_surprise.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/icon_upload.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/paintbrush_83820.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/asset/images/seo-social-web-network-internet_25_icon-icons.com_61513 (1).png" afterDir="false" />
+    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="add draw line tool">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/Graphic_Element.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Graphic_Element.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
     </list>
@@ -316,7 +262,14 @@
       <option name="project" value="LOCAL" />
       <updated>1771400482260</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="add draw line tool">
+      <created>1771436616040</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1771436616040</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -372,6 +325,7 @@
     <MESSAGE value="complete backdrop menu and upload from sys and random backdrop." />
     <MESSAGE value="fix backdrop drawing bug" />
     <MESSAGE value="lightening update and get event functions" />
-    <option name="LAST_COMMIT_MESSAGE" value="lightening update and get event functions" />
+    <MESSAGE value="add draw line tool" />
+    <option name="LAST_COMMIT_MESSAGE" value="add draw line tool" />
   </component>
 </project>
