@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 
+EditorSettings globalEditor;
 Blocks* draggedBlock = nullptr;
 bool isBackdropMenuOpen = false;
 bool isLibraryOpen = false;
@@ -12,7 +13,7 @@ bool isStageSelected = false;
 int offsetX = 0, offsetY = 0;
 int sidebar_scroll_y = 0;
 std::vector<BackdropItem> libraryItems;
-
+std::vector<Backdrop> libraryBackdrops;
 std::vector<Backdrop> projectBackdrops;
 int selectedBackdropIndex = 0;
 Tab currentTab = CODE;
@@ -35,36 +36,154 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     return color;
 }
 
+SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer) {
+    if (!source) return nullptr;
+    int w, h;
+    SDL_QueryTexture(source, NULL, NULL, &w, &h);
+
+    SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!target) return source;
+
+    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, target);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    SDL_RenderCopy(renderer, source, NULL, NULL);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    SDL_SetRenderTarget(renderer, oldTarget);
+    return target;
+}
+
+void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser) {
+    if (!target) return;
+    SDL_SetRenderTarget(renderer, target);
+
+    if (isEraser) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    } else {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+    }
+
+    float dx = (float)x2 - (float)x1;
+    float dy = (float)y2 - (float)y1;
+    float distance = sqrt(dx * dx + dy * dy);
+
+    if (distance < 1.0f) {
+        SDL_Rect r = { x1 - globalEditor.brushSize / 2, y1 - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
+        SDL_RenderFillRect(renderer, &r);
+    } else {
+        float stepX = dx / distance;
+        float stepY = dy / distance;
+        for (float i = 0; i <= distance; i += 1.0f) {
+            float drawX = (float)x1 + (stepX * i);
+            float drawY = (float)y1 + (stepY * i);
+            SDL_Rect r = { (int)drawX - globalEditor.brushSize / 2, (int)drawY - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
+            SDL_RenderFillRect(renderer, &r);
+        }
+    }
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, NULL);
+}
+
+SDL_Texture* GetCurrentLayer() {
+    if (currentTab == BACKDROPS) {
+        if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+            return projectBackdrops[selectedBackdropIndex].texture;
+        }
+    }
+    return nullptr;
+}
+
 void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName) {
     int barX = 110, barY = 95, barW = 920, barH = 110;
     SDL_Rect topBar = { barX, barY, barW, barH };
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderFillRect(renderer, &topBar);
+
     Drawtext(renderer, font, "Name:", barX + 20, barY + 20, {100, 100, 100, 255}, false);
+
     SDL_Rect nameBox = { barX + 80, barY + 15, 180, 35 };
-    SDL_SetRenderDrawColor(renderer, 245, 245, 245, 255);
+    SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
     SDL_RenderFillRect(renderer, &nameBox);
-    Drawtext(renderer, font, itemName, barX + 90, barY + 20, {0, 0, 0, 255}, false);
+
+    string displayName = itemName;
+    if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+        displayName = projectBackdrops[selectedBackdropIndex].name;
+    }
+    Drawtext(renderer, font, displayName, nameBox.x + 10, nameBox.y + 5, {0, 0, 0, 255}, false);
+
     int toolX = 115, toolY = 220, btnS = 45;
-    string tools[] = {"Select", "Brush", "Fill", "Line", "Circle", "Rect", "Text", "Eraser"};
     for (int i = 0; i < 8; i++) {
-        SDL_Rect r = { toolX + (i%2)*55, toolY + (i/2)*55, btnS, btnS };
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
+        bool isActive = false;
+        if (i == 1 && globalEditor.activeTool == TOOL_PEN) isActive = true;
+        else if (i == 3 && globalEditor.activeTool == TOOL_LINE) isActive = true;
+        else if (i == 7 && globalEditor.activeTool == TOOL_ERASER) isActive = true;
+
+        if (isActive) SDL_SetRenderDrawColor(renderer, 210, 230, 255, 255);
+        else SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
         SDL_RenderFillRect(renderer, &r);
-        SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
+        SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
         SDL_RenderDrawRect(renderer, &r);
     }
+
     SDL_Rect canvasBG = { 240, 220, 780, 520 };
     SDL_SetRenderDrawColor(renderer, 232, 237, 247, 255);
     SDL_RenderFillRect(renderer, &canvasBG);
+
     if (currentTex) {
         SDL_Rect imgPos = { 330, 280, 600, 380 };
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &imgPos);
         SDL_RenderCopy(renderer, currentTex, NULL, &imgPos);
+
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(renderer, &imgPos);
     }
-    SDL_Rect vectorBtn = { 240, 750, 150, 35 };
-    SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
-    SDL_RenderFillRect(renderer, &vectorBtn);
-    Drawtext(renderer, font, "Convert to Vector", 250, 755, {255,255,255,255}, false);
+}
+
+void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
+    if (!target) return;
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+    SDL_Rect r = { x - globalEditor.brushSize / 2, y - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
+    SDL_RenderFillRect(renderer, &r);
+    SDL_SetRenderTarget(renderer, NULL);
+}
+
+void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
+    if (!target) return;
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_Rect r = { x - globalEditor.brushSize / 2, y - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
+    SDL_RenderFillRect(renderer, &r);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, NULL);
+}
+
+void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer) {
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer, NULL);
+}
+
+void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer) {
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer, NULL);
 }
 
 void Drawtext(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, int y, SDL_Color color, bool center) {
@@ -151,6 +270,7 @@ bool Is_mouse_on(int x,int y,int w,int h) {
         return false;
     }
 }
+
 void Draw_loading_window(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     int texture_w, texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
@@ -240,6 +360,7 @@ void Draw_CodeBar(SDL_Renderer* renderer){
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&code_bar);
 }
+
 void Draw_RunningBar(SDL_Renderer* renderer){
     SDL_Rect rect = {60,95,970,Get_height()};
     SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);

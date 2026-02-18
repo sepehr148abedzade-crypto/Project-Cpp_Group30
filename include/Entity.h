@@ -14,6 +14,25 @@ typedef struct _TTF_Font TTF_Font;
 
 enum InputType { NUMBER, DROPDOWN, TEXT };
 
+enum EditTool { TOOL_NONE,
+    TOOL_SELECT,
+    TOOL_PEN,
+    TOOL_FILL,
+    TOOL_LINE,
+    TOOL_CIRCLE,
+    TOOL_RECT,
+    TOOL_TEXT,
+    TOOL_ERASER};
+
+struct EditorSettings {
+    EditTool activeTool = TOOL_PEN;
+    SDL_Color currentColor = {0, 0, 0, 255};
+    int brushSize = 5;
+    bool isDrawing = false;
+};
+
+extern EditorSettings globalEditor;
+
 struct InputField {
     int posX;
     InputType type;
@@ -39,6 +58,7 @@ struct character{
     std::vector<SDL_Texture*> costumes;
     int currentCostumeIndex;
 };
+
 struct Blocks{
     string id;
     SDL_Rect rect;
@@ -54,6 +74,7 @@ struct Blocks{
 struct Backdrop {
     string name;
     SDL_Texture* texture;
+    SDL_Texture* drawingLayer;
 };
 extern std::vector<Backdrop> projectBackdrops;
 extern int selectedBackdropIndex;

@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <string>
 #include "Entity.h"
+#include <SDL2/SDL_image.h>
 
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
@@ -11,9 +12,14 @@ typedef struct _TTF_Font TTF_Font;
 extern bool stop ;
 extern bool isBackdropMenuOpen;
 
+
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
+SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
+
 bool Loading();
 bool Init_Game();
+std::string GetUniqueName(std::string baseName);
+void AddUploadedBackdrop(SDL_Texture* tex, std::string fileName);
 void AddBlock(std::string type, int x, int y);
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font);
 void HandleBlockEvent(SDL_Event& e);

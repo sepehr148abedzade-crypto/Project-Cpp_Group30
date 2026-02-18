@@ -8,7 +8,6 @@ vector<Blocks> active_blocks;
 std::vector<Blocks> menu_blocks;
 std::map<std::string, BlockTemplate> blockMap;
 std::map<std::string, SDL_Texture*> blockLibrary;
-
 Button Top_button{};
 void Init_Button() {
     Top_button.rect = {140, 0, 40, 48};

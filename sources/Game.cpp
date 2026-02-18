@@ -21,36 +21,99 @@ TTF_Font* main_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 SDL_Texture* currentBackdropTexture = nullptr;
 character* currentSprite = nullptr;
+SDL_Texture* globalDrawingLayer = nullptr;
 std::vector<character> allCharacters;
+int lastMouseX = -1;
+int lastMouseY = -1;
+
+string textInput = "";
+bool isTyping = false;
+int textX = 0, textY = 0;
 
 bool stop = false;
 
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
-    if (!tex) return;
+    if (!tex || !renderer) return;
+
+    int w, h;
+    if (SDL_QueryTexture(tex, NULL, NULL, &w, &h) != 0) return;
+
     Backdrop newBD;
-    newBD.texture = tex;
     newBD.name = name;
+
+    newBD.texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!newBD.texture) return;
+
+    SDL_SetTextureBlendMode(newBD.texture, SDL_BLENDMODE_BLEND);
+
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    if (SDL_SetRenderTarget(renderer, newBD.texture) == 0) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, tex, NULL, NULL);
+    }
+
+    newBD.drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (newBD.drawingLayer) {
+        SDL_SetTextureBlendMode(newBD.drawingLayer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderTarget(renderer, newBD.drawingLayer);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+    }
+
+    SDL_SetRenderTarget(renderer, oldTarget);
+
     projectBackdrops.push_back(newBD);
-    selectedBackdropIndex = projectBackdrops.size() - 1;
-    currentBackdropTexture = projectBackdrops[selectedBackdropIndex].texture;
+    selectedBackdropIndex = (int)projectBackdrops.size() - 1;
+
     if (forceSwitch) {
         currentTab = BACKDROPS;
+        currentBackdropTexture = projectBackdrops[selectedBackdropIndex].texture;
     }
 }
 
+std::string GetUniqueBackdropName(std::string baseName) {
+    int counter = 1;
+    std::string finalName = baseName;
+    bool exists = true;
+
+    while (exists) {
+        exists = false;
+        for (size_t i = 0; i < projectBackdrops.size(); i++) {
+            if (projectBackdrops[i].name == finalName) {
+                exists = true;
+                break;
+            }
+        }
+        if (exists) {
+            finalName = baseName + std::to_string(++counter);
+        }
+    }
+    return finalName;
+}
+
+void AddUploadedBackdrop(SDL_Texture* tex, std::string fileName) {
+    size_t lastDot = fileName.find_last_of(".");
+    std::string baseName = (lastDot == std::string::npos) ? fileName : fileName.substr(0, lastDot);
+
+    Backdrop newBD;
+    newBD.texture = tex;
+    newBD.name = GetUniqueBackdropName(baseName);
+    projectBackdrops.push_back(newBD);
+}
 
 void CreateNewPaintBackdrop() {
-    SDL_Surface* surf = SDL_CreateRGBSurface(0, 480, 360, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    if (surf) {
-        SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 255, 255, 255));
-        SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
-        SDL_FreeSurface(surf);
-        if (tex) {
-            AddBackdropToProject(tex, "backdrop" + std::to_string(projectBackdrops.size() + 1), true, false);
-            currentTab = BACKDROPS;
-            printf("New Blank Backdrop Created and switched to Edit mode.\n");
-        }
+    SDL_Texture* tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 780, 520);
+    if (tex) {
+        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderTarget(renderer, tex);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderTarget(renderer, NULL);
+
+        AddBackdropToProject(tex, "backdrop" + std::to_string(projectBackdrops.size() + 1), true, false);
+        currentTab = BACKDROPS;
     }
 }
 
@@ -58,7 +121,31 @@ void SetRandomBackdrop() {
     if (libraryItems.empty()) return;
     int r = rand() % libraryItems.size();
     bool shouldSwitch = (currentTab == BACKDROPS);
-    AddBackdropToProject(libraryItems[r].texture, "Surprise", shouldSwitch, false);
+    AddBackdropToProject(libraryItems[r].texture, libraryItems[r].name, shouldSwitch, false);
+}
+
+void UploadBackdrop() {
+    std::string filePath = OpenFileDialog();
+    if (filePath.empty()) return;
+
+    size_t lastSlash = filePath.find_last_of("\\/");
+    std::string fileName = (lastSlash == std::string::npos) ? filePath : filePath.substr(lastSlash + 1);
+
+    SDL_Texture* tempTex = IMG_LoadTexture(renderer, filePath.c_str());
+    if (tempTex) {
+        SDL_Texture* editableTex = ConvertToEditable(tempTex, renderer);
+        SDL_DestroyTexture(tempTex);
+
+        size_t lastDot = fileName.find_last_of(".");
+        std::string baseName = (lastDot == std::string::npos) ? fileName : fileName.substr(0, lastDot);
+
+        Backdrop nb;
+        nb.texture = editableTex;
+        nb.name = GetUniqueBackdropName(baseName);
+        projectBackdrops.push_back(nb);
+        selectedBackdropIndex = (int)projectBackdrops.size() - 1;
+        currentBackdropTexture = projectBackdrops[selectedBackdropIndex].texture;
+    }
 }
 
 bool IsCircleClicked(int mx, int my, int cx, int cy, int r) {
@@ -304,20 +391,6 @@ bool Init_Game(){
         return true;
 }
 
-void UploadBackdrop() {
-    std::string filePath = OpenFileDialog();
-    if (filePath.empty()) return;
-    SDL_Texture* newTex = IMG_LoadTexture(renderer, filePath.c_str());
-
-    if (newTex) {
-        bool shouldSwitch = (currentTab == BACKDROPS);
-        AddBackdropToProject(newTex, "Uploaded", shouldSwitch, false);
-        printf("File Uploaded: %s\n", filePath.c_str());
-    } else {
-        printf("Upload Error: %s\n", IMG_GetError());
-    }
-}
-
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
     if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
         if (mx < 110 && currentTab == BACKDROPS) {
@@ -361,28 +434,21 @@ void Handle_Backdrop_Menu_Clicks(int mx, int my) {
     int cy = 760;
 
     if (isBackdropMenuOpen) {
-        if (IsCircleClicked(mx, my, cx, cy, 20)) {
-            isLibraryOpen = true;
-            isBackdropMenuOpen = false;
-        }
-        else if (IsCircleClicked(mx, my, cx, cy - 50, 20)) {
-            SetRandomBackdrop();
-            isBackdropMenuOpen = false;
-        }
-        else if (IsCircleClicked(mx, my, cx, cy - 100, 20)) {
-            CreateNewPaintBackdrop();
-            isBackdropMenuOpen = false;
-        }
-        else if (IsCircleClicked(mx, my, cx, cy - 150, 20)) {
+         if (IsCircleClicked(mx, my, cx, cy - 150, 20)) {
             UploadBackdrop();
             isBackdropMenuOpen = false;
         }
-        else {
+         else if (IsCircleClicked(mx, my, cx, cy - 100, 20)) {
+            CreateNewPaintBackdrop();
             isBackdropMenuOpen = false;
         }
-    } else {
-        if (IsCircleClicked(mx, my, cx, cy, 30)) {
-            isBackdropMenuOpen = true;
+         else if (IsCircleClicked(mx, my, cx, cy - 50, 20)) {
+            SetRandomBackdrop();
+            isBackdropMenuOpen = false;
+        }
+         else if (IsCircleClicked(mx, my, cx, cy, 20)) {
+            isLibraryOpen = true;
+            isBackdropMenuOpen = false;
         }
     }
 }
@@ -393,20 +459,84 @@ void Get_event() {
         if (e.type == SDL_QUIT) stop = true;
 
         int mx, my;
-        SDL_GetMouseState(&mx, &my);
+        Uint32 mouseState = SDL_GetMouseState(&mx, &my);
+        bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
 
         Handle_Scroll_Events(mx, my, e);
 
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (isLibraryOpen) {
-                if (mx >= 0 && mx <= 120 && my >= 0 && my <= 60) isLibraryOpen = false;
-                else HandleLibraryClick(mx, my);
-                continue;
-            }
+                if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) {
+                    isLibraryOpen = false;
+                } else {
+                    HandleLibraryClick(mx, my);
+                }
+            } else {
+                Handle_Tab_Switch(mx, my);
+                Handle_Backdrop_Selection(mx, my);
+                Handle_Backdrop_Menu_Clicks(mx, my);
 
-            Handle_Tab_Switch(mx, my);
-            Handle_Backdrop_Selection(mx, my);
-            Handle_Backdrop_Menu_Clicks(mx, my);
+                int toolX = 115, toolY = 220, btnS = 45;
+                for (int i = 0; i < 8; i++) {
+                    SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
+                    if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+                        if (i == 0) globalEditor.activeTool = TOOL_SELECT;
+                        else if (i == 1) globalEditor.activeTool = TOOL_PEN;
+                        else if (i == 2) globalEditor.activeTool = TOOL_FILL;
+                        else if (i == 3) globalEditor.activeTool = TOOL_LINE;
+                        else if (i == 4) globalEditor.activeTool = TOOL_CIRCLE;
+                        else if (i == 5) globalEditor.activeTool = TOOL_RECT;
+                        else if (i == 6) globalEditor.activeTool = TOOL_TEXT;
+                        else if (i == 7) globalEditor.activeTool = TOOL_ERASER;
+                    }
+                }
+
+                if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+                    SDL_Texture* drawLayer = projectBackdrops[selectedBackdropIndex].drawingLayer;
+                    if (drawLayer && globalEditor.activeTool == TOOL_FILL) {
+                        ApplyFill(drawLayer, renderer);
+                    }
+                }
+            }
+            CheckInputClick(mx, my);
+        }
+
+        if (isLeftPressed && !isLibraryOpen && currentTab == BACKDROPS) {
+            if (globalEditor.activeTool == TOOL_PEN || globalEditor.activeTool == TOOL_ERASER) {
+                if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+
+                    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+
+                    int localX = mx - 330;
+                    int localY = my - 280;
+
+                    if (localX >= 0 && localX <= 600 && localY >= 0 && localY <= 380) {
+                        int realW, realH;
+                        SDL_QueryTexture(target, NULL, NULL, &realW, &realH);
+                        int finalX = localX * realW / 600;
+                        int finalY = localY * realH / 380;
+
+                        if (lastMouseX != -1 && lastMouseY != -1) {
+                            bool isEraser = (globalEditor.activeTool == TOOL_ERASER);
+                            DrawLineOnTexture(target, lastMouseX, lastMouseY, finalX, finalY, renderer, isEraser);
+                        } else {
+                            if (globalEditor.activeTool == TOOL_PEN) {
+                                ApplyPen(target, finalX, finalY, renderer);
+                            } else if (globalEditor.activeTool == TOOL_ERASER) {
+                                ApplyEraser(target, finalX, finalY, renderer);
+                            }
+                        }
+                        lastMouseX = finalX;
+                        lastMouseY = finalY;
+                    } else {
+                        lastMouseX = -1;
+                        lastMouseY = -1;
+                    }
+                }
+            }
+        } else {
+            lastMouseX = -1;
+            lastMouseY = -1;
         }
 
         HandleBlockEvent(e);
@@ -423,10 +553,8 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
 
     if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-        SDL_Texture* activeTex = projectBackdrops[selectedBackdropIndex].texture;
-        if (activeTex) {
-            SDL_RenderCopy(renderer, activeTex, NULL, &stageArea);
-        }
+        SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].texture, NULL, &stageArea);
+        SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &stageArea);
     }
 
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
@@ -466,10 +594,25 @@ void Update() {
             Draw_Menu_Blocks(renderer);
             DrawALLBlocks(renderer, code_bar_font);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
-            Draw_Backdrop_List_Sidebar(renderer, main_font);
-            SDL_Texture* target = (!projectBackdrops.empty()) ? projectBackdrops[selectedBackdropIndex].texture : nullptr;
-            Draw_Image_Editor(renderer, main_font, target, "Backdrop");
+        Draw_Backdrop_List_Sidebar(renderer, main_font);
+
+        SDL_Texture* baseTex = nullptr;
+        string bName = "";
+        if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+            baseTex = projectBackdrops[selectedBackdropIndex].texture;
+            bName = projectBackdrops[selectedBackdropIndex].name;
         }
+
+        Draw_Image_Editor(renderer, main_font, baseTex, bName);
+
+        if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+            SDL_Rect imgPos = { 330, 280, 600, 380 };
+            if (projectBackdrops[selectedBackdropIndex].drawingLayer != nullptr) {
+                SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
+                SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &imgPos);
+            }
+        }
+    }
 
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);

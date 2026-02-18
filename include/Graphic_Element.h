@@ -7,6 +7,7 @@
 #include <constants.h>
 #include "Asset_Loader.h"
 #include <vector>
+//#include <SDL2/SDL_ttf.h>
 //#include <Game.h>
 
 
@@ -22,6 +23,13 @@ extern std::vector<Backdrop> projectBackdrops;
 extern int selectedBackdropIndex;
 extern int backdropScrollY;
 
+void ApplyPen(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
+void ApplyEraser(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
+void ApplyFill(SDL_Texture* target,SDL_Renderer* renderer);
+void ApplyTextToTexture(SDL_Texture* target, string text, int x, int y, SDL_Renderer* renderer, TTF_Font* font);
+SDL_Texture* GetCurrentLayer();
+SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
+SDL_Texture* MakeTextureEditable(SDL_Renderer* renderer, SDL_Texture* sourceTex);
 struct Button;
 
 
@@ -39,6 +47,11 @@ void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo);
 void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
+void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser);
+void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
+void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer);
+void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
+void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer);
 void Draw_RunningBar(SDL_Renderer* renderer);
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
