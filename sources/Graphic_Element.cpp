@@ -16,6 +16,37 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     color.a = SDL_ALPHA_OPAQUE;
     return color;
 }
+int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font ) {
+    int totalWidth =20;
+    totalWidth += Get_text_width(font,BT.Back_label);
+    for (size_t i = 0 ; i <BT.inputs.size();++i) {
+        if (BT.inputs[i].type==INPUT_NUMBER) {
+            totalWidth+=5;
+            string v = i<value.size() ? value[i]:BT.inputs[i].defaultValue;
+            totalWidth+= Get_text_width(font,BT.Back_label);
+        }
+        if (i < BT.labels.size()) {
+            totalWidth += 5;
+            totalWidth += Get_text_width(font, BT.labels[i]);
+        }
+    }
+    return totalWidth;
+}
+
+
+int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color ) {
+    SDL_Texture* text_tex = LoadText(renderer, font,text,color);
+    if (text_tex) {
+        SDL_Rect T_Rect;
+        SDL_QueryTexture(text_tex, nullptr, nullptr, &T_Rect.w, &T_Rect.h);
+        T_Rect.x = current_x;
+        T_Rect.y = y+T_Rect.h;
+        SDL_RenderCopy(renderer, text_tex, nullptr, &T_Rect);
+        SDL_DestroyTexture(text_tex);
+        return current_x+T_Rect.w;
+    }
+    return 0;
+}
 
 void DrawBlockInputs(SDL_Renderer* renderer, TTF_Font* font, Blocks& block) {
     if (blockMap.count(block.id)) {
@@ -37,21 +68,65 @@ void DrawBlockInputs(SDL_Renderer* renderer, TTF_Font* font, Blocks& block) {
     }
 }
 
-void Draw_Menu_Blocks(SDL_Renderer* renderer) {
+void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
     for (auto& mb : menu_blocks) {
         SDL_Rect renderPos = mb.rect;
         renderPos.y += sidebar_scroll_y;
+        SDL_Color color {76,151,255,255};
 
         if (renderPos.y > 90 && renderPos.y < Get_height()) {
-            SDL_RenderCopy(renderer, mb.image, nullptr, &renderPos);
+            switch (mb.type) {
+                case Simple_Block:
+                    DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font);
+                    break;
+            }
         }
     }
 }
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font ) {
+    roundedBoxRGBA(renderer,x,y+10,x+w,y+h-10,0,color.r,color.g,color.b,color.a);
+    Imaginary_circle C1 {x+20,y-10,15 };
+    SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
+    for (int i= x;i<=x+w;++i) {
+        for (int j=y;j<=y+10;++j) {
+            if (((i-C1.x)*(i-C1.x))+((j-C1.y)*(j-C1.y))>=C1.R*C1.R) {
+                SDL_RenderDrawPoint(renderer,i,j);
+            }
+        }
+    }
+    C1.y+=h-10;
+    for (int i= x;i<=x+w;++i) {
+        for (int j=y+h-10;j<=y+h;++j) {
+            if (((i-C1.x)*(i-C1.x))+((j-C1.y)*(j-C1.y))<=C1.R*C1.R) {
+                SDL_RenderDrawPoint(renderer,i,j);
+            }
+        }
+    }
+    int current_x = x+5;
+    current_x=Draw_label(current_x,renderer,font,BT.Back_label,y,{255,255,255,255})+5;
+    for (size_t i =0 ; i<values.size(); i++) {
+        string val = (i<values.size()) ? values[i]:BT.inputs[i].defaultValue;
+        int input_width = max(40,Get_text_width(font,val)+10);
+        roundedBoxRGBA(renderer,current_x,y+9,current_x+input_width-3,y+29,10,255,255,255,255);
+        Draw_label(current_x+(input_width-Get_text_width(font,val))/2,renderer,font,val,y,{100,100,100,255});
+        current_x+=input_width+5;
+        if (i<BT.labels.size()) {
+            current_x=Draw_label(current_x,renderer,font,BT.labels[i],y,{255,255,255,255})+5;
+        }
+
+    }
+
+    }
 
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
     for (auto& b : active_blocks) {
-        SDL_RenderCopy(renderer, b.image, nullptr, &b.rect);
-        DrawBlockInputs(renderer, font, b);
+        SDL_Color color= {76, 151, 255, 255};
+        switch (b.type) {
+            case Simple_Block :
+                DrawSimpleBlocks(renderer,b.rect.x,b.rect.y,b.rect.w,b.rect.h,blockMap[b.id],b.values,color,font);
+                break;
+        }
+        //DrawBlockInputs(renderer, font, b);
     }
 }
 

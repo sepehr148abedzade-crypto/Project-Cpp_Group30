@@ -11,18 +11,41 @@ using namespace std;
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 
+struct Imaginary_circle {
+    int x;
+    int y;
+    int R;
+};
 
-enum InputType { NUMBER, DROPDOWN, TEXT };
+
+enum InputType {
+    INPUT_NUMBER,
+    INPUT_DROPDOWN,
+    INPUT_TEXT,
+    INPUT_BOOLEAN
+};
 
 struct InputField {
     int posX;
     InputType type;
     std::string defaultValue;
+    std:: vector <std:: string> options;
+};
+enum BlockType {
+    Simple_Block,
+    Event_Block,
+    C_Block,
+    E_Block,
+    Bool_Block,
+    Expression_Block,
 };
 
 struct BlockTemplate {
     int width;
     int height;
+    BlockType type;
+    std::string Back_label;
+    std::vector<std::string> labels;
     std::vector<InputField> inputs;
 };
 
@@ -36,13 +59,17 @@ struct character{
     bool show;
 
 };
+
 struct Blocks{
     string id;
     SDL_Rect rect;
+    BlockType type;
     SDL_Texture* image;
     vector<string> values;
-    bool is_editing;int active_value_index = -1;
-
+    bool is_editing;
+    int active_value_index = -1;
+    vector<Blocks*> children;
+    Blocks* parent;
 
     Blocks* next = nullptr;
 };
