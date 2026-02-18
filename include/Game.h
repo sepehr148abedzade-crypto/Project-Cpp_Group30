@@ -9,6 +9,7 @@ typedef struct _TTF_Font TTF_Font;
 
 extern bool stop ;
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
+int Get_text_width(TTF_Font* font,std ::string text );
 bool Loading();
 bool Init_Game();
 void AddBlock(std::string type, int x, int y);

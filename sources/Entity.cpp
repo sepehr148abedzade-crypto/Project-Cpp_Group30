@@ -8,6 +8,16 @@ vector<Blocks> active_blocks;
 std::vector<Blocks> menu_blocks;
 std::map<std::string, BlockTemplate> blockMap;
 std::map<std::string, SDL_Texture*> blockLibrary;
+vector<categoryInfo> categoryOrder {
+        {CAT_MOTION,true,100},
+        {CAT_LOOK,true,0},
+        {CAT_SOUND,true,0},
+        {CAT_EVENT,true,0},
+        {CAT_CONTROL,true,0},
+        {CAT_SENSING,true,0},
+        {CAT_OPERATORS,true,0},
+        {CAT_VARIABLES,true,0},
+    };
 
 Button Top_button{};
 void Init_Button() {

@@ -6,7 +6,7 @@
 #include <Entity.h>
 #include <constants.h>
 #include "Asset_Loader.h"
-//#include <Game.h>
+#include <Game.h>
 
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 
@@ -32,11 +32,15 @@ void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo);
 void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
-void Draw_Menu_Blocks(SDL_Renderer* renderer);
+void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font );
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer);
+int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
+int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
+SDL_Color GetBlockColor(Block_category cat);
 void Draw_Character(SDL_Renderer* renderer,Character &sprite);
 void Handle_event_for_code_button(SDL_Event &e);
 void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);

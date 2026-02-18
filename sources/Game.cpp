@@ -25,6 +25,12 @@ TTF_Font* talking_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 
 bool stop = false;
+void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
+    if (blockMap.count(block.id)) {
+        int new_width = calculatingWidthBlock(blockMap[block.id],block.values,font);
+        block.rect.w=new_width;
+    }
+}
 
 void HandleBlockEvent(SDL_Event& e){
     int mx, my;
@@ -44,26 +50,59 @@ void HandleBlockEvent(SDL_Event& e){
                 SDL_Rect actual_pos = mb.rect;
                 actual_pos.y += sidebar_scroll_y;
                 if (SDL_PointInRect(&mPos, &actual_pos)) {
-                    AddBlock(mb.id, mx - blockMap[mb.id].width/2, my - blockMap[mb.id].height/2, mb.image);
+                    Blocks new_block = mb;
+                    new_block.rect.x= mx- new_block.rect.w/2;
+                    new_block.rect.y= my- new_block.rect.h/2;
+                    new_block.values.clear();
+                    if (blockMap.count(mb.id)) {
+                        for (auto& Input : blockMap[mb.id].inputs) {
+                            new_block.values.push_back(Input.defaultValue);
+                        }
+                    }
+                    active_blocks.push_back(new_block);
+                    //UpdateBlockWidth(active_blocks.back(),code_bar_font);
                     draggedBlock = &active_blocks.back();
-                    offsetX = mx - draggedBlock->rect.x;
-                    offsetY = my - draggedBlock->rect.y;
+                    offsetX=mx - draggedBlock->rect.x;
+                    offsetY=my - draggedBlock->rect.y;
                     clickedOnMenu = true;
                     break;
                 }
             }
         }
         if (!clickedOnMenu) {
-            for (int i = active_blocks.size() - 1; i >= 0; i--) {
-                if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
-                    draggedBlock = &active_blocks[i];
-                    offsetX = mx - active_blocks[i].rect.x;
-                    offsetY = my - active_blocks[i].rect.y;
-                    Blocks temp = active_blocks[i];
-                    active_blocks.erase(active_blocks.begin() + i);
-                    active_blocks.push_back(temp);
-                    draggedBlock = &active_blocks.back();
-                    break;
+            bool clickedOnInput = false;
+            for (auto& block : active_blocks) {
+                if (blockMap.count(block.id)) {
+                    for (size_t i = 0; i < block.values.size(); i++) {
+                        int input_x=block.rect.x+blockMap[block.id].inputs[i].posX;
+                        SDL_Rect input_rect ={input_x,block.rect.y+12,40,20};
+
+                        if (SDL_PointInRect(&mPos, &input_rect)) {
+                            for (auto& b :active_blocks) {
+                                b.is_editing = false;
+                            }
+                            block.is_editing = true;
+                            block.active_value_index=i;
+                            clickedOnInput = true;
+                            SDL_StartTextInput();
+                            break;
+                        }
+                    }
+                    if (clickedOnInput) break;
+                }
+            }
+            if (!clickedOnInput) {
+                for (int i = active_blocks.size()-1; i>=0; i--) {
+                    if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
+                        draggedBlock = &active_blocks[i];
+                        offsetX= mx-active_blocks[i].rect.x;
+                        offsetY=my-active_blocks[i].rect.y;
+                        Blocks temp = active_blocks[i];
+                        active_blocks.erase(active_blocks.begin()+i);
+                        active_blocks.push_back(temp);
+                        draggedBlock = &active_blocks.back();
+                        break;
+                    }
                 }
             }
         }
@@ -106,6 +145,11 @@ SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL
         SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,text_surface);
         SDL_FreeSurface(text_surface);
         return texture;
+}
+int Get_text_width(TTF_Font* font,string text ) {
+    int width ;
+    TTF_SizeText(font,text.c_str(),&width,nullptr);
+    return width;
 }
 
 bool Loading(){
@@ -214,7 +258,7 @@ void Update() {
     Draw_RunningBar(renderer);
     Draw_CodeBar(renderer);
     Draw_CodeBar_Item(renderer, categories);
-    Draw_Menu_Blocks(renderer);
+    Draw_Menu_Blocks(renderer,code_bar_font);
     DrawALLBlocks(renderer, code_bar_font);
     Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
     Draw_Top_Button(renderer, Top_button, File_Text);
