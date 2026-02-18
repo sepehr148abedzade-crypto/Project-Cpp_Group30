@@ -318,6 +318,75 @@ void UploadBackdrop() {
     }
 }
 
+void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
+    if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
+        if (mx < 110 && currentTab == BACKDROPS) {
+            if (e.wheel.y > 0) backdropScrollY -= 30;
+            else if (e.wheel.y < 0) backdropScrollY += 30;
+
+            if (backdropScrollY < 0) backdropScrollY = 0;
+            int contentHeight = projectBackdrops.size() * 110;
+            int visibleHeight = Get_height() - 200;
+            if (backdropScrollY > contentHeight - visibleHeight && contentHeight > visibleHeight)
+                backdropScrollY = contentHeight - visibleHeight;
+        }
+    }
+}
+
+void Handle_Tab_Switch(int mx, int my) {
+    if (my >= 50 && my <= 90) {
+        if (mx >= 100 && mx <= 200) currentTab = CODE;
+        else if (mx >= 200 && mx <= 300) {
+            currentTab = BACKDROPS;
+            backdropScrollY = 0;
+        }
+    }
+}
+
+void Handle_Backdrop_Selection(int mx, int my) {
+    if (currentTab == BACKDROPS && mx < 105 && my > 95) {
+        for (int i = 0; i < (int)projectBackdrops.size(); i++) {
+            int yPos = 110 + (i * 110) - backdropScrollY;
+            if (my >= yPos && my <= yPos + 90) {
+                selectedBackdropIndex = i;
+                currentBackdropTexture = projectBackdrops[i].texture;
+                break;
+            }
+        }
+    }
+}
+
+void Handle_Backdrop_Menu_Clicks(int mx, int my) {
+    int cx = Get_width() - 53;
+    int cy = 760;
+
+    if (isBackdropMenuOpen) {
+        if (IsCircleClicked(mx, my, cx, cy, 20)) {
+            isLibraryOpen = true;
+            isBackdropMenuOpen = false;
+        }
+        else if (IsCircleClicked(mx, my, cx, cy - 50, 20)) {
+            SetRandomBackdrop();
+            isBackdropMenuOpen = false;
+        }
+        else if (IsCircleClicked(mx, my, cx, cy - 100, 20)) {
+            CreateNewPaintBackdrop();
+            isBackdropMenuOpen = false;
+        }
+        else if (IsCircleClicked(mx, my, cx, cy - 150, 20)) {
+            UploadBackdrop();
+            isBackdropMenuOpen = false;
+        }
+        else {
+            isBackdropMenuOpen = false;
+        }
+    } else {
+        if (IsCircleClicked(mx, my, cx, cy, 30)) {
+            isBackdropMenuOpen = true;
+        }
+    }
+}
+
 void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
@@ -325,80 +394,57 @@ void Get_event() {
 
         int mx, my;
         SDL_GetMouseState(&mx, &my);
-        if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
-            if (mx < 110 && currentTab == BACKDROPS) {
-                if (e.wheel.y > 0) backdropScrollY -= 30;
-                else if (e.wheel.y < 0) backdropScrollY += 30;
 
-                if (backdropScrollY < 0) backdropScrollY = 0;
-                int contentHeight = projectBackdrops.size() * 110;
-                int visibleHeight = Get_height() - 200;
-                if (backdropScrollY > contentHeight - visibleHeight && contentHeight > visibleHeight)
-                    backdropScrollY = contentHeight - visibleHeight;
-            }
-        }
+        Handle_Scroll_Events(mx, my, e);
+
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (isLibraryOpen) {
-                if (mx >= 0 && mx <= 120 && my >= 0 && my <= 60) {
-                    isLibraryOpen = false;
-                } else {
-                    HandleLibraryClick(mx, my);
-                }
+                if (mx >= 0 && mx <= 120 && my >= 0 && my <= 60) isLibraryOpen = false;
+                else HandleLibraryClick(mx, my);
                 continue;
             }
-            if (my >= 50 && my <= 90) {
-                if (mx >= 100 && mx <= 200) currentTab = CODE;
-                else if (mx >= 200 && mx <= 300) {
-                    currentTab = BACKDROPS;
-                    backdropScrollY = 0;
-                }
-            }
-            if (currentTab == BACKDROPS && mx < 105 && my > 95) {
-                bool clickedAny = false;
-                for (int i = 0; i < (int)projectBackdrops.size(); i++) {
-                    int yPos = 110 + (i * 110) - backdropScrollY;
-                    if (my >= yPos && my <= yPos + 90) {
-                        selectedBackdropIndex = i;
-                        currentBackdropTexture = projectBackdrops[i].texture;
-                        clickedAny = true;
-                        break;
-                    }
-                }
-                if (clickedAny) continue;
-            }
 
-            int cx = Get_width() - 53;
-            int cy = 760;
-
-            if (isBackdropMenuOpen) {
-                if (IsCircleClicked(mx, my, cx, cy, 20)) {
-                    isLibraryOpen = true;
-                    isBackdropMenuOpen = false;
-                }
-                else if (IsCircleClicked(mx, my, cx, cy - 50, 20)) {
-                    SetRandomBackdrop();
-                    isBackdropMenuOpen = false;
-                }
-                else if (IsCircleClicked(mx, my, cx, cy - 100, 20)) {
-                    CreateNewPaintBackdrop();
-                    isBackdropMenuOpen = false;
-                }
-                else if (IsCircleClicked(mx, my, cx, cy - 150, 20)) {
-                    UploadBackdrop();
-                    isBackdropMenuOpen = false;
-                }
-                else {
-                    isBackdropMenuOpen = false;
-                }
-            } else {
-                if (IsCircleClicked(mx, my, cx, cy, 30)) {
-                    isBackdropMenuOpen = true;
-                }
-            }
+            Handle_Tab_Switch(mx, my);
+            Handle_Backdrop_Selection(mx, my);
+            Handle_Backdrop_Menu_Clicks(mx, my);
         }
 
         HandleBlockEvent(e);
         HandleKeyboardInput(e);
+    }
+}
+
+void Draw_Stage_Content(SDL_Renderer* renderer) {
+    int sw = Get_width();
+    int stageW = 486;
+    int stageH = 352;
+    int stageX = sw - stageW - 10;
+    int stageY = 95;
+    SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
+
+    if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+        SDL_Texture* activeTex = projectBackdrops[selectedBackdropIndex].texture;
+        if (activeTex) {
+            SDL_RenderCopy(renderer, activeTex, NULL, &stageArea);
+        }
+    }
+
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(renderer, &stageArea);
+
+    for (auto& ch : allCharacters) {
+        if (ch.show && !ch.costumes.empty()) {
+            int centerX = stageArea.x + (stageArea.w / 2);
+            int centerY = stageArea.y + (stageArea.h / 2);
+            int rSize = (ch.size > 0) ? ch.size : 100;
+            SDL_Rect charPos = {
+                    centerX + ch.x - (rSize / 2),
+                    centerY - ch.y - (rSize / 2),
+                    rSize,
+                    rSize
+            };
+            SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
+        }
     }
 }
 
@@ -431,37 +477,7 @@ void Update() {
         DrawBackdropCircleButton(renderer);
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
 
-        int sw = Get_width();
-        int stageW = 486;
-        int stageH = 352;
-        int stageX = sw - stageW - 10;
-        int stageY = 95;
-        SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
-
-        if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-            SDL_Texture* activeTex = projectBackdrops[selectedBackdropIndex].texture;
-            if (activeTex) {
-                SDL_RenderCopy(renderer, activeTex, NULL, &stageArea);
-            }
-        }
-
-        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-        SDL_RenderDrawRect(renderer, &stageArea);
-
-        for (auto& ch : allCharacters) {
-            if (ch.show && !ch.costumes.empty()) {
-                int centerX = stageArea.x + (stageArea.w / 2);
-                int centerY = stageArea.y + (stageArea.h / 2);
-                int rSize = (ch.size > 0) ? ch.size : 100;
-                SDL_Rect charPos = {
-                        centerX + ch.x - (rSize / 2),
-                        centerY - ch.y - (rSize / 2),
-                        rSize,
-                        rSize
-                };
-                SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
-            }
-        }
+        Draw_Stage_Content(renderer);
     }
     SDL_RenderPresent(renderer);
 }

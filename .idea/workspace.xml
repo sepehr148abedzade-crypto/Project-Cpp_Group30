@@ -20,11 +20,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="complete backdrop menu and upload from sys and random backdrop.">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" />
+    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="fix backdrop drawing bug">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -137,7 +137,7 @@
       <workItem from="1771070134178" duration="937000" />
       <workItem from="1771222719500" duration="27446000" />
       <workItem from="1771306555759" duration="28922000" />
-      <workItem from="1771391320008" duration="3748000" />
+      <workItem from="1771391320008" duration="4449000" />
     </task>
     <task id="LOCAL-00001" summary="create Welcometeamate.cpp">
       <option name="closed" value="true" />
@@ -248,7 +248,14 @@
       <option name="project" value="LOCAL" />
       <updated>1771358817378</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="fix backdrop drawing bug">
+      <created>1771399096399</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1771399096399</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -302,6 +309,7 @@
     <MESSAGE value="adding drag and scroll option" />
     <MESSAGE value="complete backdrop menu and upload from sys and random backdrop" />
     <MESSAGE value="complete backdrop menu and upload from sys and random backdrop." />
-    <option name="LAST_COMMIT_MESSAGE" value="complete backdrop menu and upload from sys and random backdrop." />
+    <MESSAGE value="fix backdrop drawing bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix backdrop drawing bug" />
   </component>
 </project>
