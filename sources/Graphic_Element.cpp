@@ -121,7 +121,8 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
 
         if (i == 1 && globalEditor.activeTool == TOOL_PEN) isActive = true;
         else if (i == 3 && globalEditor.activeTool == TOOL_LINE) isActive = true;
-        else if (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) isActive = true; // اضافه شد
+        else if (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) isActive = true;
+        else if (i == 5 && globalEditor.activeTool == TOOL_TEXT) isActive = true;
         else if (i == 7 && globalEditor.activeTool == TOOL_ERASER) isActive = true;
 
         if (isActive) SDL_SetRenderDrawColor(renderer, 210, 230, 255, 255);
@@ -130,6 +131,10 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         SDL_RenderFillRect(renderer, &r);
         SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
         SDL_RenderDrawRect(renderer, &r);
+
+        if (i == 5) {
+//            Drawtext(renderer, loading_font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
+        }
     }
 
     SDL_Rect canvasBG = { 240, 220, 780, 520 };
@@ -157,14 +162,15 @@ void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
 }
 
 void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
-    if (!target) return;
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
     SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_Rect r = { x - globalEditor.brushSize / 2, y - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+    SDL_Rect r = { x - 10, y - 10, 20, 20 };
     SDL_RenderFillRect(renderer, &r);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderTarget(renderer, NULL);
+
+    SDL_SetRenderTarget(renderer, oldTarget);
 }
 
 void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill) {

@@ -2,6 +2,7 @@
 #ifndef GRAPHIC_ELEMENT_H
 #define GRAPHIC_ELEMENT_H
 
+
 #include <SDL2/SDL.h>
 #include <Entity.h>
 #include <constants.h>

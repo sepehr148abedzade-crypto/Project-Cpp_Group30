@@ -11,18 +11,18 @@
 #include <cmath>
 using namespace std;
 
-
-
 SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
+TTF_Font* edit_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 SDL_Texture* currentBackdropTexture = nullptr;
 character* currentSprite = nullptr;
 SDL_Texture* globalDrawingLayer = nullptr;
+
 std::vector<character> allCharacters;
 int lastMouseX = -1;
 int lastMouseY = -1;
@@ -30,6 +30,9 @@ int lineStartX = -1, lineStartY = -1;
 bool isDrawingLine = false;
 bool isDrawingCircle = false;
 int circleStartX = -1, circleStartY = -1;
+bool isTypingText = false;
+string textToDraw = "";
+int textClickX = -1, textClickY = -1;
 
 string textInput = "";
 bool isTyping = false;
@@ -198,7 +201,54 @@ bool IsValidChar(char c, InputType type) {
     return false;
 }
 
+void ApplyTextToLayer() {
+    if (textInput.empty() || selectedBackdropIndex < 0) {
+        isTyping = false;
+        return;
+    }
+
+    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    if (!target) return;
+
+    int tw, th;
+    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
+
+    int fx = (textX - 330) * tw / 600;
+    int fy = (textY - 280) * th / 380;
+
+    SDL_Surface* surf = TTF_RenderText_Blended(edit_font, textInput.c_str(), globalEditor.currentColor);
+    if (!surf) return;
+
+    SDL_Texture* textTex = SDL_CreateTextureFromSurface(renderer, surf);
+    SDL_Rect dest = { fx, fy, surf->w, surf->h };
+
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, target);
+    SDL_RenderCopy(renderer, textTex, NULL, &dest);
+    SDL_SetRenderTarget(renderer, oldTarget);
+
+    SDL_FreeSurface(surf);
+    SDL_DestroyTexture(textTex);
+
+    isTyping = false;
+    textInput = "";
+    SDL_StopTextInput();
+}
+
 void HandleKeyboardInput(SDL_Event& e) {
+    if (isTyping) {
+        if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_BACKSPACE && !textInput.empty()) {
+                textInput.pop_back();
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                ApplyTextToLayer();
+            }
+        } else if (e.type == SDL_TEXTINPUT) {
+            textInput += e.text.text;
+        }
+        return;
+    }
+
     for (auto& b : active_blocks) {
         if (b.is_editing && b.active_value_index != -1) {
             string& str = b.values[b.active_value_index];
@@ -209,14 +259,10 @@ void HandleKeyboardInput(SDL_Event& e) {
                 } else if (e.key.keysym.sym == SDLK_RETURN) {
                     b.is_editing = false;
                 }
-            }
-            else if (e.type == SDL_TEXTINPUT) {
+            } else if (e.type == SDL_TEXTINPUT) {
                 char c = e.text.text[0];
                 if (IsValidChar(c, currentType)) {
-                    size_t maxLen = (currentType == NUMBER) ? 6 : 20;
-                    if (str.length() < maxLen) {
-                        str += c;
-                    }
+                    if (str.length() < 20) str += c;
                 }
             }
         }
@@ -375,6 +421,7 @@ bool Init_Game(){
                 return false;
         }
         main_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",15);
+        edit_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",40);
         if(main_font== nullptr){
                 std::cout << "Font could not be found! Error: " << TTF_GetError() << std::endl;
                 return false;
@@ -485,13 +532,21 @@ void Get_event() {
                         if (i == 1) globalEditor.activeTool = TOOL_PEN;
                         else if (i == 3) globalEditor.activeTool = TOOL_LINE;
                         else if (i == 4) globalEditor.activeTool = TOOL_CIRCLE;
+                        else if (i == 5) globalEditor.activeTool = TOOL_TEXT;
                         else if (i == 7) globalEditor.activeTool = TOOL_ERASER;
                     }
                 }
 
                 if (currentTab == BACKDROPS && selectedBackdropIndex >= 0) {
                     if (mx >= 330 && mx <= 930 && my >= 280 && my <= 660) {
-                        if (globalEditor.activeTool == TOOL_CIRCLE) {
+                        if (globalEditor.activeTool == TOOL_TEXT) {
+                            if (isTyping) ApplyTextToLayer();
+                            isTyping = true;
+                            textX = mx;
+                            textY = my;
+                            textInput = "";
+                            SDL_StartTextInput();
+                        } else if (globalEditor.activeTool == TOOL_CIRCLE) {
                             circleStartX = mx; circleStartY = my;
                             isDrawingCircle = true;
                         } else if (globalEditor.activeTool == TOOL_LINE) {
@@ -542,19 +597,9 @@ void Get_event() {
             lastMouseX = -1; lastMouseY = -1;
         }
 
-        if (isLeftPressed && !isLibraryOpen && currentTab == BACKDROPS && !isDrawingLine && !isDrawingCircle) {
+        if (isLeftPressed && !isLibraryOpen && currentTab == BACKDROPS && !isDrawingLine && !isDrawingCircle && !isTyping) {
             if (globalEditor.activeTool == TOOL_PEN || globalEditor.activeTool == TOOL_ERASER) {
                 if (selectedBackdropIndex >= 0) {
-                    if (projectBackdrops[selectedBackdropIndex].drawingLayer == nullptr) {
-                        int w, h;
-                        SDL_QueryTexture(projectBackdrops[selectedBackdropIndex].texture, NULL, NULL, &w, &h);
-                        projectBackdrops[selectedBackdropIndex].drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
-                        SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
-                        SDL_SetRenderTarget(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer);
-                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-                        SDL_RenderClear(renderer);
-                        SDL_SetRenderTarget(renderer, NULL);
-                    }
                     SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
                     int tw, th;
                     SDL_QueryTexture(target, NULL, NULL, &tw, &th);
@@ -650,10 +695,9 @@ void Update() {
                     SDL_GetMouseState(&curX, &curY);
                     int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
                     SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-
-                    for (int a = 0; a < 360; a += 1) {
-                        float r1 = a * 3.14159f / 180.0f;
-                        float r2 = (a + 1) * 3.14159f / 180.0f;
+                    for (int a = 0; a < 360; a++) {
+                        float r1 = a * M_PI / 180.0f;
+                        float r2 = (a + 1) * M_PI / 180.0f;
                         SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)), circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
                     }
                 }
@@ -661,6 +705,16 @@ void Update() {
                     int curX, curY; SDL_GetMouseState(&curX, &curY);
                     SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
                     SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
+                }
+                else if (isTyping && !textInput.empty()) {
+                    SDL_Surface* tempSurf = TTF_RenderText_Blended(main_font, textInput.c_str(), globalEditor.currentColor);
+                    if (tempSurf) {
+                        SDL_Texture* tempTex = SDL_CreateTextureFromSurface(renderer, tempSurf);
+                        SDL_Rect pos = { textX, textY, tempSurf->w, tempSurf->h };
+                        SDL_RenderCopy(renderer, tempTex, NULL, &pos);
+                        SDL_FreeSurface(tempSurf);
+                        SDL_DestroyTexture(tempTex);
+                    }
                 }
             }
         }

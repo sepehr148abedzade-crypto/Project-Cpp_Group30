@@ -31,6 +31,7 @@ void CreateNewPaintBackdrop();
 void UploadBackdrop();
 bool IsValidChar(char c, InputType type);
 void HandleKeyboardInput(SDL_Event& e);
+void ApplyTextToLayer();
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e);
 void Handle_Tab_Switch(int mx, int my);
 void Handle_Backdrop_Selection(int mx, int my);
