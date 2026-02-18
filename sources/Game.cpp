@@ -409,76 +409,60 @@ void Update() {
 
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
-    }
-    else {
+    } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
-        Draw_RunningBar(renderer);
+
         if (currentTab == CODE) {
+            Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
             Draw_Menu_Blocks(renderer);
             DrawALLBlocks(renderer, code_bar_font);
-        }
-        else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
+        } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
-
-            SDL_Texture* targetTexture = nullptr;
-            string targetName = "";
-
-            if (currentTab == BACKDROPS) {
-                targetTexture = currentBackdropTexture;
-                if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size())
-                    targetName = projectBackdrops[selectedBackdropIndex].name;
-            }
-            else if (currentTab == COSTUMES && currentSprite != nullptr) {
-                if (!currentSprite->costumes.empty())
-                    targetTexture = currentSprite->costumes[currentSprite->currentCostumeIndex];
-                targetName = currentSprite->name;
-            }
-            Draw_Image_Editor(renderer, main_font, targetTexture, targetName);
+            SDL_Texture* target = (!projectBackdrops.empty()) ? projectBackdrops[selectedBackdropIndex].texture : nullptr;
+            Draw_Image_Editor(renderer, main_font, target, "Backdrop");
         }
-        int stageW = 430;
-        int stageH = 320;
-        int stageX = Get_width() - stageW - 30;;
-        int stageY = 110;
+
+        Draw_Information_of_Character(renderer);
+        Draw_Character_Show_Bar(renderer);
+        Draw_Stage_Bar(renderer, main_font);
+        DrawBackdropCircleButton(renderer);
+        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
+
+        int sw = Get_width();
+        int stageW = 486;
+        int stageH = 352;
+        int stageX = sw - stageW - 10;
+        int stageY = 95;
         SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
 
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &stageArea);
-        if (currentBackdropTexture) {
-            SDL_RenderCopy(renderer, currentBackdropTexture, NULL, &stageArea);
-        }
-        for (int i = 0; i < (int)allCharacters.size(); i++) {
-            character& ch = allCharacters[i];
-            if (ch.show) {
-                int centerX = stageArea.x + (stageArea.w / 2);
-                int centerY = stageArea.y + (stageArea.h / 2);
-                int renderSize = (ch.size > 0) ? ch.size : 100;
-
-                SDL_Rect charPos = {
-                        centerX + ch.x - (renderSize / 2),
-                        centerY - ch.y - (renderSize / 2),
-                        renderSize,
-                        renderSize
-                };
-
-                if (!ch.costumes.empty()) {
-                    SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex],
-                                     NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
-                }
+        if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+            SDL_Texture* activeTex = projectBackdrops[selectedBackdropIndex].texture;
+            if (activeTex) {
+                SDL_RenderCopy(renderer, activeTex, NULL, &stageArea);
             }
         }
-        Draw_Information_of_Character(renderer);
-        Draw_Stage_Bar(renderer, main_font);
-        Draw_Character_Show_Bar(renderer);
 
-        DrawBackdropCircleButton(renderer);
-        if (isBackdropMenuOpen) {
-            DrawBackdropSubMenu(renderer);
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(renderer, &stageArea);
+
+        for (auto& ch : allCharacters) {
+            if (ch.show && !ch.costumes.empty()) {
+                int centerX = stageArea.x + (stageArea.w / 2);
+                int centerY = stageArea.y + (stageArea.h / 2);
+                int rSize = (ch.size > 0) ? ch.size : 100;
+                SDL_Rect charPos = {
+                        centerX + ch.x - (rSize / 2),
+                        centerY - ch.y - (rSize / 2),
+                        rSize,
+                        rSize
+                };
+                SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
+            }
         }
     }
-
     SDL_RenderPresent(renderer);
 }
 

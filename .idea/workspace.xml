@@ -20,8 +20,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="complete backdrop menu and upload from sys and random backdrop">
+    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="complete backdrop menu and upload from sys and random backdrop.">
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,12 +91,12 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
       <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -133,7 +136,8 @@
       <workItem from="1771069924274" duration="184000" />
       <workItem from="1771070134178" duration="937000" />
       <workItem from="1771222719500" duration="27446000" />
-      <workItem from="1771306555759" duration="28392000" />
+      <workItem from="1771306555759" duration="28922000" />
+      <workItem from="1771391320008" duration="3748000" />
     </task>
     <task id="LOCAL-00001" summary="create Welcometeamate.cpp">
       <option name="closed" value="true" />
@@ -237,7 +241,14 @@
       <option name="project" value="LOCAL" />
       <updated>1771357177776</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="complete backdrop menu and upload from sys and random backdrop.">
+      <created>1771358817378</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1771358817378</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -290,6 +301,7 @@
     <MESSAGE value="define functions &#10;create Loading window(0.5)&#10;cleaning code in all file&#10;and create main struct of program" />
     <MESSAGE value="adding drag and scroll option" />
     <MESSAGE value="complete backdrop menu and upload from sys and random backdrop" />
-    <option name="LAST_COMMIT_MESSAGE" value="complete backdrop menu and upload from sys and random backdrop" />
+    <MESSAGE value="complete backdrop menu and upload from sys and random backdrop." />
+    <option name="LAST_COMMIT_MESSAGE" value="complete backdrop menu and upload from sys and random backdrop." />
   </component>
 </project>
