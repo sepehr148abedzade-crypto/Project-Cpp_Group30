@@ -21,11 +21,62 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="lightening update and get event functions">
+      <change afterPath="$PROJECT_DIR$/asset/asset/fonts/Montserrat-Bold.ttf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/change_x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/change_y.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/go_to_x_y.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/move.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/set_x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/set_y.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/turn_left.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Blocks/Motion/turn_right.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/Scratch.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/code_bar.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/asset/images/icon.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/fonts/Montserrat-Bold.ttf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Basketball 3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Bench With View.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/change_color_effect_by.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/clear_graphic_effect.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/go_forward_layers.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/go_to_front_layer.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/hide.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/next_backdrop.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/next_costume.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/say.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/say_for_seconds.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/set_color_effect_to.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/set_size_to.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/show.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/switch_backdrop_to.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/switch_costume_to.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/think.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Looks/think_for_seconds.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/change_x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/change_y.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/go_to_random_position.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/go_to_x_y.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/move.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/point_in_direction.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/point_towards.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/set_x.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/set_y.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/turn_left.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Blocks/Motion/turn_right.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Castle 2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Castle 3.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/Scratch.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/code_bar.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/effect_preset_tool_edit_selector_icon_196304.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/gallery_icon_148533.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/icon.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/icon_gallery.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/icon_paint.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/icon_surprise.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/icon_upload.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/paintbrush_83820.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/asset/images/seo-social-web-network-internet_25_icon-icons.com_61513 (1).png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Entity.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Entity.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/Graphic_Element.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Graphic_Element.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Entity.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Entity.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
     </list>
@@ -77,16 +128,16 @@
     <property name="cf.first.check.clang-format" value="false" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="cmake.loaded.for.project" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/asset/images" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\ASUS\CLionProjects\untitled13" />
       <recent name="C:\Users\ASUS\CLionProjects\untitled13\asset\images" />
       <recent name="C:\Users\ASUS\CLionProjects\untitled13\cmake-build-debug\asset\images" />
       <recent name="C:\Users\ASUS\CLionProjects\untitled13\cmake-build-debug\asset\images\Blocks" />
       <recent name="C:\Users\ASUS\CLionProjects\untitled13\asset\images\Blocks" />
-      <recent name="C:\Users\ASUS\CLionProjects\untitled13\asset\images\Blocks\Looks" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\sepeh\CLionProjects\Project-Cpp_Group30\include" />

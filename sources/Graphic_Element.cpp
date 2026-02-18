@@ -62,6 +62,7 @@ SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer) {
 
 void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser) {
     if (!target) return;
+
     SDL_SetRenderTarget(renderer, target);
 
     if (isEraser) {
@@ -72,26 +73,18 @@ void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_
         SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
     }
 
-    float dx = (float)x2 - (float)x1;
-    float dy = (float)y2 - (float)y1;
-    float distance = sqrt(dx * dx + dy * dy);
+    int radius = isEraser ? 10 : 3;
 
-    if (distance < 1.0f) {
-        SDL_Rect r = { x1 - globalEditor.brushSize / 2, y1 - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
-        SDL_RenderFillRect(renderer, &r);
-    } else {
-        float stepX = dx / distance;
-        float stepY = dy / distance;
-        for (float i = 0; i <= distance; i += 1.0f) {
-            float drawX = (float)x1 + (stepX * i);
-            float drawY = (float)y1 + (stepY * i);
-            SDL_Rect r = { (int)drawX - globalEditor.brushSize / 2, (int)drawY - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
-            SDL_RenderFillRect(renderer, &r);
+    for (int w = -radius; w <= radius; w++) {
+        for (int h = -radius; h <= radius; h++) {
+            if (w * w + h * h <= radius * radius) {
+                SDL_RenderDrawLine(renderer, x1 + w, y1 + h, x2 + w, y2 + h);
+            }
         }
     }
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(renderer, NULL);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 }
 
 SDL_Texture* GetCurrentLayer() {
