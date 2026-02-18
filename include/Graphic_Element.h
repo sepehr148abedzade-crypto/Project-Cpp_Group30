@@ -41,4 +41,6 @@ void Draw_Character(SDL_Renderer* renderer,Character &sprite);
 void Handle_event_for_code_button(SDL_Event &e);
 void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);
 void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 #endif //GRAPHIC_ELEMENT_H

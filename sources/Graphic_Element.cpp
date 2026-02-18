@@ -252,11 +252,45 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
 }
 
 void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
-    std::string message = sprite.name + " " + "size is : " + to_string(sprite.size*1000);
+    std::string message = sprite.name + " " + "size is : " + to_string(sprite.size*500);
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+5,stage.y+5,texture_w+10,25};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2 ,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+
+void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
+    SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
+    int texture_w,texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
+    SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2 ,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+
+void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
+    SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
+    int texture_w,texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
+    SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
     SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);

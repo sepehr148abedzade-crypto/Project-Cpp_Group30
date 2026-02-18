@@ -21,6 +21,7 @@ SDL_Texture* cat_texture = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
+TTF_Font* talking_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 
 bool stop = false;
@@ -171,6 +172,11 @@ bool Init_Game(){
             std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
             return false;
         }
+        talking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+        if(talking_font== nullptr){
+            std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
+            return false;
+        }
         File_Text = LoadText(renderer,main_font,"File",white);
         Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
         SetWindowIcon(main_window,"asset/images/logo/icon.png");
@@ -197,14 +203,11 @@ void Get_event() {
         Handle_event_for_code_button(e);
         Handle_event_for_motion_sprite(e,now_sprite);
         if(e.type==SDL_KEYDOWN){
-            if(e.key.keysym.sym == SDLK_SPACE) {
-            }
         }
     }
 }
 
-void Update(){
-
+void Update() {
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
     Draw_Stage_Bar(renderer);
@@ -217,8 +220,8 @@ void Update(){
     Draw_Top_Button(renderer, Top_button, File_Text);
     Draw_Character_Show_Bar(renderer);
     Draw_Information_of_Character(renderer);
-    Draw_size_report(renderer,main_font,now_sprite);
-    Draw_Character(renderer,now_sprite);
+    Draw_Character(renderer, now_sprite);
+    Draw_size_report(renderer, main_font, now_sprite);
 }
 void Render(){
         SDL_RenderPresent(renderer);
