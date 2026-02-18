@@ -1,6 +1,7 @@
 #include "looks_functions.h"
 #include "constants.h"
 #include "TextureManager.h"
+#include "Graphic_Element.h"
 #include "Entity.h"
 
 void change_size_by(SDL_Renderer *renderer,double size,Character &sprite){
@@ -31,4 +32,18 @@ void show_character(Character &sprite){
 
 void hide_character(Character &sprite){
     sprite.isvisible = false;
+}
+
+void say_a_for_t_seconds(SDL_Renderer* renderer,TTF_Font* font,std::string message,double time,Character &sprite){
+    static Uint32 startTime = SDL_GetTicks();
+    Uint32 currentTime = SDL_GetTicks();
+    if(currentTime-startTime <= 1000 * time) {
+        sprite.monologue = message;
+        Draw_talking_box(renderer, font, sprite);
+    }
+}
+
+void say_a(SDL_Renderer* renderer,TTF_Font* font,std::string message,Character &sprite){
+    sprite.think = message;
+    Draw_thinking_box(renderer,font,now_sprite);
 }
