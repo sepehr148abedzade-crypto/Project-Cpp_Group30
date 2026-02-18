@@ -72,7 +72,7 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
     for (auto& mb : menu_blocks) {
         SDL_Rect renderPos = mb.rect;
         renderPos.y += sidebar_scroll_y;
-        SDL_Color color {76,151,255,255};
+        SDL_Color color =GetBlockColor(blockMap[mb.id].category);
 
         if (renderPos.y > 90 && renderPos.y < Get_height()) {
             switch (mb.type) {
@@ -117,10 +117,24 @@ void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,Bloc
     }
 
     }
+SDL_Color GetBlockColor(Block_category cat) {
+    switch (cat) {
+        case CAT_MOTION : return {76, 151, 255,255}; break;
+        case CAT_LOOK : return {153, 102, 255,255}; break;
+        case CAT_SOUND: return {214, 91, 229, 255}; break;
+        case CAT_EVENT: return  {255, 200, 0, 255}; break;
+        case CAT_CONTROL:   return {255, 140, 0, 255};
+        case CAT_SENSING:   return {76, 191, 230, 255};
+        case CAT_OPERATORS: return {89, 192, 89, 255};
+        case CAT_VARIABLES: return {255, 140, 26, 255};
+        default:            return {76, 151, 255, 255};
+
+    }
+}
 
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
     for (auto& b : active_blocks) {
-        SDL_Color color= {76, 151, 255, 255};
+        SDL_Color color= GetBlockColor(blockMap[b.id].category);
         switch (b.type) {
             case Simple_Block :
                 DrawSimpleBlocks(renderer,b.rect.x,b.rect.y,b.rect.w,b.rect.h,blockMap[b.id],b.values,color,font);

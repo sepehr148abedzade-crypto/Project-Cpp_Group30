@@ -55,7 +55,7 @@ void HandleBlockEvent(SDL_Event& e){
                         }
                     }
                     active_blocks.push_back(new_block);
-                    UpdateBlockWidth(active_blocks.back(),code_bar_font);
+                    //UpdateBlockWidth(active_blocks.back(),code_bar_font);
                     draggedBlock = &active_blocks.back();
                     offsetX=mx - draggedBlock->rect.x;
                     offsetY=my - draggedBlock->rect.y;

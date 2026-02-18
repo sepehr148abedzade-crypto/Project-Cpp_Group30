@@ -25,6 +25,25 @@ enum InputType {
     INPUT_BOOLEAN
 };
 
+enum Block_category {
+    CAT_MOTION,
+    CAT_LOOK,
+    CAT_SOUND,
+    CAT_EVENT,
+    CAT_CONTROL,
+    CAT_SENSING,
+    CAT_OPERATORS,
+    CAT_VARIABLES,
+    CAT_MY_BLOCK,
+};
+struct categoryInfo {
+    Block_category category;
+    bool active;
+    int startY;
+};
+
+ extern vector<categoryInfo> categoryOrder;
+
 struct InputField {
     int posX;
     InputType type;
@@ -44,6 +63,7 @@ struct BlockTemplate {
     int width;
     int height;
     BlockType type;
+    Block_category category;
     std::string Back_label;
     std::vector<std::string> labels;
     std::vector<InputField> inputs;

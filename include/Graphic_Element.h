@@ -39,4 +39,5 @@ void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer);
 int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
 int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
+SDL_Color GetBlockColor(Block_category cat);
 #endif //GRAPHIC_ELEMENT_H
