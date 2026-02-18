@@ -123,18 +123,28 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         else if (i == 3 && globalEditor.activeTool == TOOL_LINE) isActive = true;
         else if (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) isActive = true;
         else if (i == 5 && globalEditor.activeTool == TOOL_TEXT) isActive = true;
+        else if (i == 6 && globalEditor.activeTool == TOOL_FILL) isActive = true;
         else if (i == 7 && globalEditor.activeTool == TOOL_ERASER) isActive = true;
 
-        if (isActive) SDL_SetRenderDrawColor(renderer, 210, 230, 255, 255);
-        else SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-        SDL_RenderFillRect(renderer, &r);
-        SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);
+        if (isActive) {
+            SDL_SetRenderDrawColor(renderer, 66, 133, 244, 40);
+            SDL_RenderFillRect(renderer, &r);
+            SDL_SetRenderDrawColor(renderer, 66, 133, 244, 255);
+        } else {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            SDL_RenderFillRect(renderer, &r);
+            SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
+        }
         SDL_RenderDrawRect(renderer, &r);
 
-        if (i == 5) {
-//            Drawtext(renderer, loading_font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
+        if (i == 1) Drawtext(renderer, font, "P", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 3) Drawtext(renderer, font, "/", r.x + 18, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 4) Drawtext(renderer, font, "O", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 5) Drawtext(renderer, font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
+        else if (i == 6) {
+            Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
         }
+        else if (i == 7) Drawtext(renderer, font, "E", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
     }
 
     SDL_Rect canvasBG = { 240, 220, 780, 520 };
@@ -146,6 +156,11 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &imgPos);
         SDL_RenderCopy(renderer, currentTex, NULL, &imgPos);
+
+        if (selectedBackdropIndex >= 0 && projectBackdrops[selectedBackdropIndex].drawingLayer) {
+            SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
+            SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &imgPos);
+        }
 
         SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(renderer, &imgPos);

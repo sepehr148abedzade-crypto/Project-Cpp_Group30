@@ -529,10 +529,13 @@ void Get_event() {
                 for (int i = 0; i < 8; i++) {
                     SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
                     if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+                        if (isTyping) ApplyTextToLayer();
+
                         if (i == 1) globalEditor.activeTool = TOOL_PEN;
                         else if (i == 3) globalEditor.activeTool = TOOL_LINE;
                         else if (i == 4) globalEditor.activeTool = TOOL_CIRCLE;
                         else if (i == 5) globalEditor.activeTool = TOOL_TEXT;
+                        else if (i == 6) globalEditor.activeTool = TOOL_FILL;
                         else if (i == 7) globalEditor.activeTool = TOOL_ERASER;
                     }
                 }
@@ -546,6 +549,8 @@ void Get_event() {
                             textY = my;
                             textInput = "";
                             SDL_StartTextInput();
+                        } else if (globalEditor.activeTool == TOOL_FILL) {
+                            ApplyFill(projectBackdrops[selectedBackdropIndex].drawingLayer, renderer);
                         } else if (globalEditor.activeTool == TOOL_CIRCLE) {
                             circleStartX = mx; circleStartY = my;
                             isDrawingCircle = true;
@@ -559,18 +564,7 @@ void Get_event() {
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            if (selectedBackdropIndex >= 0) {
-                if (projectBackdrops[selectedBackdropIndex].drawingLayer == nullptr) {
-                    int w, h;
-                    SDL_QueryTexture(projectBackdrops[selectedBackdropIndex].texture, NULL, NULL, &w, &h);
-                    projectBackdrops[selectedBackdropIndex].drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
-                    SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
-                    SDL_SetRenderTarget(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer);
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-                    SDL_RenderClear(renderer);
-                    SDL_SetRenderTarget(renderer, NULL);
-                }
-
+            if (selectedBackdropIndex >= 0 && projectBackdrops[selectedBackdropIndex].drawingLayer != nullptr) {
                 SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
                 int tw, th;
                 SDL_QueryTexture(target, NULL, NULL, &tw, &th);
@@ -591,29 +585,32 @@ void Get_event() {
                     DrawLineOnTexture(target, x1, y1, x2, y2, renderer, false);
                 }
             }
-            isDrawingCircle = false; isDrawingLine = false;
-            circleStartX = -1; circleStartY = -1;
-            lineStartX = -1; lineStartY = -1;
-            lastMouseX = -1; lastMouseY = -1;
+            isDrawingCircle = false;
+            isDrawingLine = false;
+            lastMouseX = -1;
+            lastMouseY = -1;
         }
 
-        if (isLeftPressed && !isLibraryOpen && currentTab == BACKDROPS && !isDrawingLine && !isDrawingCircle && !isTyping) {
-            if (globalEditor.activeTool == TOOL_PEN || globalEditor.activeTool == TOOL_ERASER) {
-                if (selectedBackdropIndex >= 0) {
-                    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
-                    int tw, th;
-                    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
-                    int lx = mx - 330, ly = my - 280;
-                    if (lx >= 0 && lx <= 600 && ly >= 0 && ly <= 380) {
-                        int fx = lx * tw / 600, fy = ly * th / 380;
-                        if (lastMouseX != -1 && lastMouseY != -1) {
-                            DrawLineOnTexture(target, lastMouseX, lastMouseY, fx, fy, renderer, (globalEditor.activeTool == TOOL_ERASER));
-                        } else {
-                            if (globalEditor.activeTool == TOOL_PEN) ApplyPen(target, fx, fy, renderer);
-                            else ApplyEraser(target, fx, fy, renderer);
-                        }
+        if (isLeftPressed && currentTab == BACKDROPS && !isDrawingLine && !isDrawingCircle && !isTyping) {
+            if (selectedBackdropIndex >= 0) {
+                SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+                int tw, th;
+                SDL_QueryTexture(target, NULL, NULL, &tw, &th);
+                int lx = mx - 330, ly = my - 280;
+
+                if (lx >= 0 && lx <= 600 && ly >= 0 && ly <= 380) {
+                    int fx = lx * tw / 600, fy = ly * th / 380;
+                    if (globalEditor.activeTool == TOOL_PEN) {
+                        if (lastMouseX != -1 && lastMouseY != -1) DrawLineOnTexture(target, lastMouseX, lastMouseY, fx, fy, renderer, false);
+                        else ApplyPen(target, fx, fy, renderer);
                         lastMouseX = fx; lastMouseY = fy;
-                    } else { lastMouseX = -1; lastMouseY = -1; }
+                    } else if (globalEditor.activeTool == TOOL_ERASER) {
+                        if (lastMouseX != -1 && lastMouseY != -1) DrawLineOnTexture(target, lastMouseX, lastMouseY, fx, fy, renderer, true);
+                        else ApplyEraser(target, fx, fy, renderer);
+                        lastMouseX = fx; lastMouseY = fy;
+                    }
+                } else {
+                    lastMouseX = -1; lastMouseY = -1;
                 }
             }
         }
