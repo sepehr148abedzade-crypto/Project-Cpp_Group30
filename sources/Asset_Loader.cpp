@@ -139,7 +139,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap ["change_effect"] = {180, 45 , Simple_Block,CAT_LOOK,"change",{"effect by"},{{70,INPUT_DROPDOWN,"color"},{140 , INPUT_NUMBER,"25"}}};
 
-    blockMap["go_to_random_position"] = {153, 40,{{64, DROPDOWN, ""}}};
+    /*blockMap["go_to_random_position"] = {153, 40,{{64, DROPDOWN, ""}}};
     blockLibrary["go_to_random_position"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/go_to_random_position.png");
 
     blockMap["point_in_direction"] = {127, 40,{{107, NUMBER, "0"}}};
@@ -167,7 +167,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
     blockLibrary["switch_costume"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/switch_costume.png");
 
     blockMap["next_costume"] = {78, 40,{{50, DROPDOWN, ""}}};
-    blockLibrary["next_costume"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/next_costume.png");
+    blockLibrary["next_costume"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/next_costume.png");*/
     return true;
 }
 

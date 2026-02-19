@@ -203,10 +203,10 @@ void CheckInputClick(int mx, int my) {
 }
 
 bool IsValidChar(char c, InputType type) {
-    if (type == NUMBER) {
+    if (type == INPUT_NUMBER) {
         return (c >= '0' && c <= '9') || c == '-';
     }
-    if (type ==TEXT) {
+    if (type ==INPUT_BOOLEAN) {
         return (c >= 32 && c <= 126);
     }
     return false;
@@ -698,13 +698,16 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_RenderDrawRect(renderer, &stageArea);
 
     for (auto& ch : allCharacters) {
-        if (ch.show && !ch.costumes.empty()) {
+        if (ch.isvisible && !ch.costumes.empty()) {
             int centerX = stageArea.x + (stageArea.w / 2);
             int centerY = stageArea.y + (stageArea.h / 2);
             int rSize = (ch.size > 0) ? ch.size : 100;
-            SDL_Rect charPos = {
-                    centerX + ch.x - (rSize / 2),
-                    centerY - ch.y - (rSize / 2),
+            int  Xpos = centerX + ch.x - (rSize / 2);
+            int YPos = centerY + ch.y - (rSize / 2);
+            SDL_Rect charPos =
+                {
+                    Xpos,
+                    YPos,
                     rSize,
                     rSize
             };
@@ -727,7 +730,7 @@ void Update() {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
-            Draw_Menu_Blocks(renderer);
+            Draw_Menu_Blocks(renderer,code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
@@ -779,7 +782,7 @@ void Update() {
 
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
-        Draw_Stage_Bar(renderer, main_font);
+        Draw_Stage_Bar(renderer);
         DrawBackdropCircleButton(renderer);
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Stage_Content(renderer);
