@@ -253,7 +253,24 @@ void ApplyTextToLayer() {
 }
 
 void HandleKeyboardInput(SDL_Event& e) {
-    if (isTyping) {
+    if (isSaveModalOpen) {
+        if (e.type == SDL_TEXTINPUT) {
+            saveInputText += e.text.text;
+        } else if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_BACKSPACE && !saveInputText.empty()) {
+                saveInputText.pop_back();
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                if (!saveInputText.empty()) SaveToLibrary(saveInputText, renderer);
+            } else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                isSaveModalOpen = false;
+                saveInputText = "";
+                SDL_StopTextInput();
+            }
+        }
+        return;
+    }
+
+    if (isTyping && currentTab == BACKDROPS) {
         if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_BACKSPACE && !textInput.empty()) {
                 textInput.pop_back();
@@ -262,26 +279,6 @@ void HandleKeyboardInput(SDL_Event& e) {
             }
         } else if (e.type == SDL_TEXTINPUT) {
             textInput += e.text.text;
-        }
-        return;
-    }
-
-    for (auto& b : active_blocks) {
-        if (b.is_editing && b.active_value_index != -1) {
-            string& str = b.values[b.active_value_index];
-            InputType currentType = blockMap[b.id].inputs[b.active_value_index].type;
-            if (e.type == SDL_KEYDOWN) {
-                if (e.key.keysym.sym == SDLK_BACKSPACE && !str.empty()) {
-                    str.pop_back();
-                } else if (e.key.keysym.sym == SDLK_RETURN) {
-                    b.is_editing = false;
-                }
-            } else if (e.type == SDL_TEXTINPUT) {
-                char c = e.text.text[0];
-                if (IsValidChar(c, currentType)) {
-                    if (str.length() < 20) str += c;
-                }
-            }
         }
     }
 }
@@ -716,6 +713,7 @@ void SaveToLibrary(string name, SDL_Renderer* renderer) {
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
 
     SDL_SetRenderTarget(renderer, combinedTex);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -829,43 +827,52 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
 }
 
 void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
-    if (!isSaveModalOpen) return;
-
-    SDL_Rect overlay = { 0, 0, Get_width(), Get_height() };
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);
-    SDL_RenderFillRect(renderer, &overlay);
-
     int mW = 400, mH = 200;
-    SDL_Rect modal = { (Get_width() - mW) / 2, (Get_height() - mH) / 2, mW, mH };
+    int mX = (Get_width() - mW) / 2;
+    int mY = (Get_height() - mH) / 2;
 
+    SDL_Rect bg = { mX, mY, mW, mH };
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &modal);
+    SDL_RenderFillRect(renderer, &bg);
     SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
-    SDL_RenderDrawRect(renderer, &modal);
+    SDL_RenderDrawRect(renderer, &bg);
 
-    Drawtext(renderer, font, "Save to Library", modal.x + 20, modal.y + 20, {77, 151, 255, 255}, false);
-    Drawtext(renderer, font, "Enter Name:", modal.x + 20, modal.y + 60, {100, 100, 100, 255}, false);
+    SDL_Color black = { 0, 0, 0, 255 };
+    SDL_Texture* title = LoadText(renderer, font, "Save Backdrop As:", black);
+    SDL_Rect titleRect = { mX + 20, mY + 20, 0, 0 };
+    SDL_QueryTexture(title, NULL, NULL, &titleRect.w, &titleRect.h);
+    SDL_RenderCopy(renderer, title, NULL, &titleRect);
+    SDL_DestroyTexture(title);
 
-    SDL_Rect inputField = { modal.x + 20, modal.y + 85, 360, 40 };
-    SDL_SetRenderDrawColor(renderer, 245, 245, 245, 255);
-    SDL_RenderFillRect(renderer, &inputField);
+    SDL_Rect inputArea = { mX + 20, mY + 60, mW - 40, 40 };
+    SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
+    SDL_RenderFillRect(renderer, &inputArea);
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderDrawRect(renderer, &inputField);
+    SDL_RenderDrawRect(renderer, &inputArea);
 
     if (!saveInputText.empty()) {
-        Drawtext(renderer, font, saveInputText, inputField.x + 10, inputField.y + 10, {0, 0, 0, 255}, false);
+        SDL_Texture* inputTex = LoadText(renderer, font, saveInputText, black);
+        SDL_Rect txtR = { mX + 30, mY + 70, 0, 0 };
+        SDL_QueryTexture(inputTex, NULL, NULL, &txtR.w, &txtR.h);
+        SDL_RenderCopy(renderer, inputTex, NULL, &txtR);
+        SDL_DestroyTexture(inputTex);
     }
 
-    SDL_Rect saveBtn = { modal.x + 280, modal.y + 140, 100, 40 };
+    SDL_Rect btnSave = { mX + 280, mY + 140, 100, 40 };
     SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
-    SDL_RenderFillRect(renderer, &saveBtn);
-    Drawtext(renderer, font, "SAVE", saveBtn.x + 25, saveBtn.y + 10, {255, 255, 255, 255}, false);
+    SDL_RenderFillRect(renderer, &btnSave);
+    SDL_Texture* sText = LoadText(renderer, font, "Save", { 255, 255, 255, 255 });
+    SDL_Rect sTextR = { mX + 310, mY + 150, 40, 20 };
+    SDL_RenderCopy(renderer, sText, NULL, &sTextR);
+    SDL_DestroyTexture(sText);
 
-    SDL_Rect cancelBtn = { modal.x + 170, modal.y + 140, 100, 40 };
+    SDL_Rect btnCancel = { mX + 170, mY + 140, 100, 40 };
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderFillRect(renderer, &cancelBtn);
-    Drawtext(renderer, font, "Cancel", cancelBtn.x + 20, cancelBtn.y + 10, {255, 255, 255, 255}, false);
+    SDL_RenderFillRect(renderer, &btnCancel);
+    SDL_Texture* cText = LoadText(renderer, font, "Cancel", black);
+    SDL_Rect cTextR = { mX + 195, mY + 150, 50, 20 };
+    SDL_RenderCopy(renderer, cText, NULL, &cTextR);
+    SDL_DestroyTexture(cText);
 }
 
 void Update() {
