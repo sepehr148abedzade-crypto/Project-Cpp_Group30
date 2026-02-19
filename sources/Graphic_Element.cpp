@@ -719,8 +719,7 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderDrawRect(renderer, &thumbRect);
 
-    Drawtext(renderer, font, "Backdrops", cx, thumbRect.y + thumbRect.h + 8, {130, 130, 130}, true);
-    Drawtext(renderer, font, "1", cx, thumbRect.y + thumbRect.h + 24, {130, 130, 130}, true);
+    Drawtext(renderer, font, "Backdrops", cx-1, thumbRect.y + thumbRect.h + 8, {130, 130, 130}, true);
 
     int spacing = 45;
     if (isBackdropMenuOpen) {

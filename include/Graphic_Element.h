@@ -52,7 +52,7 @@ void Draw_RunningBar(SDL_Renderer* renderer);
 void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font );
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
-void Draw_Stage_Bar(SDL_Renderer* renderer);
+void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font);
 int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
 int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
 SDL_Color GetBlockColor(Block_category cat);

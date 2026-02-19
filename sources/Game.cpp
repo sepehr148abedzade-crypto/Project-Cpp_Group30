@@ -150,7 +150,11 @@ void UploadBackdrop() {
         if (newTex) {
             Backdrop bd;
             bd.texture = newTex;
-            bd.name = "Uploaded Backdrop";
+
+            size_t lastSlash = path.find_last_of("/\\");
+            string fileName = (lastSlash == string::npos) ? path : path.substr(lastSlash + 1);
+            size_t lastDot = fileName.find_last_of(".");
+            bd.name = (lastDot == string::npos) ? fileName : fileName.substr(0, lastDot);
 
             int w, h;
             SDL_QueryTexture(newTex, NULL, NULL, &w, &h);
@@ -770,7 +774,6 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
 
 void Update() {
     UpdateMenuState();
-
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -800,10 +803,6 @@ void Update() {
 
             if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
                 SDL_Rect imgPos = { 330, 280, 600, 380 };
-                if (projectBackdrops[selectedBackdropIndex].drawingLayer != nullptr) {
-                    SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
-                    SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &imgPos);
-                }
 
                 if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
                     int curX, curY;
@@ -821,24 +820,15 @@ void Update() {
                     SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
                     SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
                 }
-                else if (isTyping && !textInput.empty()) {
-                    SDL_Surface* tempSurf = TTF_RenderText_Blended(main_font, textInput.c_str(), globalEditor.currentColor);
-                    if (tempSurf) {
-                        SDL_Texture* tempTex = SDL_CreateTextureFromSurface(renderer, tempSurf);
-                        SDL_Rect pos = { textX, textY, tempSurf->w, tempSurf->h };
-                        SDL_RenderCopy(renderer, tempTex, NULL, &pos);
-                        SDL_FreeSurface(tempSurf);
-                        SDL_DestroyTexture(tempTex);
-                    }
-                }
             }
         }
 
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
-        Draw_Stage_Bar(renderer);
-        DrawBackdropCircleButton(renderer);
+        Draw_Stage_Bar(renderer, main_font);
+
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
+
         Draw_Stage_Content(renderer);
         Draw_Character(renderer, now_sprite);
         Draw_size_report(renderer, main_font, now_sprite);
