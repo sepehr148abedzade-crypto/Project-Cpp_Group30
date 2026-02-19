@@ -16,6 +16,7 @@ extern bool isBackdropMenuOpen;
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
 SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
 
+int Get_text_width(TTF_Font* font,std ::string text );
 bool Loading();
 bool Init_Game();
 std::string GetUniqueName(std::string baseName);

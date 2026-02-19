@@ -3,6 +3,8 @@
 #include "iostream"
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
+#include "motion_functions.h"
+#include "looks_functions.h"
 #include "constants.h"
 #include "Entity.h"
 #include <Asset_Loader.h>
@@ -15,15 +17,18 @@ SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
+SDL_Texture* cat_texture = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
+TTF_Font* report_font = nullptr;
+TTF_Font* talking_font = nullptr;
 TTF_Font* edit_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 SDL_Texture* currentBackdropTexture = nullptr;
-character* currentSprite = nullptr;
+Character* currentSprite = nullptr;
 SDL_Texture* globalDrawingLayer = nullptr;
 
-std::vector<character> allCharacters;
+std::vector<Character> allCharacters;
 int lastMouseX = -1;
 int lastMouseY = -1;
 int lineStartX = -1, lineStartY = -1;
@@ -39,6 +44,12 @@ bool isTyping = false;
 int textX = 0, textY = 0;
 
 bool stop = false;
+void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
+    if (blockMap.count(block.id)) {
+        int new_width = calculatingWidthBlock(blockMap[block.id],block.values,font);
+        block.rect.w=new_width;
+    }
+}
 
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
@@ -192,10 +203,10 @@ void CheckInputClick(int mx, int my) {
 }
 
 bool IsValidChar(char c, InputType type) {
-    if (type == NUMBER) {
+    if (type == INPUT_NUMBER) {
         return (c >= '0' && c <= '9') || c == '-';
     }
-    if (type ==TEXT) {
+    if (type ==INPUT_BOOLEAN) {
         return (c >= 32 && c <= 126);
     }
     return false;
@@ -303,26 +314,59 @@ void HandleBlockEvent(SDL_Event& e){
                 SDL_Rect actual_pos = mb.rect;
                 actual_pos.y += sidebar_scroll_y;
                 if (SDL_PointInRect(&mPos, &actual_pos)) {
-                    AddBlock(mb.id, mx - blockMap[mb.id].width/2, my - blockMap[mb.id].height/2, mb.image);
+                    Blocks new_block = mb;
+                    new_block.rect.x= mx- new_block.rect.w/2;
+                    new_block.rect.y= my- new_block.rect.h/2;
+                    new_block.values.clear();
+                    if (blockMap.count(mb.id)) {
+                        for (auto& Input : blockMap[mb.id].inputs) {
+                            new_block.values.push_back(Input.defaultValue);
+                        }
+                    }
+                    active_blocks.push_back(new_block);
+                    //UpdateBlockWidth(active_blocks.back(),code_bar_font);
                     draggedBlock = &active_blocks.back();
-                    offsetX = mx - draggedBlock->rect.x;
-                    offsetY = my - draggedBlock->rect.y;
+                    offsetX=mx - draggedBlock->rect.x;
+                    offsetY=my - draggedBlock->rect.y;
                     clickedOnMenu = true;
                     break;
                 }
             }
         }
         if (!clickedOnMenu) {
-            for (int i = active_blocks.size() - 1; i >= 0; i--) {
-                if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
-                    draggedBlock = &active_blocks[i];
-                    offsetX = mx - active_blocks[i].rect.x;
-                    offsetY = my - active_blocks[i].rect.y;
-                    Blocks temp = active_blocks[i];
-                    active_blocks.erase(active_blocks.begin() + i);
-                    active_blocks.push_back(temp);
-                    draggedBlock = &active_blocks.back();
-                    break;
+            bool clickedOnInput = false;
+            for (auto& block : active_blocks) {
+                if (blockMap.count(block.id)) {
+                    for (size_t i = 0; i < block.values.size(); i++) {
+                        int input_x=block.rect.x+blockMap[block.id].inputs[i].posX;
+                        SDL_Rect input_rect ={input_x,block.rect.y+12,40,20};
+
+                        if (SDL_PointInRect(&mPos, &input_rect)) {
+                            for (auto& b :active_blocks) {
+                                b.is_editing = false;
+                            }
+                            block.is_editing = true;
+                            block.active_value_index=i;
+                            clickedOnInput = true;
+                            SDL_StartTextInput();
+                            break;
+                        }
+                    }
+                    if (clickedOnInput) break;
+                }
+            }
+            if (!clickedOnInput) {
+                for (int i = active_blocks.size()-1; i>=0; i--) {
+                    if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
+                        draggedBlock = &active_blocks[i];
+                        offsetX= mx-active_blocks[i].rect.x;
+                        offsetY=my-active_blocks[i].rect.y;
+                        Blocks temp = active_blocks[i];
+                        active_blocks.erase(active_blocks.begin()+i);
+                        active_blocks.push_back(temp);
+                        draggedBlock = &active_blocks.back();
+                        break;
+                    }
                 }
             }
         }
@@ -365,6 +409,11 @@ SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL
         SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,text_surface);
         SDL_FreeSurface(text_surface);
         return texture;
+}
+int Get_text_width(TTF_Font* font,string text ) {
+    int width ;
+    TTF_SizeText(font,text.c_str(),&width,nullptr);
+    return width;
 }
 
 bool Loading(){
@@ -427,10 +476,19 @@ bool Init_Game(){
                 return false;
         }
         Init_Button();
-
+        report_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",10);
+        if(report_font== nullptr){
+            std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
+            return false;
+        }
+        talking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+        if(talking_font== nullptr){
+            std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
+            return false;
+        }
         File_Text = LoadText(renderer,main_font,"File",white);
-        Scratch_logo = LoadTexture(renderer,"asset/images/scratch.png");
-        SetWindowIcon(main_window,"asset/images/icon.png");
+        Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
+        SetWindowIcon(main_window,"asset/images/logo/icon.png");
 
         code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
         if(code_bar_font == nullptr){
@@ -442,6 +500,9 @@ bool Init_Game(){
         Init_Menu_Blocks();
         LoadBackdropLibraryManual(renderer);
         SDL_StartTextInput();
+        Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
+        Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
+        now_sprite = cat_running;
         return true;
 }
 
@@ -511,7 +572,8 @@ void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
-
+        Handle_event_for_code_button(e);
+        Handle_event_for_motion_sprite(e,now_sprite);
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
@@ -636,13 +698,16 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_RenderDrawRect(renderer, &stageArea);
 
     for (auto& ch : allCharacters) {
-        if (ch.show && !ch.costumes.empty()) {
+        if (ch.isvisible && !ch.costumes.empty()) {
             int centerX = stageArea.x + (stageArea.w / 2);
             int centerY = stageArea.y + (stageArea.h / 2);
             int rSize = (ch.size > 0) ? ch.size : 100;
-            SDL_Rect charPos = {
-                    centerX + ch.x - (rSize / 2),
-                    centerY - ch.y - (rSize / 2),
+            int  Xpos = centerX + ch.x - (rSize / 2);
+            int YPos = centerY + ch.y - (rSize / 2);
+            SDL_Rect charPos =
+                {
+                    Xpos,
+                    YPos,
                     rSize,
                     rSize
             };
@@ -653,6 +718,7 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
 
 void Update() {
     UpdateMenuState();
+
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -666,7 +732,7 @@ void Update() {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
-            Draw_Menu_Blocks(renderer);
+            Draw_Menu_Blocks(renderer, code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
@@ -718,10 +784,12 @@ void Update() {
 
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
-        Draw_Stage_Bar(renderer, main_font);
+        Draw_Stage_Bar(renderer);
         DrawBackdropCircleButton(renderer);
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Stage_Content(renderer);
+        Draw_Character(renderer, now_sprite);
+        Draw_size_report(renderer, main_font, now_sprite);
     }
     SDL_RenderPresent(renderer);
 }

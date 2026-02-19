@@ -12,7 +12,13 @@ add_executable(Project_Cpp_Group30 sources/main.cpp
         sources/TextureManager.cpp
         sources/Game.cpp
         sources/constants.cpp
-        include/Asset_Loader.h sources/Asset_Loader.cpp)
+        include/Asset_Loader.h sources/Asset_Loader.cpp
+        sources/motion_functions.cpp
+        include/motion_functions.h
+        sources/operators_functions.cpp
+        include/operators_functions.h
+        sources/looks_functions.cpp
+        include/looks_functions.h)
 
 
 target_link_libraries(Project_Cpp_Group30 mingw32 SDL2main SDL2)

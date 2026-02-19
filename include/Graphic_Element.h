@@ -2,14 +2,13 @@
 #ifndef GRAPHIC_ELEMENT_H
 #define GRAPHIC_ELEMENT_H
 
-
 #include <SDL2/SDL.h>
 #include <Entity.h>
 #include <constants.h>
 #include "Asset_Loader.h"
 #include <vector>
 //#include <SDL2/SDL_ttf.h>
-//#include <Game.h>
+#include <Game.h>
 
 
 
@@ -33,10 +32,6 @@ SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
 SDL_Texture* MakeTextureEditable(SDL_Renderer* renderer, SDL_Texture* sourceTex);
 struct Button;
 
-
-
-
-
 extern SDL_Color white;
 
 
@@ -54,11 +49,21 @@ void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radi
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer);
 void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
-void Draw_Menu_Blocks(SDL_Renderer* renderer);
+void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font );
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
-void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font);
+void Draw_Stage_Bar(SDL_Renderer* renderer);
+int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
+int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
+SDL_Color GetBlockColor(Block_category cat);
+void Draw_Character(SDL_Renderer* renderer,Character &sprite);
+void Handle_event_for_code_button(SDL_Event &e);
+void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);
+void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropThumbnail(SDL_Renderer* renderer, SDL_Texture* tex, SDL_Rect area);
 void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName);
