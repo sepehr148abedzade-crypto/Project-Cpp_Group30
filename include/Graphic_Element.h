@@ -11,7 +11,7 @@
 #include <Game.h>
 
 
-
+extern bool flag_active;
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
@@ -40,9 +40,8 @@ bool Is_mouse_on(int x,int y,int w,int h);
 void Drawtext(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, int y, SDL_Color color, bool center);
 void Draw_loading_window(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo);
-void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
-void Draw_flag_button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
-void Draw_stop_button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
+void Draw_Top_Button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
+void Draw_flag_and_stop_button(SDL_Renderer* renderer,Button &button1,Button &button2,SDL_Texture* texture1,SDL_Texture* texture2);
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
 void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser);
@@ -62,10 +61,11 @@ int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text,
 SDL_Color GetBlockColor(Block_category cat);
 void Draw_Character(SDL_Renderer* renderer,Character &sprite);
 void Handle_event_for_code_button(SDL_Event &e);
-void Handle_event_for_flag_button(SDL_Event &e);
-void Handle_event_for_stop_button(SDL_Event &e);
+void Handle_event_for_flag_button(SDL_Event &e,Button &button);
+void Handle_event_for_stop_button(SDL_Event &e,Button &button);
 void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);
 void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time);
 void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
