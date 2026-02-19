@@ -33,6 +33,7 @@ void UploadBackdrop();
 void HandleColorSelection(int mx, int my);
 void HandleBrushSizeSelection(int mx, int my);
 bool IsValidChar(char c, InputType type);
+void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font);
 void HandleKeyboardInput(SDL_Event& e);
 void ApplyTextToLayer();
 void HandleContinuousDrawing(int mx, int my);

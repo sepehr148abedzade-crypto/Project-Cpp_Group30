@@ -38,6 +38,8 @@ int circleStartX = -1, circleStartY = -1;
 bool isTypingText = false;
 string textToDraw = "";
 int textClickX = -1, textClickY = -1;
+bool isSaveModalOpen = false;
+string saveInputText = "";
 
 string textInput = "";
 bool isTyping = false;
@@ -581,25 +583,28 @@ void MapMouseToCanvas(int mx, int my, int* outX, int* outY, SDL_Texture* target)
 
 void HandleToolSelection(int mx, int my) {
     int toolX = 115, toolY = 220, btnS = 45;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
         if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
-            if (isTyping) ApplyTextToLayer();
 
-            if (i == 0) {
-                ClearCurrentDrawingLayer(renderer);
-            } else if (i == 1) {
-                globalEditor.activeTool = TOOL_PEN;
-            } else if (i == 3) {
-                globalEditor.activeTool = TOOL_LINE;
-            } else if (i == 4) {
-                globalEditor.activeTool = TOOL_CIRCLE;
-            } else if (i == 5) {
-                globalEditor.activeTool = TOOL_TEXT;
-            } else if (i == 6) {
-                globalEditor.activeTool = TOOL_FILL;
-            } else if (i == 7) {
-                globalEditor.activeTool = TOOL_ERASER;
+            if (i == 8) { // دکمه بازگشت
+                currentTab = CODE;
+            }
+            else if (i == 7) { // دکمه ذخیره
+                isSaveModalOpen = true;
+                saveInputText = projectBackdrops[selectedBackdropIndex].name;
+                SDL_StartTextInput();
+            }
+            else {
+                if (isTyping && i != 4) ApplyTextToLayer();
+
+                if (i == 0) ClearCurrentDrawingLayer(renderer);
+                else if (i == 1) globalEditor.activeTool = TOOL_PEN;
+                else if (i == 2) globalEditor.activeTool = TOOL_LINE;
+                else if (i == 3) globalEditor.activeTool = TOOL_CIRCLE;
+                else if (i == 4) globalEditor.activeTool = TOOL_TEXT;
+                else if (i == 5) globalEditor.activeTool = TOOL_FILL;
+                else if (i == 6) globalEditor.activeTool = TOOL_ERASER;
             }
             break;
         }
@@ -627,6 +632,8 @@ void HandleCanvasMouseDown(int mx, int my) {
         isDrawingLine = true;
     }
 }
+
+
 
 void HandleColorSelection(int mx, int my) {
     int colorX = 110 + 300;
@@ -772,6 +779,46 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
     }
 }
 
+void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
+    if (!isSaveModalOpen) return;
+
+    SDL_Rect overlay = { 0, 0, Get_width(), Get_height() };
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);
+    SDL_RenderFillRect(renderer, &overlay);
+
+    int mW = 400, mH = 200;
+    SDL_Rect modal = { (Get_width() - mW) / 2, (Get_height() - mH) / 2, mW, mH };
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &modal);
+    SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
+    SDL_RenderDrawRect(renderer, &modal);
+
+    Drawtext(renderer, font, "Save to Library", modal.x + 20, modal.y + 20, {77, 151, 255, 255}, false);
+    Drawtext(renderer, font, "Enter Name:", modal.x + 20, modal.y + 60, {100, 100, 100, 255}, false);
+
+    SDL_Rect inputField = { modal.x + 20, modal.y + 85, 360, 40 };
+    SDL_SetRenderDrawColor(renderer, 245, 245, 245, 255);
+    SDL_RenderFillRect(renderer, &inputField);
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(renderer, &inputField);
+
+    if (!saveInputText.empty()) {
+        Drawtext(renderer, font, saveInputText, inputField.x + 10, inputField.y + 10, {0, 0, 0, 255}, false);
+    }
+
+    SDL_Rect saveBtn = { modal.x + 280, modal.y + 140, 100, 40 };
+    SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
+    SDL_RenderFillRect(renderer, &saveBtn);
+    Drawtext(renderer, font, "SAVE", saveBtn.x + 25, saveBtn.y + 10, {255, 255, 255, 255}, false);
+
+    SDL_Rect cancelBtn = { modal.x + 170, modal.y + 140, 100, 40 };
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderFillRect(renderer, &cancelBtn);
+    Drawtext(renderer, font, "Cancel", cancelBtn.x + 20, cancelBtn.y + 10, {255, 255, 255, 255}, false);
+}
+
 void Update() {
     UpdateMenuState();
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
@@ -789,7 +836,8 @@ void Update() {
             Draw_CodeBar_Item(renderer, categories);
             Draw_Menu_Blocks(renderer, code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
-        } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
+        }
+        else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
             SDL_Texture* baseTex = nullptr;
@@ -802,8 +850,6 @@ void Update() {
             Draw_Image_Editor(renderer, main_font, baseTex, bName);
 
             if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-                SDL_Rect imgPos = { 330, 280, 600, 380 };
-
                 if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
                     int curX, curY;
                     SDL_GetMouseState(&curX, &curY);
@@ -832,6 +878,10 @@ void Update() {
         Draw_Stage_Content(renderer);
         Draw_Character(renderer, now_sprite);
         Draw_size_report(renderer, main_font, now_sprite);
+
+        if (isSaveModalOpen) {
+            DrawSaveModal(renderer, main_font);
+        }
     }
     SDL_RenderPresent(renderer);
 }

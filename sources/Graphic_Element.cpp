@@ -159,15 +159,13 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
     }
     Drawtext(renderer, font, displayName, nameBox.x + 10, nameBox.y + 5, {0, 0, 0, 255}, false);
 
-    int colorX = barX + 300;
-    int colorY = barY + 32;
+    int colorX = barX + 300, colorY = barY + 32;
     SDL_Color colors[] = {{0, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 255, 255}};
     for (int i = 0; i < 3; i++) {
         SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, 255);
-        for (int w = 0; w < 30; w++) {
-            for (int h = 0; h < 30; h++) {
-                if ((15 - w) * (15 - w) + (15 - h) * (15 - h) <= 225)
-                    SDL_RenderDrawPoint(renderer, colorX + i * 45 + (15 - w), colorY + (15 - h));
+        for (int w = -15; w <= 15; w++) {
+            for (int h = -15; h <= 15; h++) {
+                if (w * w + h * h <= 225) SDL_RenderDrawPoint(renderer, colorX + i * 45 + w, colorY + h);
             }
         }
         if (globalEditor.currentColor.r == colors[i].r && globalEditor.currentColor.g == colors[i].g && globalEditor.currentColor.b == colors[i].b) {
@@ -182,10 +180,9 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
     for (int i = 0; i < 3; i++) {
         SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
         int r = sizes[i] + 2;
-        for (int w = 0; w < r * 2; w++) {
-            for (int h = 0; h < r * 2; h++) {
-                if ((r - w) * (r - w) + (r - h) * (r - h) <= r * r)
-                    SDL_RenderDrawPoint(renderer, sizeX + i * 40 + (r - w), colorY + (r - h));
+        for (int w = -r; w <= r; w++) {
+            for (int h = -r; h <= r; h++) {
+                if (w * w + h * h <= r * r) SDL_RenderDrawPoint(renderer, sizeX + i * 40 + w, colorY + h);
             }
         }
         if (globalEditor.brushSize == sizes[i]) {
@@ -196,24 +193,31 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
     }
 
     int toolX = 115, toolY = 220, btnS = 45;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
-        bool isActive = (i == 1 && globalEditor.activeTool == TOOL_PEN) || (i == 3 && globalEditor.activeTool == TOOL_LINE) ||
-                        (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) || (i == 5 && globalEditor.activeTool == TOOL_TEXT) ||
-                        (i == 6 && globalEditor.activeTool == TOOL_FILL) || (i == 7 && globalEditor.activeTool == TOOL_ERASER);
 
-        SDL_SetRenderDrawColor(renderer, isActive ? 66 : 255, isActive ? 133 : 255, isActive ? 244 : 255, isActive ? 40 : 255);
+        bool isActive = false;
+        if (i == 1) isActive = (globalEditor.activeTool == TOOL_PEN);
+        else if (i == 2) isActive = (globalEditor.activeTool == TOOL_LINE);
+        else if (i == 3) isActive = (globalEditor.activeTool == TOOL_CIRCLE);
+        else if (i == 4) isActive = (globalEditor.activeTool == TOOL_TEXT);
+        else if (i == 5) isActive = (globalEditor.activeTool == TOOL_FILL);
+        else if (i == 6) isActive = (globalEditor.activeTool == TOOL_ERASER);
+
+        SDL_SetRenderDrawColor(renderer, isActive ? 229 : 255, isActive ? 240 : 255, isActive ? 255 : 255, 255);
         SDL_RenderFillRect(renderer, &r);
-        SDL_SetRenderDrawColor(renderer, isActive ? 66 : 220, isActive ? 133 : 220, isActive ? 244 : 220, 255);
+        SDL_SetRenderDrawColor(renderer, isActive ? 77 : 220, isActive ? 151 : 220, isActive ? 255 : 220, 255);
         SDL_RenderDrawRect(renderer, &r);
 
         if (i == 0) Drawtext(renderer, font, "C", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
         else if (i == 1) Drawtext(renderer, font, "P", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 3) Drawtext(renderer, font, "/", r.x + 18, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 4) Drawtext(renderer, font, "O", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 5) Drawtext(renderer, font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
-        else if (i == 6) Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 7) Drawtext(renderer, font, "E", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
+        else if (i == 2) Drawtext(renderer, font, "/", r.x + 18, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 3) Drawtext(renderer, font, "O", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 4) Drawtext(renderer, font, "T", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 5) Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
+        else if (i == 6) Drawtext(renderer, font, "E", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
+        else if (i == 7) Drawtext(renderer, font, "S", r.x + 15, r.y + 12, {0, 150, 0, 255}, false);
+        else if (i == 8) Drawtext(renderer, font, "<", r.x + 15, r.y + 12, {77, 151, 255, 255}, false);
     }
 
     SDL_Rect canvasBG = { 240, 220, 780, 520 };
@@ -225,10 +229,12 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &imgPos);
         SDL_RenderCopy(renderer, currentTex, nullptr, &imgPos);
+
         if (selectedBackdropIndex >= 0 && projectBackdrops[selectedBackdropIndex].drawingLayer) {
             SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
             SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &imgPos);
         }
+
         SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(renderer, &imgPos);
     }
