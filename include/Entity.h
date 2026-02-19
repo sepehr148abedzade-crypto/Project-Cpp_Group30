@@ -102,7 +102,7 @@ struct Character{
     std::string think;
     SDL_Texture* texture= nullptr;
     const char* path;
-    std::vector<SDL_Texture*> costumes;
+//    std::vector<SDL_Texture*> costumes;
     int currentCostumeIndex;
 };
 

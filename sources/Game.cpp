@@ -754,7 +754,7 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_RenderDrawRect(renderer, &stageArea);
 
     for (auto& ch : allCharacters) {
-        if (ch.isvisible && !ch.costumes.empty()) {
+        if (ch.isvisible) { //!ch.costumes.empty()
             int centerX = stageArea.x + (stageArea.w / 2);
             int centerY = stageArea.y + (stageArea.h / 2);
             int rSize = (ch.size > 0) ? ch.size : 100;
@@ -767,7 +767,7 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
                     rSize,
                     rSize
             };
-            SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
+           // SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
         }
     }
 }
