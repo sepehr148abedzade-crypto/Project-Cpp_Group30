@@ -718,8 +718,10 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
 
 void Update() {
     UpdateMenuState();
+
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
+
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
@@ -730,7 +732,7 @@ void Update() {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
-            Draw_Menu_Blocks(renderer,code_bar_font);
+            Draw_Menu_Blocks(renderer, code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
@@ -786,20 +788,10 @@ void Update() {
         DrawBackdropCircleButton(renderer);
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Stage_Content(renderer);
+        Draw_Character(renderer, now_sprite);
+        Draw_size_report(renderer, main_font, now_sprite);
     }
     SDL_RenderPresent(renderer);
-    Draw_Stage_Bar(renderer);
-    Draw_RunningBar(renderer);
-    Draw_CodeBar(renderer);
-    Draw_CodeBar_Item(renderer, categories);
-    Draw_Menu_Blocks(renderer,code_bar_font);
-    DrawALLBlocks(renderer, code_bar_font);
-    Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
-    Draw_Top_Button(renderer, Top_button, File_Text);
-    Draw_Character_Show_Bar(renderer);
-    Draw_Information_of_Character(renderer);
-    Draw_Character(renderer, now_sprite);
-    Draw_size_report(renderer, main_font, now_sprite);
 }
 
 void Render(){
