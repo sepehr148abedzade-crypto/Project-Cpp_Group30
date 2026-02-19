@@ -586,18 +586,18 @@ void HandleToolSelection(int mx, int my) {
     for (int i = 0; i < 9; i++) {
         SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
         if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
-
-            if (i == 8) { // دکمه بازگشت
+            if (i == 8) {
                 currentTab = CODE;
             }
-            else if (i == 7) { // دکمه ذخیره
-                isSaveModalOpen = true;
-                saveInputText = projectBackdrops[selectedBackdropIndex].name;
-                SDL_StartTextInput();
+            else if (i == 7) {
+                if (selectedBackdropIndex >= 0) {
+                    isSaveModalOpen = true;
+                    saveInputText = projectBackdrops[selectedBackdropIndex].name;
+                    SDL_StartTextInput();
+                }
             }
             else {
                 if (isTyping && i != 4) ApplyTextToLayer();
-
                 if (i == 0) ClearCurrentDrawingLayer(renderer);
                 else if (i == 1) globalEditor.activeTool = TOOL_PEN;
                 else if (i == 2) globalEditor.activeTool = TOOL_LINE;
@@ -705,16 +705,65 @@ void HandleBrushSizeSelection(int mx, int my) {
     }
 }
 
+void SaveToLibrary(string name, SDL_Renderer* renderer) {
+    if (selectedBackdropIndex < 0 || selectedBackdropIndex >= (int)projectBackdrops.size()) return;
+
+    Backdrop& bd = projectBackdrops[selectedBackdropIndex];
+    int w, h;
+    SDL_QueryTexture(bd.texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* combinedTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+
+    SDL_SetRenderTarget(renderer, combinedTex);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopy(renderer, bd.texture, NULL, NULL);
+    if (bd.drawingLayer) {
+        SDL_RenderCopy(renderer, bd.drawingLayer, NULL, NULL);
+    }
+
+    SDL_SetRenderTarget(renderer, oldTarget);
+
+    BackdropItem newItem;
+    newItem.texture = combinedTex;
+    newItem.name = name;
+    libraryItems.push_back(newItem);
+
+    isSaveModalOpen = false;
+    saveInputText = "";
+    SDL_StopTextInput();
+}
+
 void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
-        Handle_event_for_code_button(e);
-        Handle_event_for_motion_sprite(e, now_sprite);
 
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
+
+        if (isSaveModalOpen) {
+            HandleKeyboardInput(e);
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+                int mW = 400, mH = 200;
+                int mX = (Get_width() - mW) / 2;
+                int mY = (Get_height() - mH) / 2;
+                if (mx >= mX + 280 && mx <= mX + 380 && my >= mY + 140 && my <= mY + 180) {
+                    SaveToLibrary(saveInputText, renderer);
+                } else if (mx >= mX + 170 && mx <= mX + 270 && my >= mY + 140 && my <= mY + 180) {
+                    isSaveModalOpen = false;
+                    saveInputText = "";
+                    SDL_StopTextInput();
+                }
+            }
+            continue;
+        }
+
+        Handle_event_for_code_button(e);
+        Handle_event_for_motion_sprite(e, now_sprite);
 
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (isLibraryOpen) {
@@ -735,7 +784,7 @@ void Get_event() {
             HandleCanvasMouseUp(mx, my);
         }
 
-        if (isLeftPressed) {
+        if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
             HandleContinuousDrawing(mx, my);
         }
 

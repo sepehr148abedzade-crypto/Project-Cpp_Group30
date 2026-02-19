@@ -43,6 +43,7 @@ void Handle_Scroll_Events(int mx, int my, const SDL_Event& e);
 void Handle_Tab_Switch(int mx, int my);
 void Handle_Backdrop_Selection(int mx, int my);
 void Handle_Backdrop_Menu_Clicks(int mx, int my);
+void SaveToLibrary(string name, SDL_Renderer* renderer);
 void Get_event();
 void Draw_Stage_Content(SDL_Renderer* renderer);
 void Update();
