@@ -40,4 +40,5 @@
 # debug information files
 *.dwo
 
-.idea/workspace.xml
+# IDE Settings (CLion / IntelliJ)
+.idea/
