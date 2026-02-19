@@ -35,31 +35,20 @@ void hide_character(Character &sprite){
 }
 
 void say_a_for_t_seconds(SDL_Renderer* renderer,TTF_Font* font,std::string message,double time,Character &sprite){
-    static Uint32 startTime = SDL_GetTicks();
-    Uint32 currentTime = SDL_GetTicks();
-    if(currentTime-startTime <= 1000 * time) {
-        sprite.monologue = message;
-        Draw_talking_box(renderer, font, sprite);
-    }
+    sprite.monologue = message;
 }
 
 void say_a(SDL_Renderer* renderer,TTF_Font* font,std::string message,Character &sprite){
     sprite.monologue = message;
-    Draw_talking_box(renderer,font,now_sprite);
 }
 
 void think_a_for_t_second(SDL_Renderer* renderer,TTF_Font* font,std::string message,double time, Character &sprite){
-    static Uint32 startTime = SDL_GetTicks();
-    Uint32 currentTime = SDL_GetTicks();
-    if(currentTime-startTime <= 1000 * time) {
-        sprite.think = message;
-        Draw_thinking_box(renderer, font, sprite);
-    }
+    sprite.think = message;
+
 }
 
 void think_a(SDL_Renderer* renderer,TTF_Font* font,std::string message,Character &sprite){
     sprite.think = message;
-    Draw_thinking_box(renderer,font,now_sprite);
 }
 
 void switch_costume_to(SDL_Renderer* renderer,double n,Character &sprite){
