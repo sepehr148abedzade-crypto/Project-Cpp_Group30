@@ -624,6 +624,21 @@ void HandleCanvasMouseDown(int mx, int my) {
     }
 }
 
+void HandleColorSelection(int mx, int my) {
+    int colorX = 110 + 300;
+    int colorY = 95 + 32;
+    SDL_Color colors[] = {{0, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 255, 255}};
+
+    for (int i = 0; i < 3; i++) {
+        int targetX = colorX + i * 45;
+        int targetY = colorY;
+        if (pow(mx - targetX, 2) + pow(my - targetY, 2) <= pow(15, 2)) {
+            globalEditor.currentColor = colors[i];
+            break;
+        }
+    }
+}
+
 void HandleCanvasMouseUp(int mx, int my) {
     if (selectedBackdropIndex < 0) return;
     SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
@@ -664,6 +679,21 @@ void HandleContinuousDrawing(int mx, int my) {
     }
 }
 
+void HandleBrushSizeSelection(int mx, int my) {
+    int sizeX = 110 + 450;
+    int sizeY = 95 + 32;
+    int sizes[] = {2, 5, 10};
+
+    for (int i = 0; i < 3; i++) {
+        int targetX = sizeX + i * 40;
+        int targetY = sizeY;
+        if ((mx - targetX) * (mx - targetX) + (my - targetY) * (my - targetY) <= 400) {
+            globalEditor.brushSize = sizes[i];
+            break;
+        }
+    }
+}
+
 void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
@@ -684,6 +714,8 @@ void Get_event() {
                 Handle_Backdrop_Selection(mx, my);
                 Handle_Backdrop_Menu_Clicks(mx, my);
                 HandleToolSelection(mx, my);
+                HandleColorSelection(mx, my);
+                HandleBrushSizeSelection(mx, my);
                 HandleCanvasMouseDown(mx, my);
             }
         }

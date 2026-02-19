@@ -30,6 +30,8 @@ void AddBackdropToProject(SDL_Texture *tex, std::string name, bool forceSwitch, 
 void CheckInputClick(int mx, int my);
 void CreateNewPaintBackdrop();
 void UploadBackdrop();
+void HandleColorSelection(int mx, int my);
+void HandleBrushSizeSelection(int mx, int my);
 bool IsValidChar(char c, InputType type);
 void HandleKeyboardInput(SDL_Event& e);
 void ApplyTextToLayer();
