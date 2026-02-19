@@ -139,35 +139,26 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap ["change_effect"] = {180, 45 , Simple_Block,CAT_LOOK,"change",{"effect by"},{{70,INPUT_DROPDOWN,"color"},{140 , INPUT_NUMBER,"25"}}};
 
-//    blockMap["go_to_random_position"] = {153, 40,{{64, DROPDOWN, ""}}};
-//    blockLibrary["go_to_random_position"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/go_to_random_position.png");
-//
-//    blockMap["point_in_direction"] = {127, 40,{{107, NUMBER, "0"}}};
-//    blockLibrary["point_in_direction"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/point_in_direction.png");
-//
-//    blockMap["point_towards"] = {193, 40,{{64, DROPDOWN, ""}}};
-//    blockLibrary["point_towards"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/point_towards.png");
-//
-//    blockMap["say_for_seconds"] = {168, 40,{{48, TEXT, ""}, {101, TEXT, ""}}};
-//    blockLibrary["say_for_seconds"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/say_for_seconds.png");
-//
-//    blockMap["say"] = {68, 40,{{47, TEXT, ""}}};
-//    blockLibrary["say"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/say.png");
-//
-//    blockMap["think_for_seconds"] = {168, 40,{{48, TEXT, ""}, {101, TEXT, ""}}};
-//    blockLibrary["think_for_seconds"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/think_for_seconds.png");
-//
-//    blockMap["think"] = {68, 40,{{50, TEXT, ""}}};
-//    blockLibrary["think"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/think.png");
-//
-//    blockMap["switch_costume_to"] = {184, 40,{{50, DROPDOWN, ""}}};
-//    blockLibrary["switch_costume_to"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/switch_costume_to.png");
-//
-//    blockMap["switch_costume"] = {78, 40,{{50, DROPDOWN, ""}}};
-//    blockLibrary["switch_costume"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/switch_costume.png");
-//
-//    blockMap["next_costume"] = {78, 40,{{50, DROPDOWN, ""}}};
-//    blockLibrary["next_costume"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Looks/next_costume.png");
+    /*blockMap["go_to_random_position"] = {153, 40,{{64, DROPDOWN, ""}}};
+
+    blockMap["point_in_direction"] = {127, 40,{{107, NUMBER, "0"}}};
+
+    blockMap["point_towards"] = {193, 40,{{64, DROPDOWN, ""}}};
+
+    blockMap["say_for_seconds"] = {168, 40,{{48, TEXT, ""}, {101, TEXT, ""}}};
+
+    blockMap["say"] = {68, 40,{{47, TEXT, ""}}};
+
+    blockMap["think_for_seconds"] = {168, 40,{{48, TEXT, ""}, {101, TEXT, ""}}};
+
+    blockMap["think"] = {68, 40,{{50, TEXT, ""}}};
+
+    blockMap["switch_costume_to"] = {184, 40,{{50, DROPDOWN, ""}}};
+
+    blockMap["switch_costume"] = {78, 40,{{50, DROPDOWN, ""}}};
+
+    blockMap["next_costume"] = {78, 40,{{50, DROPDOWN, ""}}};
+    */
     return true;
 }
 
