@@ -44,6 +44,25 @@ struct categoryInfo {
 
  extern vector<categoryInfo> categoryOrder;
 
+enum EditTool { TOOL_NONE,
+    TOOL_SELECT,
+    TOOL_PEN,
+    TOOL_FILL,
+    TOOL_LINE,
+    TOOL_CIRCLE,
+    TOOL_RECT,
+    TOOL_TEXT,
+    TOOL_ERASER};
+
+struct EditorSettings {
+    EditTool activeTool = TOOL_PEN;
+    SDL_Color currentColor = {0, 0, 0, 255};
+    int brushSize = 5;
+    bool isDrawing = false;
+};
+
+extern EditorSettings globalEditor;
+
 struct InputField {
     int posX;
     InputType type;
@@ -69,16 +88,27 @@ struct BlockTemplate {
     std::vector<InputField> inputs;
 };
 
-struct character{
-    int x;
-    int y;
-    int degree;
-    int size;
+struct Character{
+    std::string name;
+    double x = 0;
+    double y = 0;
+    double degree = 0;
+    double size = 0.25;
+    double width=0;
+    double height=0;
+    bool isvisible = true;
+    bool is_mouse_on = false;
     std::string monologue;
     std::string think;
-    bool show;
-
+    SDL_Texture* texture= nullptr;
+    const char* path;
+    std::vector<SDL_Texture*> costumes;
+    int currentCostumeIndex;
 };
+
+extern Character cat;
+extern Character cat_running;
+extern Character now_sprite;
 
 struct Blocks{
     string id;
@@ -92,6 +122,25 @@ struct Blocks{
     Blocks* parent;
 
     Blocks* next = nullptr;
+};
+
+struct Backdrop {
+    string name;
+    SDL_Texture* texture;
+    SDL_Texture* drawingLayer;
+};
+extern std::vector<Backdrop> projectBackdrops;
+extern int selectedBackdropIndex;
+extern SDL_Texture* currentBackdropTexture;
+
+struct BackdropItem{
+    SDL_Texture* texture;
+    std::string name;
+};
+
+struct BackdropMenu{
+    SDL_Rect BackDropCircle;
+    bool is_open;
 };
 
 
@@ -115,6 +164,7 @@ extern Blocks* draggedBlock;
 extern int offsetX, offsetY;
 extern std::map<std::string, BlockTemplate> blockMap;
 extern std::map<std::string, SDL_Texture*> blockLibrary;
+
 
 void Init_Button();
 void Init_Load_button();
