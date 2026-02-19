@@ -12,15 +12,15 @@
 
 
 
-extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
+
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
-extern SDL_Texture* currentBackdropTexture;
+
 extern bool isStageSelected;
 enum Tab { CODE, BACKDROPS, SOUNDS , COSTUMES};
 extern Tab currentTab;
-extern std::vector<Backdrop> projectBackdrops;
-extern int selectedBackdropIndex;
+
+
 extern int backdropScrollY;
 
 void ApplyPen(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
@@ -28,7 +28,6 @@ void ApplyEraser(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target,SDL_Renderer* renderer);
 void ApplyTextToTexture(SDL_Texture* target, string text, int x, int y, SDL_Renderer* renderer, TTF_Font* font);
 SDL_Texture* GetCurrentLayer();
-SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
 SDL_Texture* MakeTextureEditable(SDL_Renderer* renderer, SDL_Texture* sourceTex);
 struct Button;
 
@@ -45,10 +44,9 @@ void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
 void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser);
 void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
+void ClearCurrentDrawingLayer(SDL_Renderer* renderer);
 void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill);
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer);
-void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
-void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
 void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font );

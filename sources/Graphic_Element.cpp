@@ -169,13 +169,12 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         }
         SDL_RenderDrawRect(renderer, &r);
 
-        if (i == 1) Drawtext(renderer, font, "P", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
+        if (i == 0) Drawtext(renderer, font, "C", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
+        else if (i == 1) Drawtext(renderer, font, "P", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
         else if (i == 3) Drawtext(renderer, font, "/", r.x + 18, r.y + 12, {0, 0, 0, 255}, false);
         else if (i == 4) Drawtext(renderer, font, "O", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
         else if (i == 5) Drawtext(renderer, font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
-        else if (i == 6) {
-            Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        }
+        else if (i == 6) Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
         else if (i == 7) Drawtext(renderer, font, "E", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
     }
 
@@ -187,8 +186,7 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         SDL_Rect imgPos = { 330, 280, 600, 380 };
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &imgPos);
-        SDL_RenderCopy(renderer, currentTex,
-nullptr, &imgPos);
+        SDL_RenderCopy(renderer, currentTex, nullptr, &imgPos);
 
         if (selectedBackdropIndex >= 0 && projectBackdrops[selectedBackdropIndex].drawingLayer) {
             SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
@@ -198,9 +196,7 @@ nullptr, &imgPos);
         SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(renderer, &imgPos);
     }
-}
-
-void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
+}void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
     if (!target) return;
     SDL_SetRenderTarget(renderer, target);
     SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
@@ -289,6 +285,21 @@ void Drawtext(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, i
     }
 }
 
+void ClearCurrentDrawingLayer(SDL_Renderer* renderer) {
+    if (selectedBackdropIndex < 0 || selectedBackdropIndex >= (int)projectBackdrops.size()) return;
+
+    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    if (!target) return;
+
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, target);
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_SetRenderTarget(renderer, oldTarget);
+}
 void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font) {
     SDL_Rect sidebarRect = { 0, 95, 105, Get_height() - 150 };
     SDL_RenderSetClipRect(renderer, &sidebarRect);
