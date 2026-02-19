@@ -17,11 +17,14 @@ SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
+SDL_Texture* green_flag = nullptr;
+SDL_Texture* stop_sign = nullptr;
 SDL_Texture* cat_texture = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
 TTF_Font* talking_font = nullptr;
+TTF_Font* thinking_font = nullptr;
 TTF_Font* edit_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 SDL_Texture* currentBackdropTexture = nullptr;
@@ -202,15 +205,15 @@ void CheckInputClick(int mx, int my) {
     }
 }
 
-//bool IsValidChar(char c, InputType type) {
-//    if (type == NUMBER) {
-//        return (c >= '0' && c <= '9') || c == '-';
-//    }
-//    if (type ==TEXT) {
-//        return (c >= 32 && c <= 126);
-//    }
-//    return false;
-//}
+bool IsValidChar(char c, InputType type) {
+    if (type == INPUT_NUMBER) {
+        return (c >= '0' && c <= '9') || c == '-';
+    }
+    if (type ==INPUT_BOOLEAN) {
+        return (c >= 32 && c <= 126);
+    }
+    return false;
+}
 
 void ApplyTextToLayer() {
     if (textInput.empty() || selectedBackdropIndex < 0) {
@@ -272,9 +275,9 @@ void HandleKeyboardInput(SDL_Event& e) {
                 }
             } else if (e.type == SDL_TEXTINPUT) {
                 char c = e.text.text[0];
-//                if (IsValidChar(c, currentType)) {
-//                    if (str.length() < 20) str += c;
-//                }
+                if (IsValidChar(c, currentType)) {
+                    if (str.length() < 20) str += c;
+                }
             }
         }
     }
@@ -486,23 +489,31 @@ bool Init_Game(){
             std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
             return false;
         }
+        thinking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+        if(thinking_font== nullptr){
+            std::cout << "Thinking Font could not be found! Error: " << TTF_GetError() << std::endl;
+            return false;
+        }
         File_Text = LoadText(renderer,main_font,"File",white);
         Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
         SetWindowIcon(main_window,"asset/images/logo/icon.png");
-
+        green_flag = LoadTexture(renderer,"asset/images/logo/flag.png");
+        stop_sign = LoadTexture(renderer,"asset/images/logo/stop.png");
         code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
         if(code_bar_font == nullptr){
                 std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
                 return false;
         }
         Init_code_button(renderer,code_bar_font);
+        Init_flag_button();
+        Init_stop_button();
         LoadAllAssets(renderer);
         Init_Menu_Blocks();
         LoadBackdropLibraryManual(renderer);
         SDL_StartTextInput();
         Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
         Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
-        now_sprite = cat_running;
+        now_sprite = cat;
         return true;
 }
 
@@ -573,6 +584,8 @@ void Get_event() {
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
         Handle_event_for_code_button(e);
+        Handle_event_for_flag_button(e);
+        Handle_event_for_stop_button(e);
         Handle_event_for_motion_sprite(e,now_sprite);
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
@@ -681,53 +694,60 @@ void Get_event() {
     }
 }
 
-//void Draw_Stage_Content(SDL_Renderer* renderer) {
-//    int sw = Get_width();
-//    int stageW = 486;
-//    int stageH = 352;
-//    int stageX = sw - stageW - 10;
-//    int stageY = 95;
-//    SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
-//
-//    if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-//        SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].texture, NULL, &stageArea);
-//        SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &stageArea);
-//    }
-//
-//    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-//    SDL_RenderDrawRect(renderer, &stageArea);
-//
-//    for (auto& ch : allCharacters) {
-//        if (ch.show && !ch.costumes.empty()) {
-//            int centerX = stageArea.x + (stageArea.w / 2);
-//            int centerY = stageArea.y + (stageArea.h / 2);
-//            int rSize = (ch.size > 0) ? ch.size : 100;
-//            SDL_Rect charPos = {
-//                    centerX + ch.x - (rSize / 2),
-//                    centerY - ch.y - (rSize / 2),
-//                    rSize,
-//                    rSize
-//            };
-//            SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
-//        }
-//    }
-//}
+void Draw_Stage_Content(SDL_Renderer* renderer) {
+    int sw = Get_width();
+    int stageW = 486;
+    int stageH = 352;
+    int stageX = sw - stageW - 10;
+    int stageY = 95;
+    SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
+
+    if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+        SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].texture, NULL, &stageArea);
+        SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &stageArea);
+    }
+
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(renderer, &stageArea);
+
+    for (auto& ch : allCharacters) {
+        if (ch.isvisible && !ch.costumes.empty()) {
+            int centerX = stageArea.x + (stageArea.w / 2);
+            int centerY = stageArea.y + (stageArea.h / 2);
+            int rSize = (ch.size > 0) ? ch.size : 100;
+            int  Xpos = centerX + ch.x - (rSize / 2);
+            int YPos = centerY + ch.y - (rSize / 2);
+            SDL_Rect charPos =
+                {
+                    Xpos,
+                    YPos,
+                    rSize,
+                    rSize
+            };
+            SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
+        }
+    }
+}
 
 void Update() {
     UpdateMenuState();
+
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
+
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
+        Draw_flag_button(renderer,flag_button,green_flag);
+        Draw_stop_button(renderer,stop_button,stop_sign);
 
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
-            //Draw_Menu_Blocks(renderer);
+            Draw_Menu_Blocks(renderer, code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
@@ -779,24 +799,15 @@ void Update() {
 
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
-        //Draw_Stage_Bar(renderer, main_font);
+        Draw_Stage_Bar(renderer);
         DrawBackdropCircleButton(renderer);
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Stage_Content(renderer);
+        Draw_Character(renderer, now_sprite);
+        Draw_size_report(renderer, main_font, now_sprite);
+        Draw_costume_report(renderer,main_font,now_sprite);
     }
     SDL_RenderPresent(renderer);
-    Draw_Stage_Bar(renderer);
-    Draw_RunningBar(renderer);
-    Draw_CodeBar(renderer);
-    Draw_CodeBar_Item(renderer, categories);
-    Draw_Menu_Blocks(renderer,code_bar_font);
-    DrawALLBlocks(renderer, code_bar_font);
-    Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
-    Draw_Top_Button(renderer, Top_button, File_Text);
-    Draw_Character_Show_Bar(renderer);
-    Draw_Information_of_Character(renderer);
-    Draw_Character(renderer, now_sprite);
-    Draw_size_report(renderer, main_font, now_sprite);
 }
 
 void Render(){

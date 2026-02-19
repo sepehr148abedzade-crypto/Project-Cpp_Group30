@@ -458,6 +458,64 @@ void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
+void Draw_flag_button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+    if (Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(button.is_mouse_click_on){
+        SDL_SetRenderDrawColor(renderer,button.third_color.r,button.third_color.g,
+                               button.third_color.b,SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    double scale = std::min(
+            (double)button.rect.w / texture_w,
+            (double)button.rect.h / texture_h
+            );
+    int new_w = texture_w * scale;
+    int new_h = texture_h * scale;
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - new_w) / 2,
+            button.rect.y + (button.rect.h - new_h) / 2,
+            new_w, new_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+
+void Draw_stop_button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+    if (Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(button.is_mouse_click_on){
+        flag_button.is_mouse_click_on = false;
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    double scale = std::min(
+            (double)button.rect.w / texture_w,
+            (double)button.rect.h / texture_h
+    );
+    int new_w = texture_w * scale;
+    int new_h = texture_h * scale;
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - new_w) / 2,
+            button.rect.y + (button.rect.h - new_h) / 2,
+            new_w, new_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_Rect left_bar = {0, 95, 60, Get_height() - 48};
     SDL_SetRenderDrawColor(renderer, 249, 249, 249, SDL_ALPHA_OPAQUE);
@@ -718,6 +776,23 @@ void Handle_event_for_code_button(SDL_Event &e) {
     }
 }
 
+void Handle_event_for_flag_button(SDL_Event &e){
+    if(e.type== SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            if(Is_mouse_on(flag_button.rect.x,flag_button.rect.h,flag_button.rect.w,flag_button.rect.h))
+            flag_button.is_mouse_click_on = true;
+        }
+    }
+}
+
+void Handle_event_for_stop_button(SDL_Event &e){
+    if(e.type== SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            if(Is_mouse_on(stop_button.rect.x,stop_button.rect.h,stop_button.rect.w,stop_button.rect.h))
+            stop_button.is_mouse_click_on = true;
+        }
+    }
+}
 void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
     static int mouse_firstX , mouse_firstY;
     if(e.type == SDL_MOUSEBUTTONDOWN){
@@ -767,6 +842,23 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
+void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
+    std::string message = sprite.name + " " + "costume number is : " + to_string(sprite.costumes.size());
+    SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
+    int texture_w,texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
+    SDL_Rect rect = {stage.x+5,stage.y+5+25+5,texture_w+10,25};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2 ,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
 void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
     int texture_w,texture_h;

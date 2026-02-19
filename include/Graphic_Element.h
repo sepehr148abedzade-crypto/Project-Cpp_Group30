@@ -41,6 +41,8 @@ void Drawtext(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, i
 void Draw_loading_window(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo);
 void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
+void Draw_flag_button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
+void Draw_stop_button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
 void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser);
@@ -60,8 +62,11 @@ int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text,
 SDL_Color GetBlockColor(Block_category cat);
 void Draw_Character(SDL_Renderer* renderer,Character &sprite);
 void Handle_event_for_code_button(SDL_Event &e);
+void Handle_event_for_flag_button(SDL_Event &e);
+void Handle_event_for_stop_button(SDL_Event &e);
 void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);
 void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
