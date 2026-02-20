@@ -55,9 +55,309 @@ void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
         block.rect.w=new_width;
     }
 }
+/*void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
+    string ID = block.id;
+        if (ID=="move") {
+            double steps=stod(block.values[0]);
+            move_steps(steps,sprite);
+        }
+        else if (ID=="tern_left") {
+            double angel = stod(block.values[0]);
+            turn_clockwise_character(angel,sprite);
+        }
+        else if (ID=="tern_right") {
+            double angel = stod(block.values[0]);
+            turn_clockwise_character(angel,sprite);
+        }
+        else if (ID=="change_x") {
+            double new_x = stod(block.values[0]);
+            change_x_by(new_x,sprite);
+        }
+        else if (ID=="change_y") {
+            double new_y = stod(block.values[0]);
+            change_y_by(new_y,sprite);
+        }
+        else if (ID=="go_to_x_y") {
+            double new_x = stod(block.values[0]);
+            double new_y = stod(block.values[1]);
+            go_to_x_y(new_x,new_y,sprite);
+        }
+        else if (ID=="set_x") {
+            double new_x = stod(block.values[0]);
+            set_x_to(new_x,sprite);
+        }
+        else if (ID=="set_y") {
+            double new_y = stod(block.values[0]);
+            set_y_to(new_y,sprite);
+        }
+
+}*/
 
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
+    if (!tex || !renderer) return;
+
+    int w, h;
+    if (SDL_QueryTexture(tex, NULL, NULL, &w, &h) != 0) return;
+
+    Backdrop newBD;
+    newBD.name = name;
+
+    newBD.texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!newBD.texture) return;
+
+    SDL_SetTextureBlendMode(newBD.texture, SDL_BLENDMODE_BLEND);
+
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    if (SDL_SetRenderTarget(renderer, newBD.texture) == 0) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, tex, NULL, NULL);
+    }
+
+    newBD.drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (newBD.drawingLayer) {
+        SDL_SetTextureBlendMode(newBD.drawingLayer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderTarget(renderer, newBD.drawingLayer);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+    }
+
+    SDL_SetRenderTarget(renderer, oldTarget);
+
+    projectBackdrops.push_back(newBD);
+    selectedBackdropIndex = (int)projectBackdrops.size() - 1;
+
+    if (forceSwitch) {
+        currentTab = BACKDROPS;
+        currentBackdropTexture = projectBackdrops[selectedBackdropIndex].texture;
+    }
+}
+
+std::string GetUniqueBackdropName(std::string baseName) {
+    int counter = 1;
+    std::string finalName = baseName;
+    bool exists = true;
+
+    while (exists) {
+        exists = false;
+        for (size_t i = 0; i < projectBackdrops.size(); i++) {
+            if (projectBackdrops[i].name == finalName) {
+                exists = true;
+                break;
+            }
+        }
+        if (exists) {
+            finalName = baseName + std::to_string(++counter);
+        }
+    }
+    return finalName;
+}
+
+void AddUploadedBackdrop(SDL_Texture* tex, std::string fileName) {
+    size_t lastDot = fileName.find_last_of(".");
+    std::string baseName = (lastDot == std::string::npos) ? fileName : fileName.substr(0, lastDot);
+
+    Backdrop newBD;
+    newBD.texture = tex;
+    newBD.name = GetUniqueBackdropName(baseName);
+    projectBackdrops.push_back(newBD);
+}
+
+void CreateNewPaintBackdrop() {
+    SDL_Texture* tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 780, 520);
+    if (tex) {
+        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderTarget(renderer, tex);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderTarget(renderer, NULL);
+
+        AddBackdropToProject(tex, "backdrop" + std::to_string(projectBackdrops.size() + 1), true, false);
+        currentTab = BACKDROPS;
+    }
+}
+
+void SetRandomBackdrop() {
+    if (libraryItems.empty()) return;
+    int r = rand() % libraryItems.size();
+    bool shouldSwitch = (currentTab == BACKDROPS);
+    AddBackdropToProject(libraryItems[r].texture, libraryItems[r].name, shouldSwitch, false);
+}
+
+void UploadBackdrop() {
+    string path = OpenFileDialog();
+    if (!path.empty()) {
+        SDL_Texture* newTex = IMG_LoadTexture(renderer, path.c_str());
+        if (newTex) {
+            Backdrop bd;
+            bd.texture = newTex;
+            bd.name = "Uploaded Backdrop";
+
+            int w, h;
+            SDL_QueryTexture(newTex, NULL, NULL, &w, &h);
+
+            bd.drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+            SDL_SetTextureBlendMode(bd.drawingLayer, SDL_BLENDMODE_BLEND);
+
+            SDL_SetRenderTarget(renderer, bd.drawingLayer);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderTarget(renderer, NULL);
+
+            projectBackdrops.push_back(bd);
+            selectedBackdropIndex = projectBackdrops.size() - 1;
+        }
+    }
+}
+
+bool IsCircleClicked(int mx, int my, int cx, int cy, int r) {
+    return ((mx - cx) * (mx - cx) + (my - cy) * (my - cy)) <= (r * r);
+}
+
+void CheckInputClick(int mx, int my) {
+    SDL_Point mPos = {mx, my};
+    bool foundFocus = false;
+    for (int i = active_blocks.size() - 1; i >= 0; i--) {
+        if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
+            for (size_t j = 0; j < active_blocks[i].values.size(); j++) {
+                int px = blockMap[active_blocks[i].id].inputs[j].posX;
+                int centerY = active_blocks[i].rect.h / 2;
+                SDL_Rect inputArea = {
+                        active_blocks[i].rect.x + px - 20,
+                        active_blocks[i].rect.y + centerY - 10,
+                        40, 20
+                };
+                if (SDL_PointInRect(&mPos, &inputArea)) {
+                    for(auto& b : active_blocks) b.is_editing = false;
+                    active_blocks[i].is_editing = true;
+                    active_blocks[i].active_value_index = (int)j;
+                    foundFocus = true;
+                    break;
+                }
+            }
+        }
+        if (foundFocus) break;
+    }
+   if (!foundFocus) {
+        for(auto& b : active_blocks) b.is_editing = false;
+    }
+}
+
+bool IsValidChar(char c, InputType type) {
+    if (type == INPUT_NUMBER) {
+        return (c >= '0' && c <= '9') || c == '-';
+    }
+    if (type ==INPUT_TEXT) {
+        return (c >= 32 && c <= 126);
+    }
+    return false;
+}
+
+void ApplyTextToLayer() {
+    if (textInput.empty() || selectedBackdropIndex < 0) {
+        isTyping = false;
+        return;
+    }
+
+    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    if (!target) return;
+
+    int tw, th;
+    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
+
+    int fx = (textX - 330) * tw / 600;
+    int fy = (textY - 280) * th / 380;
+
+    SDL_Surface* surf = TTF_RenderText_Blended(edit_font, textInput.c_str(), globalEditor.currentColor);
+    if (!surf) return;
+
+    SDL_Texture* textTex = SDL_CreateTextureFromSurface(renderer, surf);
+    SDL_Rect dest = { fx, fy, surf->w, surf->h };
+
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, target);
+    SDL_RenderCopy(renderer, textTex, NULL, &dest);
+    SDL_SetRenderTarget(renderer, oldTarget);
+
+    SDL_FreeSurface(surf);
+    SDL_DestroyTexture(textTex);
+
+    isTyping = false;
+    textInput = "";
+    SDL_StopTextInput();
+}
+
+void HandleKeyboardInput(SDL_Event& e) {
+    if (isTyping) {
+        if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_BACKSPACE && !textInput.empty()) {
+                textInput.pop_back();
+            } else if (e.key.keysym.sym == SDLK_RETURN) {
+                ApplyTextToLayer();
+            }
+        } else if (e.type == SDL_TEXTINPUT) {
+            textInput += e.text.text;
+        }
+        return;
+    }
+
+    for (auto& b : active_blocks) {
+        if (b.is_editing && b.active_value_index != -1) {
+            string& str = b.values[b.active_value_index];
+            InputType currentType = blockMap[b.id].inputs[b.active_value_index].type;
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_BACKSPACE && !str.empty()) {
+                    str.pop_back();
+                    UpdateBlockWidth(b,code_bar_font);
+                } else if (e.key.keysym.sym == SDLK_RETURN) {
+                    int Last_Index = b.active_value_index;
+                    b.is_editing = false;
+                    b.active_value_index = -1;
+                    SDL_StopTextInput();
+                    if (str.empty()&&Last_Index != -1) {
+                        str = blockMap[b.id].inputs[Last_Index].defaultValue;
+                        UpdateBlockWidth(b, code_bar_font);
+                    }
+                }
+            } else if (e.type == SDL_TEXTINPUT) {
+                bool valid_char = false;
+                if (currentType == INPUT_NUMBER) {
+                    valid_char=(e.text.text[0] >= '0' && e.text.text[0] <= '9') || e.text.text[0] == '-' || e.text.text[0] == '.';
+
+                }
+                else if (currentType == INPUT_TEXT) {
+                    valid_char = (e.text.text[0] >= 32 && e.text.text[0] <= 126);
+                }
+                else {valid_char = true;}
+                if (valid_char && str.length() < 20) {
+                    str += e.text.text;
+                    UpdateBlockWidth(b, code_bar_font);
+                }
+                break;
+            }
+        }
+    }
+}
+
+void HandleLibraryClick(int mx, int my) {
+    int xStart = 50, yStart = 100, padding = 20, imgW = 150, imgH = 120;
+
+    for (int i = 0; i < (int)libraryItems.size(); i++) {
+        SDL_Rect box = { xStart + (i % 5) * (imgW + padding),
+                         yStart + (i / 5) * (imgH + padding),
+                         imgW, imgH };
+
+        if (mx >= box.x && mx <= box.x + box.w && my >= box.y && my <= box.y + box.h) {
+            AddBackdropToProject(libraryItems[i].texture, libraryItems[i].name, (currentTab == BACKDROPS), false);
+            isLibraryOpen = false;
+            return;
+        }
+    }
+}
+
+
+/*void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
     if (!tex || !renderer) return;
 
     int w, h;
@@ -299,7 +599,7 @@ void HandleLibraryClick(int mx, int my) {
             return;
         }
     }
-}
+}*/
 
 void HandleBlockEvent(SDL_Event& e){
     int mx, my;
@@ -309,10 +609,11 @@ void HandleBlockEvent(SDL_Event& e){
         if (mx > 60 && mx < 310) {
             sidebar_scroll_y += e.wheel.y * 25;
             if (sidebar_scroll_y > 0) sidebar_scroll_y = 0;
-            if (sidebar_scroll_y < -1000) sidebar_scroll_y = -1000;
+            if (sidebar_scroll_y < -1500) sidebar_scroll_y = -1500;
         }
     }
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+         bool clickedOnInput = false;
         bool clickedOnMenu = false;
         if (mx > 60 && mx < 310 && my > 95) {
             for (auto& mb : menu_blocks) {
@@ -339,26 +640,32 @@ void HandleBlockEvent(SDL_Event& e){
             }
         }
         if (!clickedOnMenu) {
-            bool clickedOnInput = false;
             for (auto& block : active_blocks) {
                 if (blockMap.count(block.id)) {
                     for (size_t i = 0; i < block.values.size(); i++) {
                         int input_x=block.rect.x+blockMap[block.id].inputs[i].posX;
-                        SDL_Rect input_rect ={input_x,block.rect.y+12,40,20};
+                        string current_val = block.values[i];
+                        int text_width = Get_text_width(code_bar_font, current_val);
+                        int input_width = max(40, text_width + 10);
+                        SDL_Rect input_rect ={input_x-input_width/2,block.rect.y+12,input_width,20};
 
                         if (SDL_PointInRect(&mPos, &input_rect)) {
                             for (auto& b :active_blocks) {
                                 b.is_editing = false;
+                                b.active_value_index=-1;
                             }
                             block.is_editing = true;
                             block.active_value_index=i;
                             clickedOnInput = true;
+                            if (i < block.values.size()) {
+                                block.values[i] = "";
+                            }
                             SDL_StartTextInput();
                             break;
                         }
                     }
-                    if (clickedOnInput) break;
                 }
+                if (clickedOnInput) break;
             }
             if (!clickedOnInput) {
                 for (int i = active_blocks.size()-1; i>=0; i--) {
@@ -808,7 +1115,6 @@ void Update() {
     }
     SDL_RenderPresent(renderer);
 }
-
 void Render(){
         SDL_RenderPresent(renderer);
 }

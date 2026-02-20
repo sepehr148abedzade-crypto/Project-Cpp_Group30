@@ -47,10 +47,6 @@ void think_a_for_t_second(SDL_Renderer* renderer,TTF_Font* font,std::string mess
 
 }
 
-void think_a(SDL_Renderer* renderer,TTF_Font* font,std::string message,Character &sprite){
-    sprite.think = message;
-}
-
 void switch_costume_to(SDL_Renderer* renderer,double n,Character &sprite){
     sprite.texture = sprite.costumes[n-1];
 }
