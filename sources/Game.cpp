@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include "Paint_Editor.h"
 using namespace std;
 
 SDL_Window* main_window = nullptr;
@@ -29,30 +30,158 @@ Character* currentSprite = nullptr;
 SDL_Texture* globalDrawingLayer = nullptr;
 
 std::vector<Character> allCharacters;
+
 int lastMouseX = -1;
 int lastMouseY = -1;
 int lineStartX = -1, lineStartY = -1;
+int textClickX = -1, textClickY = -1;
+int textX = 0, textY = 0;
+int circleStartX = -1, circleStartY = -1;
+
+bool isTypingText = false;
 bool isDrawingLine = false;
 bool isDrawingCircle = false;
-int circleStartX = -1, circleStartY = -1;
-bool isTypingText = false;
-string textToDraw = "";
-int textClickX = -1, textClickY = -1;
 bool isSaveModalOpen = false;
-string saveInputText = "";
-
-string textInput = "";
 bool isTyping = false;
-int textX = 0, textY = 0;
-
 bool stop = false;
+
+string saveInputText;
+string textToDraw;
+string textInput;
+
+std::string GetUniqueBackdropName(std::string baseName) {
+    int counter = 1;
+    std::string finalName = baseName;
+    bool exists = true;
+
+    while (exists) {
+        exists = false;
+        for (size_t i = 0; i < projectBackdrops.size(); i++) {
+            if (projectBackdrops[i].name == finalName) {
+                exists = true;
+                break;
+            }
+        }
+        if (exists) {
+            finalName = baseName + std::to_string(++counter);
+        }
+    }
+    return finalName;
+}
+
+SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
+    if(!font) {
+        std::cout << "font is not find! SDL_Error : " << TTF_GetError() << std::endl;
+        return nullptr;
+    }
+    SDL_Surface* text_surface = TTF_RenderText_Blended(font,text.c_str(),color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,text_surface);
+    SDL_FreeSurface(text_surface);
+    return texture;
+}
+
+int Get_text_width(TTF_Font* font,string text ) {
+    int width ;
+    TTF_SizeText(font,text.c_str(),&width,nullptr);
+    return width;
+}
+
+bool Loading(){
+    if(TTF_Init()==-1){
+        std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    loading_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",50);
+    if(loading_font== nullptr){
+        std::cout << "Loading Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
+    if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+        std::cout << "SDL could not initialize! SDL_Error : " << SDL_GetError() << std::endl;
+        return false;
+    }
+    main_window= SDL_CreateWindow(
+            "Scratch",
+            SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED,
+            Get_width(),
+            Get_width(),
+            SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED |SDL_WINDOW_RESIZABLE
+    );
+
+    if(main_window == nullptr) {
+        std::cout << "main_window could not be created! SDL_Error : " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    renderer = SDL_CreateRenderer(main_window,-1,SDL_RENDERER_ACCELERATED);
+
+    if(renderer == nullptr) {
+        std::cout << "renderer could not be created! SDL_Error : " << SDL_GetError() << std::endl;
+        return false;
+    }
+    SDL_Texture* Loading_text = LoadText(renderer,loading_font,"Scratch is loading...",white);
+
+    SDL_SetRenderDrawColor(renderer,77,151,255,SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+    Init_Load_button();
+    Draw_loading_window(renderer,Load_button,Loading_text);
+    SDL_RenderPresent(renderer);
+    //SDL_Delay(3000);
+}
+
+bool Init_Game(){
+    SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
+    SDL_RenderClear(renderer);
+
+    if(TTF_Init()==-1){
+        std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    main_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",15);
+    edit_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",40);
+    if(main_font== nullptr){
+        std::cout << "Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    Init_Button();
+    report_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",10);
+    if(report_font== nullptr){
+        std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    talking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+    if(talking_font== nullptr){
+        std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    File_Text = LoadText(renderer,main_font,"File",white);
+    Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
+    SetWindowIcon(main_window,"asset/images/logo/icon.png");
+
+    code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
+    if(code_bar_font == nullptr){
+        std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    Init_code_button(renderer,code_bar_font);
+    LoadAllAssets(renderer);
+    Init_Menu_Blocks();
+    LoadBackdropLibraryManual(renderer);
+    SDL_StartTextInput();
+    Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
+    Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
+    now_sprite = cat_running;
+    return true;
+}
+
 void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
     if (blockMap.count(block.id)) {
         int new_width = calculatingWidthBlock(blockMap[block.id],block.values,font);
         block.rect.w=new_width;
     }
 }
-
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
     if (!tex || !renderer) return;
@@ -92,26 +221,6 @@ void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool 
         currentTab = BACKDROPS;
         currentBackdropTexture = projectBackdrops[selectedBackdropIndex].texture;
     }
-}
-
-std::string GetUniqueBackdropName(std::string baseName) {
-    int counter = 1;
-    std::string finalName = baseName;
-    bool exists = true;
-
-    while (exists) {
-        exists = false;
-        for (size_t i = 0; i < projectBackdrops.size(); i++) {
-            if (projectBackdrops[i].name == finalName) {
-                exists = true;
-                break;
-            }
-        }
-        if (exists) {
-            finalName = baseName + std::to_string(++counter);
-        }
-    }
-    return finalName;
 }
 
 void AddUploadedBackdrop(SDL_Texture* tex, std::string fileName) {
@@ -403,112 +512,6 @@ void HandleBlockEvent(SDL_Event& e){
     }
 }
 
-SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
-        if(!font) {
-                std::cout << "font is not find! SDL_Error : " << TTF_GetError() << std::endl;
-                return nullptr;
-        }
-        SDL_Surface* text_surface = TTF_RenderText_Blended(font,text.c_str(),color);
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,text_surface);
-        SDL_FreeSurface(text_surface);
-        return texture;
-}
-int Get_text_width(TTF_Font* font,string text ) {
-    int width ;
-    TTF_SizeText(font,text.c_str(),&width,nullptr);
-    return width;
-}
-
-bool Loading(){
-        if(TTF_Init()==-1){
-                std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
-                return false;
-        }
-        loading_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",50);
-        if(loading_font== nullptr){
-                std::cout << "Loading Font could not be found! Error: " << TTF_GetError() << std::endl;
-                return false;
-        }
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
-        if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-                std::cout << "SDL could not initialize! SDL_Error : " << SDL_GetError() << std::endl;
-                return false;
-        }
-        main_window= SDL_CreateWindow(
-                "Scratch",
-                SDL_WINDOWPOS_CENTERED,
-                SDL_WINDOWPOS_CENTERED,
-                Get_width(),
-                Get_width(),
-                SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED |SDL_WINDOW_RESIZABLE
-        );
-
-        if(main_window == nullptr) {
-                std::cout << "main_window could not be created! SDL_Error : " << SDL_GetError() << std::endl;
-                return false;
-        }
-
-        renderer = SDL_CreateRenderer(main_window,-1,SDL_RENDERER_ACCELERATED);
-
-        if(renderer == nullptr) {
-                std::cout << "renderer could not be created! SDL_Error : " << SDL_GetError() << std::endl;
-                return false;
-        }
-        SDL_Texture* Loading_text = LoadText(renderer,loading_font,"Scratch is loading...",white);
-
-        SDL_SetRenderDrawColor(renderer,77,151,255,SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-        Init_Load_button();
-        Draw_loading_window(renderer,Load_button,Loading_text);
-        SDL_RenderPresent(renderer);
-        //SDL_Delay(3000);
-}
-
-bool Init_Game(){
-        SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
-        SDL_RenderClear(renderer);
-
-        if(TTF_Init()==-1){
-                std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
-                return false;
-        }
-        main_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",15);
-        edit_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",40);
-        if(main_font== nullptr){
-                std::cout << "Font could not be found! Error: " << TTF_GetError() << std::endl;
-                return false;
-        }
-        Init_Button();
-        report_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",10);
-        if(report_font== nullptr){
-            std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
-            return false;
-        }
-        talking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
-        if(talking_font== nullptr){
-            std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
-            return false;
-        }
-        File_Text = LoadText(renderer,main_font,"File",white);
-        Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
-        SetWindowIcon(main_window,"asset/images/logo/icon.png");
-
-        code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
-        if(code_bar_font == nullptr){
-                std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
-                return false;
-        }
-        Init_code_button(renderer,code_bar_font);
-        LoadAllAssets(renderer);
-        Init_Menu_Blocks();
-        LoadBackdropLibraryManual(renderer);
-        SDL_StartTextInput();
-        Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
-        Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
-        now_sprite = cat_running;
-        return true;
-}
-
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
     if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
         if (mx < 110 && currentTab == BACKDROPS) {
@@ -629,8 +632,6 @@ void HandleCanvasMouseDown(int mx, int my) {
         isDrawingLine = true;
     }
 }
-
-
 
 void HandleColorSelection(int mx, int my) {
     int colorX = 110 + 300;

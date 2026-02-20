@@ -18,7 +18,10 @@ add_executable(Project_Cpp_Group30 sources/main.cpp
         sources/operators_functions.cpp
         include/operators_functions.h
         sources/looks_functions.cpp
-        include/looks_functions.h)
+        include/looks_functions.h
+        sources/Paint_Editor.cpp
+        include/Paint_Editor.h
+        )
 
 
 target_link_libraries(Project_Cpp_Group30 mingw32 SDL2main SDL2)

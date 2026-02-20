@@ -7,45 +7,37 @@
 #include <constants.h>
 #include "Asset_Loader.h"
 #include <vector>
-//#include <SDL2/SDL_ttf.h>
 #include <Game.h>
-
-
-
 
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
-
 extern bool isStageSelected;
+extern int backdropScrollY;
+extern SDL_Color white;
+
 enum Tab { CODE, BACKDROPS, SOUNDS , COSTUMES};
 extern Tab currentTab;
 
-
-extern int backdropScrollY;
-
-void ApplyPen(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
-void ApplyEraser(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
-void ApplyFill(SDL_Texture* target,SDL_Renderer* renderer);
-void ApplyTextToTexture(SDL_Texture* target, string text, int x, int y, SDL_Renderer* renderer, TTF_Font* font);
 SDL_Texture* GetCurrentLayer();
 SDL_Texture* MakeTextureEditable(SDL_Renderer* renderer, SDL_Texture* sourceTex);
+
 struct Button;
 
-extern SDL_Color white;
+int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
+int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
 
-
+SDL_Color GetBlockColor(Block_category cat);
 SDL_Color Hex_To_rgb(uint32_t hexcolor);
+
 bool Is_mouse_on(int x,int y,int w,int h);
+
+void ApplyTextToTexture(SDL_Texture* target, string text, int x, int y, SDL_Renderer* renderer, TTF_Font* font);
 void Drawtext(SDL_Renderer* renderer, TTF_Font* font, std::string text, int x, int y, SDL_Color color, bool center);
 void Draw_loading_window(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo);
 void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture);
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
-void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser);
-void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
-void ClearCurrentDrawingLayer(SDL_Renderer* renderer);
-void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill);
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
@@ -53,9 +45,6 @@ void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,Bloc
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font);
-int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
-int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
-SDL_Color GetBlockColor(Block_category cat);
 void Draw_Character(SDL_Renderer* renderer,Character &sprite);
 void Handle_event_for_code_button(SDL_Event &e);
 void Handle_event_for_motion_sprite(SDL_Event &e,Character &sprite);
@@ -64,7 +53,6 @@ void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropThumbnail(SDL_Renderer* renderer, SDL_Texture* tex, SDL_Rect area);
-void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName);
 void DrawBackdropCircleButton(SDL_Renderer* renderer);
 void DrawBackdropSubMenu(SDL_Renderer* renderer);
 void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
