@@ -632,3 +632,18 @@ void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
+
+void Draw_File_Dropdown(SDL_Renderer* renderer, TTF_Font* font) {
+    if (!isFileMenuOpen) return;
+
+    SDL_Rect menuBG = { Top_button[0].rect.x, 48, 120, 70 };
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &menuBG);
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(renderer, &menuBG);
+
+    SDL_Color textColor = {50, 50, 50, 255};
+    Drawtext(renderer, font, "Save Project", menuBG.x + 10, menuBG.y + 10, textColor, false);
+    Drawtext(renderer, font, "Load Project", menuBG.x + 10, menuBG.y + 40, textColor, false);
+}

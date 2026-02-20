@@ -155,7 +155,7 @@ struct Button{
     bool is_mouse_click_on;
 };
 extern Button Load_button;
-extern Button Top_button;
+extern Button Top_button[4];
 extern Button categories[8];
 extern std::vector<Blocks> active_blocks;
 extern std::vector<Blocks> menu_blocks;

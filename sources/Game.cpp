@@ -44,6 +44,7 @@ bool isDrawingCircle = false;
 bool isSaveModalOpen = false;
 bool isTyping = false;
 bool stop = false;
+bool isFileMenuOpen = false;
 
 string saveInputText;
 string textToDraw;
@@ -885,7 +886,7 @@ void Update() {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
-        Draw_Top_Button(renderer, Top_button, File_Text);
+        Draw_Top_Button(renderer, Top_button[0], File_Text);
 
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);

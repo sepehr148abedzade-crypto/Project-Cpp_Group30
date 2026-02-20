@@ -12,7 +12,6 @@ typedef struct _TTF_Font TTF_Font;
 extern bool stop ;
 extern bool isBackdropMenuOpen;
 
-
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
 SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
 

@@ -58,4 +58,5 @@ void DrawBackdropSubMenu(SDL_Renderer* renderer);
 void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();
 void DrawBackdropLibrary(SDL_Renderer* renderer, TTF_Font* font);
+void Draw_File_Dropdown(SDL_Renderer* renderer, TTF_Font* font);
 #endif //GRAPHIC_ELEMENT_H

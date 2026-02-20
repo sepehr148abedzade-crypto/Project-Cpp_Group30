@@ -19,12 +19,12 @@ vector<categoryInfo> categoryOrder {
         {CAT_VARIABLES,true,0},
     };
 
-Button Top_button{};
+Button Top_button[4];
 void Init_Button() {
-    Top_button.rect = {140, 0, 40, 48};
-    Top_button.first_color = {77, 151, 255, 150};
-    Top_button.second_color = {66, 128, 217};
-    Top_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Top_button[0].rect = {140, 0, 40, 48};
+    Top_button[0].first_color = {77, 151, 255, 150};
+    Top_button[0].second_color = {66, 128, 217};
+    Top_button[0].is_mouse_on = Is_mouse_on(Top_button[0].rect.x,Top_button[0].rect.y,Top_button[0].rect.w,Top_button[0].rect.h);
 }
 Button Load_button{};
 void Init_Load_button(){

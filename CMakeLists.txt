@@ -21,7 +21,7 @@ add_executable(Project_Cpp_Group30 sources/main.cpp
         include/looks_functions.h
         sources/Paint_Editor.cpp
         include/Paint_Editor.h
-        )
+        include/ProjectManager.h sources/ProjectManager.cpp)
 
 
 target_link_libraries(Project_Cpp_Group30 mingw32 SDL2main SDL2)
