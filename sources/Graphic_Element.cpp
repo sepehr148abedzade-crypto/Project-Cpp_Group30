@@ -831,7 +831,7 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+5,stage.y+5,texture_w+10,25};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
@@ -849,7 +849,7 @@ void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w-70,stage.y+5,texture_w+10,30};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
@@ -865,8 +865,8 @@ void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
-    SDL_Rect rect = {stage.x+5,stage.y+5+25+5,texture_w+10,25};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_Rect rect = {stage.x+5,stage.y+25+5,texture_w+10,25};
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
@@ -882,7 +882,7 @@ void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
@@ -899,7 +899,7 @@ void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
