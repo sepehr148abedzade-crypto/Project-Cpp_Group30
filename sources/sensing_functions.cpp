@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "Entity.h"
 #include "Graphic_Element.h"
+#include "event_system.h"
 #include "SDL2/SDL.h"
 #include "cmath"
 

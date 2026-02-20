@@ -77,10 +77,10 @@ void executeBlock(Function_Block &block){
             think_a_for_t_second(block.message1,now_sprite);
             block.finished = true;
             break;
-        case THINK_A :
-            think_a(block.message1,now_sprite);
-            block.finished = true;
-            break;
+//        case THINK_A :
+//            think_a(block.message1,now_sprite);
+//            block.finished = true;
+//            break;
 //        case SWITCH_COSTUME_TO :
 //            move_steps_character(block.value1,now_sprite);
 //            block.finished = true;
