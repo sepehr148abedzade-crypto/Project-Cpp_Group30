@@ -6,6 +6,7 @@ struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 
 extern bool draggable;
+extern bool is_timer;
 bool touching_mouse_pointer(SDL_Event &e,Character &sprite);
 bool is_key_space_pressed(SDL_Event &e);
 bool is_key_up_arrow_pressed(SDL_Event &e);

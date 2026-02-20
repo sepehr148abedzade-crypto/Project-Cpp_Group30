@@ -6,6 +6,7 @@
 #include "cmath"
 
 bool draggable = true;
+bool is_timer = false;
 bool touching_mouse_pointer(SDL_Event &e,Character &sprite){
     double stage_centerX = stage.x + (stage.w/2);
     double stage_centerY = stage.y + (stage.h/2);
