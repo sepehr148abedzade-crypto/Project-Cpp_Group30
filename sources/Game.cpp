@@ -50,6 +50,43 @@ void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
         block.rect.w=new_width;
     }
 }
+/*void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
+    string ID = block.id;
+        if (ID=="move") {
+            double steps=stod(block.values[0]);
+            move_steps(steps,sprite);
+        }
+        else if (ID=="tern_left") {
+            double angel = stod(block.values[0]);
+            turn_clockwise_character(angel,sprite);
+        }
+        else if (ID=="tern_right") {
+            double angel = stod(block.values[0]);
+            turn_clockwise_character(angel,sprite);
+        }
+        else if (ID=="change_x") {
+            double new_x = stod(block.values[0]);
+            change_x_by(new_x,sprite);
+        }
+        else if (ID=="change_y") {
+            double new_y = stod(block.values[0]);
+            change_y_by(new_y,sprite);
+        }
+        else if (ID=="go_to_x_y") {
+            double new_x = stod(block.values[0]);
+            double new_y = stod(block.values[1]);
+            go_to_x_y(new_x,new_y,sprite);
+        }
+        else if (ID=="set_x") {
+            double new_x = stod(block.values[0]);
+            set_x_to(new_x,sprite);
+        }
+        else if (ID=="set_y") {
+            double new_y = stod(block.values[0]);
+            set_y_to(new_y,sprite);
+        }
+
+}*/
 
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
@@ -206,7 +243,7 @@ bool IsValidChar(char c, InputType type) {
     if (type == INPUT_NUMBER) {
         return (c >= '0' && c <= '9') || c == '-';
     }
-    if (type ==INPUT_BOOLEAN) {
+    if (type ==INPUT_TEXT) {
         return (c >= 32 && c <= 126);
     }
     return false;
@@ -267,14 +304,32 @@ void HandleKeyboardInput(SDL_Event& e) {
             if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_BACKSPACE && !str.empty()) {
                     str.pop_back();
+                    UpdateBlockWidth(b,code_bar_font);
                 } else if (e.key.keysym.sym == SDLK_RETURN) {
+                    int Last_Index = b.active_value_index;
                     b.is_editing = false;
+                    b.active_value_index = -1;
+                    SDL_StopTextInput();
+                    if (str.empty()&&Last_Index != -1) {
+                        str = blockMap[b.id].inputs[Last_Index].defaultValue;
+                        UpdateBlockWidth(b, code_bar_font);
+                    }
                 }
             } else if (e.type == SDL_TEXTINPUT) {
-                char c = e.text.text[0];
-                if (IsValidChar(c, currentType)) {
-                    if (str.length() < 20) str += c;
+                bool valid_char = false;
+                if (currentType == INPUT_NUMBER) {
+                    valid_char=(e.text.text[0] >= '0' && e.text.text[0] <= '9') || e.text.text[0] == '-' || e.text.text[0] == '.';
+
                 }
+                else if (currentType == INPUT_TEXT) {
+                    valid_char = (e.text.text[0] >= 32 && e.text.text[0] <= 126);
+                }
+                else {valid_char = true;}
+                if (valid_char && str.length() < 20) {
+                    str += e.text.text;
+                    UpdateBlockWidth(b, code_bar_font);
+                }
+                break;
             }
         }
     }
@@ -308,6 +363,7 @@ void HandleBlockEvent(SDL_Event& e){
         }
     }
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+         bool clickedOnInput = false;
         bool clickedOnMenu = false;
         if (mx > 60 && mx < 310 && my > 95) {
             for (auto& mb : menu_blocks) {
@@ -334,26 +390,32 @@ void HandleBlockEvent(SDL_Event& e){
             }
         }
         if (!clickedOnMenu) {
-            bool clickedOnInput = false;
             for (auto& block : active_blocks) {
                 if (blockMap.count(block.id)) {
                     for (size_t i = 0; i < block.values.size(); i++) {
                         int input_x=block.rect.x+blockMap[block.id].inputs[i].posX;
-                        SDL_Rect input_rect ={input_x,block.rect.y+12,40,20};
+                        string current_val = block.values[i];
+                        int text_width = Get_text_width(code_bar_font, current_val);
+                        int input_width = max(40, text_width + 10);
+                        SDL_Rect input_rect ={input_x-input_width/2,block.rect.y+12,input_width,20};
 
                         if (SDL_PointInRect(&mPos, &input_rect)) {
                             for (auto& b :active_blocks) {
                                 b.is_editing = false;
+                                b.active_value_index=-1;
                             }
                             block.is_editing = true;
                             block.active_value_index=i;
                             clickedOnInput = true;
+                            if (i < block.values.size()) {
+                                block.values[i] = "";
+                            }
                             SDL_StartTextInput();
                             break;
                         }
                     }
-                    if (clickedOnInput) break;
                 }
+                if (clickedOnInput) break;
             }
             if (!clickedOnInput) {
                 for (int i = active_blocks.size()-1; i>=0; i--) {

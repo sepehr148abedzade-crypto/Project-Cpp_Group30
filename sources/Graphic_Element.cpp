@@ -339,14 +339,14 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
         if (renderPos.y > 90 && renderPos.y < Get_height()) {
             switch (mb.type) {
                 case Simple_Block:
-                    DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font);
+                    DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font,nullptr);
                     break;
                 case C_Block: C_Block:Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font, nullptr);
             }
         }
     }
 }
-void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font ) {
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font, Blocks* block ) {
     roundedBoxRGBA(renderer,x,y+10,x+w,y+h-10,0,color.r,color.g,color.b,color.a);
     Imaginary_circle C1 {x+20,y-10,15 };
     SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
@@ -369,6 +369,9 @@ void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,Bloc
     current_x=Draw_label(current_x,renderer,font,BT.Back_label,y,{255,255,255,255})+5;
     for (size_t i =0 ; i<values.size(); i++) {
         string val = (i<values.size()) ? values[i]:BT.inputs[i].defaultValue;
+        if (block && block->is_editing && block->active_value_index == (int)i) {
+            val += "|";
+        }
         int input_width = max(40,Get_text_width(font,val)+10);
         roundedBoxRGBA(renderer,current_x,y+9,current_x+input_width-3,y+29,10,255,255,255,255);
         Draw_label(current_x+(input_width-Get_text_width(font,val))/2,renderer,font,val,y,{100,100,100,255});
@@ -392,6 +395,9 @@ void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTe
     for (size_t i =0 ; i<values.size(); i++) {
         string val = (i<values.size()) ? values[i]:BT.inputs[i].defaultValue;
         int input_width = max(40,Get_text_width(font,val)+10);
+        if (block && block->is_editing && block->active_value_index == (int)i) {
+            val += "|";
+        }
 
         roundedBoxRGBA(renderer, current_x - 3, y + 8, current_x + input_width - 3, y + 29, 10, 255, 255, 255, 255);
         Draw_label(current_x + (input_width - Get_text_width(font, val))/2, renderer, font, val, y , {100,100,100,255});
@@ -420,7 +426,7 @@ void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
         SDL_Color color= GetBlockColor(blockMap[b.id].category);
         switch (b.type) {
             case Simple_Block :
-                DrawSimpleBlocks(renderer,b.rect.x,b.rect.y,b.rect.w,b.rect.h,blockMap[b.id],b.values,color,font);
+                DrawSimpleBlocks(renderer,b.rect.x,b.rect.y,b.rect.w,b.rect.h,blockMap[b.id],b.values,color,font,&b);
                 break;
                 case C_Block:
                 Draw_C_Blocks(renderer,b.rect.x, b.rect.y, b.rect.w, b.rect.h, blockMap[b.id], b.values, color, font, &b);

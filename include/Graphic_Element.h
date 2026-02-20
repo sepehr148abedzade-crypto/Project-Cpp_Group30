@@ -51,7 +51,7 @@ void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
-void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font );
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font, Blocks* block );
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer);
