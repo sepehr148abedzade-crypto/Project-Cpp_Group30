@@ -10,9 +10,9 @@ void change_size_by(SDL_Renderer *renderer,double size,Character &sprite);
 void set_size_to(SDL_Renderer* renderer,double size,Character &sprite);
 void show_character(Character &sprite);
 void hide_character(Character &sprite);
-void say_a_for_t_seconds(SDL_Renderer* renderer,TTF_Font* font,std::string message,double time,Character &sprite);
-void say_a(SDL_Renderer* renderer,TTF_Font* font,std::string message,Character &sprite);
-void think_a_for_t_second(SDL_Renderer* renderer,TTF_Font* font,std::string message,double time, Character &sprite);
-void think_a(SDL_Renderer* renderer,TTF_Font* font,std::string message,Character &sprite);
+void say_a_for_t_seconds(std::string message,Character &sprite);
+void say_a(std::string message,Character &sprite);
+void think_a_for_t_second(std::string message, Character &sprite);
+void think_a(std::string message,Character &sprite);
 void switch_costume_to(SDL_Renderer* renderer,double n,Character &sprite);
 #endif //OOKS_FUNCTIONS_H
