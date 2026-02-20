@@ -4,16 +4,23 @@
 #include "constants.h"
 #include "cstdlib"
 
-void move_steps_character(double step,Character &sprite){
+void move_steps_character(double step,Character &sprite) {
     bool stop = false;
-    double nextX = sprite.x + cos((sprite.degree*PI)/180) * step;
-    double nextY = sprite.y - sin((sprite.degree*PI)/180) * step;
-        if (Limit_CharacterX(sprite) && Limit_CharacterY(sprite)) {
-            sprite.x = nextX;
-            sprite.y = nextY;
-        }
-    }
+    double nextX = sprite.x + cos((sprite.degree * PI) / 180) * step;
+    double nextY = sprite.y - sin((sprite.degree * PI) / 180) * step;
+    double targetX = nextX;
+    double targetY = nextY;
+    double limitX = (double) stage.w / 2 - sprite.width / 2;
+    double limitY = (double) stage.h / 2 - sprite.height / 2;
 
+    if (targetX > limitX) sprite.x = limitX;
+    else if (targetX < -limitX) sprite.x = -limitX;
+    else sprite.x = targetX;
+
+    if (targetY > limitY) sprite.y = limitY;
+    else if (targetY < -limitY) sprite.y = -limitY;
+    else sprite.y = targetY;
+}
 void turn_clockwise_character(double angle,Character &sprite){
     sprite.degree += -angle;
 }

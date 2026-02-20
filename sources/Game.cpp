@@ -4,6 +4,8 @@
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
 #include "motion_functions.h"
+#include "sound_functions.h"
+#include "sensing_functions.h"
 #include "looks_functions.h"
 #include "constants.h"
 #include "Entity.h"
@@ -18,11 +20,14 @@ SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
+SDL_Texture* green_flag = nullptr;
+SDL_Texture* stop_sign = nullptr;
 SDL_Texture* cat_texture = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
 TTF_Font* talking_font = nullptr;
+TTF_Font* thinking_font = nullptr;
 TTF_Font* edit_font = nullptr;
 TTF_Font* code_bar_font = nullptr;
 SDL_Texture* currentBackdropTexture = nullptr;
@@ -44,7 +49,6 @@ bool isDrawingCircle = false;
 bool isSaveModalOpen = false;
 bool isTyping = false;
 bool stop = false;
-bool isFileMenuOpen = false;
 
 string saveInputText;
 string textToDraw;
@@ -183,6 +187,43 @@ void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
         block.rect.w=new_width;
     }
 }
+/*void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
+    string ID = block.id;
+        if (ID=="move") {
+            double steps=stod(block.values[0]);
+            move_steps(steps,sprite);
+        }
+        else if (ID=="tern_left") {
+            double angel = stod(block.values[0]);
+            turn_clockwise_character(angel,sprite);
+        }
+        else if (ID=="tern_right") {
+            double angel = stod(block.values[0]);
+            turn_clockwise_character(angel,sprite);
+        }
+        else if (ID=="change_x") {
+            double new_x = stod(block.values[0]);
+            change_x_by(new_x,sprite);
+        }
+        else if (ID=="change_y") {
+            double new_y = stod(block.values[0]);
+            change_y_by(new_y,sprite);
+        }
+        else if (ID=="go_to_x_y") {
+            double new_x = stod(block.values[0]);
+            double new_y = stod(block.values[1]);
+            go_to_x_y(new_x,new_y,sprite);
+        }
+        else if (ID=="set_x") {
+            double new_x = stod(block.values[0]);
+            set_x_to(new_x,sprite);
+        }
+        else if (ID=="set_y") {
+            double new_y = stod(block.values[0]);
+            set_y_to(new_y,sprite);
+        }
+
+}*/
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
     if (!tex || !renderer) return;
@@ -417,10 +458,11 @@ void HandleBlockEvent(SDL_Event& e){
         if (mx > 60 && mx < 310) {
             sidebar_scroll_y += e.wheel.y * 25;
             if (sidebar_scroll_y > 0) sidebar_scroll_y = 0;
-            if (sidebar_scroll_y < -1000) sidebar_scroll_y = -1000;
+            if (sidebar_scroll_y < -1500) sidebar_scroll_y = -1500;
         }
     }
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+         bool clickedOnInput = false;
         bool clickedOnMenu = false;
         if (mx > 60 && mx < 310 && my > 95) {
             for (auto& mb : menu_blocks) {
@@ -447,26 +489,32 @@ void HandleBlockEvent(SDL_Event& e){
             }
         }
         if (!clickedOnMenu) {
-            bool clickedOnInput = false;
             for (auto& block : active_blocks) {
                 if (blockMap.count(block.id)) {
                     for (size_t i = 0; i < block.values.size(); i++) {
                         int input_x=block.rect.x+blockMap[block.id].inputs[i].posX;
-                        SDL_Rect input_rect ={input_x,block.rect.y+12,40,20};
+                        string current_val = block.values[i];
+                        int text_width = Get_text_width(code_bar_font, current_val);
+                        int input_width = max(40, text_width + 10);
+                        SDL_Rect input_rect ={input_x-input_width/2,block.rect.y+12,input_width,20};
 
                         if (SDL_PointInRect(&mPos, &input_rect)) {
                             for (auto& b :active_blocks) {
                                 b.is_editing = false;
+                                b.active_value_index=-1;
                             }
                             block.is_editing = true;
                             block.active_value_index=i;
                             clickedOnInput = true;
+                            if (i < block.values.size()) {
+                                block.values[i] = "";
+                            }
                             SDL_StartTextInput();
                             break;
                         }
                     }
-                    if (clickedOnInput) break;
                 }
+                if (clickedOnInput) break;
             }
             if (!clickedOnInput) {
                 for (int i = active_blocks.size()-1; i>=0; i--) {
@@ -512,6 +560,112 @@ void HandleBlockEvent(SDL_Event& e){
         }
     }
 }
+
+//SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
+//        if(!font) {
+//                std::cout << "font is not find! SDL_Error : " << TTF_GetError() << std::endl;
+//                return nullptr;
+//        }
+//        SDL_Surface* text_surface = TTF_RenderText_Blended(font,text.c_str(),color);
+//        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,text_surface);
+//        SDL_FreeSurface(text_surface);
+//        return texture;
+//}
+//int Get_text_width(TTF_Font* font,string text ) {
+//    int width ;
+//    TTF_SizeText(font,text.c_str(),&width,nullptr);
+//    return width;
+//}
+//
+//bool Loading(){
+//        if(TTF_Init()==-1){
+//                std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
+//                return false;
+//        }
+//        loading_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",50);
+//        if(loading_font== nullptr){
+//                std::cout << "Loading Font could not be found! Error: " << TTF_GetError() << std::endl;
+//                return false;
+//        }
+//        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
+//        if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+//                std::cout << "SDL could not initialize! SDL_Error : " << SDL_GetError() << std::endl;
+//                return false;
+//        }
+//        main_window= SDL_CreateWindow(
+//                "Scratch",
+//                SDL_WINDOWPOS_CENTERED,
+//                SDL_WINDOWPOS_CENTERED,
+//                Get_width(),
+//                Get_width(),
+//                SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED |SDL_WINDOW_RESIZABLE
+//        );
+//
+//        if(main_window == nullptr) {
+//                std::cout << "main_window could not be created! SDL_Error : " << SDL_GetError() << std::endl;
+//                return false;
+//        }
+//
+//        renderer = SDL_CreateRenderer(main_window,-1,SDL_RENDERER_ACCELERATED);
+//
+//        if(renderer == nullptr) {
+//                std::cout << "renderer could not be created! SDL_Error : " << SDL_GetError() << std::endl;
+//                return false;
+//        }
+//        SDL_Texture* Loading_text = LoadText(renderer,loading_font,"Scratch is loading...",white);
+//
+//        SDL_SetRenderDrawColor(renderer,77,151,255,SDL_ALPHA_OPAQUE);
+//        SDL_RenderClear(renderer);
+//        Init_Load_button();
+//        Draw_loading_window(renderer,Load_button,Loading_text);
+//        SDL_RenderPresent(renderer);
+//        //SDL_Delay(3000);
+//}
+//
+//bool Init_Game(){
+//        SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
+//        SDL_RenderClear(renderer);
+//
+//        if(TTF_Init()==-1){
+//                std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
+//                return false;
+//        }
+//        main_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",15);
+//        edit_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",40);
+//        if(main_font== nullptr){
+//                std::cout << "Font could not be found! Error: " << TTF_GetError() << std::endl;
+//                return false;
+//        }
+//        Init_Button();
+//        report_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",10);
+//        if(report_font== nullptr){
+//            std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
+//            return false;
+//        }
+//        talking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+//        if(talking_font== nullptr){
+//            std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
+//            return false;
+//        }
+//        File_Text = LoadText(renderer,main_font,"File",white);
+//        Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
+//        SetWindowIcon(main_window,"asset/images/logo/icon.png");
+//
+//        code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
+//        if(code_bar_font == nullptr){
+//                std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
+//                return false;
+//        }
+//        Init_code_button(renderer,code_bar_font);
+//        LoadAllAssets(renderer);
+//        Init_Menu_Blocks();
+//        LoadBackdropLibraryManual(renderer);
+//        SDL_StartTextInput();
+//        Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
+//        Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
+//        now_sprite = cat_running;
+//        return true;
+//}
 
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
     if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
@@ -740,30 +894,13 @@ void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
-
+        Handle_event_for_code_button(e);
+        Handle_event_for_motion_sprite(e,now_sprite);
+        Handle_event_for_flag_button(e,flag_button);
+        Handle_event_for_stop_button(e,stop_button);
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
-
-        if (isSaveModalOpen) {
-            HandleKeyboardInput(e);
-            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-                int mW = 400, mH = 200;
-                int mX = (Get_width() - mW) / 2;
-                int mY = (Get_height() - mH) / 2;
-                if (mx >= mX + 280 && mx <= mX + 380 && my >= mY + 140 && my <= mY + 180) {
-                    SaveToLibrary(saveInputText, renderer);
-                } else if (mx >= mX + 170 && mx <= mX + 270 && my >= mY + 140 && my <= mY + 180) {
-                    isSaveModalOpen = false;
-                    saveInputText = "";
-                    SDL_StopTextInput();
-                }
-            }
-            continue;
-        }
-
-        Handle_event_for_code_button(e);
-        Handle_event_for_motion_sprite(e, now_sprite);
 
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (isLibraryOpen) {
@@ -781,13 +918,12 @@ void Get_event() {
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseUp(mx, my);
+            HandleCanvasMouseDown(mx,my);
         }
 
         if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
             HandleContinuousDrawing(mx, my);
         }
-
         HandleBlockEvent(e);
         HandleKeyboardInput(e);
     }
@@ -879,6 +1015,7 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 
 void Update() {
     UpdateMenuState();
+
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -886,7 +1023,8 @@ void Update() {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
-        Draw_Top_Button(renderer, Top_button[0], File_Text);
+        Draw_Top_Button(renderer, Top_button, File_Text);
+        Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
 
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
@@ -935,15 +1073,12 @@ void Update() {
 
         Draw_Stage_Content(renderer);
         Draw_Character(renderer, now_sprite);
-        Draw_size_report(renderer, main_font, now_sprite);
-
         if (isSaveModalOpen) {
             DrawSaveModal(renderer, main_font);
         }
     }
     SDL_RenderPresent(renderer);
 }
-
 void Render(){
         SDL_RenderPresent(renderer);
 }

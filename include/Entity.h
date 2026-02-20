@@ -102,7 +102,7 @@ struct Character{
     std::string think;
     SDL_Texture* texture= nullptr;
     const char* path;
-//    std::vector<SDL_Texture*> costumes;
+    std::vector<SDL_Texture*> costumes;
     int currentCostumeIndex;
 };
 
@@ -151,12 +151,15 @@ struct Button{
     SDL_Texture* Label_texture;
     SDL_Color first_color;
     SDL_Color second_color;
+    SDL_Color third_color;
     bool is_mouse_on;
     bool is_mouse_click_on;
 };
 extern Button Load_button;
-extern Button Top_button[4];
+extern Button Top_button;
 extern Button categories[8];
+extern Button flag_button;
+extern Button stop_button;
 extern std::vector<Blocks> active_blocks;
 extern std::vector<Blocks> menu_blocks;
 extern int sidebar_scroll_y;
@@ -167,6 +170,8 @@ extern std::map<std::string, SDL_Texture*> blockLibrary;
 
 
 void Init_Button();
+void Init_flag_button();
+void Init_stop_button();
 void Init_Load_button();
 void Init_code_button(SDL_Renderer* renderer, TTF_Font* font);
 

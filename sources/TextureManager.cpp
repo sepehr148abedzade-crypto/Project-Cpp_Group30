@@ -33,7 +33,8 @@ void Load_Character(SDL_Renderer* renderer,std::string name,Character &sprite,co
     if(surface == nullptr){
         std::cout << "texture of sprite could not be load! SDL_Error: " << IMG_GetError() << std::endl;
     }
-    sprite.texture = SDL_CreateTextureFromSurface(renderer,surface);
+    sprite.costumes.push_back(SDL_CreateTextureFromSurface(renderer,surface));
+    sprite.texture = sprite.costumes.back();
     int width,height;
     SDL_QueryTexture(sprite.texture, nullptr, nullptr, &width, &height);
     sprite.width = (double)(width * sprite.size);
