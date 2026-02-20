@@ -9,23 +9,27 @@
 bool flag_active = false;
 EditorSettings globalEditor;
 Blocks* draggedBlock = nullptr;
+
 bool isBackdropMenuOpen = false;
 bool isLibraryOpen = false;
 bool isStageSelected = false;
+
 int offsetX = 0, offsetY = 0;
 int sidebar_scroll_y = 0;
+int selectedBackdropIndex = 0;
+int backdropScrollY = 0;
+
 std::vector<BackdropItem> libraryItems;
 std::vector<Backdrop> libraryBackdrops;
 std::vector<Backdrop> projectBackdrops;
-int selectedBackdropIndex = 0;
+
+
 Tab currentTab = CODE;
 
 SDL_Texture* icon_gallery = nullptr;
 SDL_Texture* icon_paint = nullptr;
 SDL_Texture* icon_upload = nullptr;
 SDL_Texture* icon_surprise = nullptr;
-int backdropScrollY = 0;
-
 
 SDL_Color white = {255,255,255};
 SDL_Color black = {0,0,0};
@@ -37,6 +41,7 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     color.a = SDL_ALPHA_OPAQUE;
     return color;
 }
+
 int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font ) {
     int totalWidth =20;
     totalWidth += Get_text_width(font,BT.Back_label);
@@ -53,7 +58,6 @@ int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font
     }
     return totalWidth;
 }
-
 
 int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color ) {
     SDL_Texture* text_tex = LoadText(renderer, font,text,color);
@@ -93,33 +97,6 @@ SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer) {
     return target;
 }
 
-void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser) {
-    if (!target) return;
-
-    SDL_SetRenderTarget(renderer, target);
-
-    if (isEraser) {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    } else {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-    }
-
-    int radius = isEraser ? 10 : 3;
-
-    for (int w = -radius; w <= radius; w++) {
-        for (int h = -radius; h <= radius; h++) {
-            if (w * w + h * h <= radius * radius) {
-                SDL_RenderDrawLine(renderer, x1 + w, y1 + h, x2 + w, y2 + h);
-            }
-        }
-    }
-
-    SDL_SetRenderTarget(renderer, NULL);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-}
-
 SDL_Texture* GetCurrentLayer() {
     if (currentTab == BACKDROPS) {
         if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
@@ -129,148 +106,9 @@ SDL_Texture* GetCurrentLayer() {
     return nullptr;
 }
 
-void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName) {
-    int barX = 110, barY = 95, barW = 920, barH = 110;
-    SDL_Rect topBar = { barX, barY, barW, barH };
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &topBar);
-
-    Drawtext(renderer, font, "Name:", barX + 20, barY + 20, {100, 100, 100, 255}, false);
-
-    SDL_Rect nameBox = { barX + 80, barY + 15, 180, 35 };
-    SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
-    SDL_RenderFillRect(renderer, &nameBox);
-
-    string displayName = itemName;
-    if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-        displayName = projectBackdrops[selectedBackdropIndex].name;
-    }
-    Drawtext(renderer, font, displayName, nameBox.x + 10, nameBox.y + 5, {0, 0, 0, 255}, false);
-
-    int toolX = 115, toolY = 220, btnS = 45;
-    for (int i = 0; i < 8; i++) {
-        SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
-        bool isActive = false;
-
-        if (i == 1 && globalEditor.activeTool == TOOL_PEN) isActive = true;
-        else if (i == 3 && globalEditor.activeTool == TOOL_LINE) isActive = true;
-        else if (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) isActive = true;
-        else if (i == 5 && globalEditor.activeTool == TOOL_TEXT) isActive = true;
-        else if (i == 6 && globalEditor.activeTool == TOOL_FILL) isActive = true;
-        else if (i == 7 && globalEditor.activeTool == TOOL_ERASER) isActive = true;
-
-        if (isActive) {
-            SDL_SetRenderDrawColor(renderer, 66, 133, 244, 40);
-            SDL_RenderFillRect(renderer, &r);
-            SDL_SetRenderDrawColor(renderer, 66, 133, 244, 255);
-        } else {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            SDL_RenderFillRect(renderer, &r);
-            SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
-        }
-        SDL_RenderDrawRect(renderer, &r);
-
-        if (i == 1) Drawtext(renderer, font, "P", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 3) Drawtext(renderer, font, "/", r.x + 18, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 4) Drawtext(renderer, font, "O", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 5) Drawtext(renderer, font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
-        else if (i == 6) {
-            Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        }
-        else if (i == 7) Drawtext(renderer, font, "E", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
-    }
-
-    SDL_Rect canvasBG = { 240, 220, 780, 520 };
-    SDL_SetRenderDrawColor(renderer, 232, 237, 247, 255);
-    SDL_RenderFillRect(renderer, &canvasBG);
-
-    if (currentTex) {
-        SDL_Rect imgPos = { 330, 280, 600, 380 };
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &imgPos);
-        SDL_RenderCopy(renderer, currentTex,
-nullptr, &imgPos);
-
-        if (selectedBackdropIndex >= 0 && projectBackdrops[selectedBackdropIndex].drawingLayer) {
-            SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
-            SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &imgPos);
-        }
-
-        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-        SDL_RenderDrawRect(renderer, &imgPos);
-    }
-}
-
-void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
-    if (!target) return;
-    SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-    SDL_Rect r = { x - globalEditor.brushSize / 2, y - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
-    SDL_RenderFillRect(renderer, &r);
-    SDL_SetRenderTarget(renderer,
-nullptr);
-}
-
-void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
-    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, target);
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-    SDL_Rect r = { x - 10, y - 10, 20, 20 };
-    SDL_RenderFillRect(renderer, &r);
-
-    SDL_SetRenderTarget(renderer, oldTarget);
-}
-
-void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill) {
-    if (!target || radius <= 0) return;
-    SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-
-    if (fill) {
-        for (int w = 0; w < radius * 2; w++) {
-            for (int h = 0; h < radius * 2; h++) {
-                int dx = radius - w;
-                int dy = radius - h;
-                if ((dx * dx + dy * dy) <= (radius * radius)) {
-                    SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
-                }
-            }
-        }
-    } else {
-        int x = radius - 1;
-        int y = 0;
-        int dx = 1;
-        int dy = 1;
-        int err = dx - (radius << 1);
-        while (x >= y) {
-            SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
-            SDL_RenderDrawPoint(renderer, centerX + y, centerY + x);
-            SDL_RenderDrawPoint(renderer, centerX - y, centerY + x);
-            SDL_RenderDrawPoint(renderer, centerX - x, centerY + y);
-            SDL_RenderDrawPoint(renderer, centerX - x, centerY - y);
-            SDL_RenderDrawPoint(renderer, centerX - y, centerY - x);
-            SDL_RenderDrawPoint(renderer, centerX + y, centerY - x);
-            SDL_RenderDrawPoint(renderer, centerX + x, centerY - y);
-            if (err <= 0) { y++; err += dy; dy += 2; }
-            if (err > 0) { x--; dx += 2; err += dx - (radius << 1); }
-        }
-    }
-    SDL_SetRenderTarget(renderer, nullptr);
-}
-
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer) {
     SDL_SetRenderTarget(renderer, target);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, nullptr);
-}
-
-void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer) {
-    SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderTarget(renderer, nullptr);
 }
@@ -616,6 +454,7 @@ void Draw_Information_of_Character(SDL_Renderer* renderer){
     SDL_RenderDrawRect(renderer,&rect);
     SDL_RenderDrawLine(renderer,1040,Get_height()/2+30+100,1040+(Get_width()-1040-100),Get_height()/2+30+100);
 }
+
 void DrawBackdropCircleButton(SDL_Renderer* renderer){
     int sw = Get_width();
     int sh = Get_height();
@@ -740,8 +579,7 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderDrawRect(renderer, &thumbRect);
 
-    Drawtext(renderer, font, "Backdrops", cx, thumbRect.y + thumbRect.h + 8, {130, 130, 130}, true);
-    Drawtext(renderer, font, "1", cx, thumbRect.y + thumbRect.h + 24, {130, 130, 130}, true);
+    Drawtext(renderer, font, "Backdrops", cx-1, thumbRect.y + thumbRect.h + 8, {130, 130, 130}, true);
 
     int spacing = 45;
     if (isBackdropMenuOpen) {
@@ -761,14 +599,6 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
         SDL_Rect iconRect = { cx - 10, cy - 10, 20, 20 };
         SDL_RenderCopy(renderer, icon_gallery, NULL, &iconRect);
     }
-}
-
-void Draw_Stage_Bar(SDL_Renderer* renderer){
-    SDL_Rect rect = {Get_width()-100+5,Get_height()/2+30,85,Get_height()/2-80};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer,&rect);
-    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer,&rect);
 }
 
 void Draw_Character(SDL_Renderer* renderer,Character &sprite){
@@ -870,7 +700,6 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
-
 void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
     std::string message = "Timer : " + to_string(time/1000);
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});

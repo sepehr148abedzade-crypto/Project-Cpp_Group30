@@ -101,28 +101,28 @@ bool LoadAllAssets(SDL_Renderer* renderer){
     icon_surprise = IMG_LoadTexture(renderer, "asset/images/icon_surprise.png");
 
     blockMap["move"] = {160, 45, Simple_Block,CAT_MOTION,"move",{"steps"},{{72,INPUT_NUMBER,"10"}}};
-    //blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
+    blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
 
     blockMap["turn_left"] = {160, 45,Simple_Block,CAT_MOTION,"turn left" ,{"degrees"},{{80, INPUT_NUMBER, "15"}}};
-    //blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
+    blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
 
     blockMap["turn_right"] = {160, 45,Simple_Block,CAT_MOTION,"tern right",{"degrees"}, {{80, INPUT_NUMBER, "0"}}};
-    //blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
+    blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
 
     blockMap["change_x"] = {145, 45,Simple_Block,CAT_MOTION,"change x by ",{},{{115, INPUT_NUMBER, "0"}}};
-    //blockLibrary["change_x"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/change_x.png");
+    blockLibrary["change_x"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/change_x.png");
 
     blockMap["change_y"] = {145, 45,Simple_Block,CAT_MOTION,"change y by ",{}, {{115, INPUT_NUMBER, "0"}}};
-    //blockLibrary["change_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/change_y.png");
+    blockLibrary["change_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/change_y.png");
 
     blockMap["go_to_x_y"] = {160, 45,Simple_Block,CAT_MOTION,"go to x:",{"y:"}, {{77, INPUT_NUMBER, "0"}, {135, INPUT_NUMBER, "0"}}};
-    //blockLibrary["go_to_x_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/go_to_x_y.png");
+    blockLibrary["go_to_x_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/go_to_x_y.png");
 
     blockMap["set_x"] = {92, 45,Simple_Block,CAT_MOTION,"set x to ",{},{{70, INPUT_NUMBER, "0"}}};
-    //blockLibrary["set_x"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/set_x.png");
+    blockLibrary["set_x"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/set_x.png");
 
     blockMap["set_y"] = {92, 45,Simple_Block,CAT_MOTION,"set y to ",{},{{70, INPUT_NUMBER, "0"}}};
-    //blockLibrary["set_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/set_y.png");
+    blockLibrary["set_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/set_y.png");
 
     blockMap["say"] = {165,45,Simple_Block,CAT_LOOK,"say",{},{{80,INPUT_TEXT,"2"}}};
 
@@ -156,50 +156,49 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap["set_s_effect"]= {180 , 45 , Simple_Block,CAT_SOUND,"set",{"effect by"},{{70,INPUT_DROPDOWN,"pitch"},{140,INPUT_NUMBER,"10"}}};
 
-   /* blockMap["clear_sound"] = {120 , 45 , Simple_Block,CAT_SOUND,"clear sound effects",{},{}};
+    /* blockMap["clear_sound"] = {120 , 45 , Simple_Block,CAT_SOUND,"clear sound effects",{},{}};
 
-    blockMap["change_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"change volume by",{},{{80, INPUT_NUMBER,"-10"}}};
+     blockMap["change_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"change volume by",{},{{80, INPUT_NUMBER,"-10"}}};
 
-    blockMap["set_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"set volume to",{"%"},{{80, INPUT_NUMBER,"100"}}};
-    //control
-    blockMap["wait_second"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait",{"seconds"},{{80, INPUT_NUMBER,"1"}}};
+     blockMap["set_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"set volume to",{"%"},{{80, INPUT_NUMBER,"100"}}};
+     //control
+     blockMap["wait_second"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait",{"seconds"},{{80, INPUT_NUMBER,"1"}}};
 
-    blockMap["wait_until"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait until",{},{{80, INPUT_BOOLEAN,"true"}}};*/
+     blockMap["wait_until"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait until",{},{{80, INPUT_BOOLEAN,"true"}}};*/
 
     blockMap["if"] = {
-        120, 100,
-        C_Block,
-        CAT_CONTROL,
-        "if",
-        {},
-        {{50, INPUT_BOOLEAN, ""}}   // شرط
+            120, 100,
+            C_Block,
+            CAT_CONTROL,
+            "if",
+            {},
+            {{50, INPUT_BOOLEAN, ""}}   // شرط
     };
 
     blockMap["forever"]= {
-        120 , 100 ,
-        C_Block,
-        CAT_CONTROL,
-        "forever",
-        {},
-        {}
+            120 , 100 ,
+            C_Block,
+            CAT_CONTROL,
+            "forever",
+            {},
+            {}
     };
     blockMap["repeat"] = {
-        120, 100,
-        C_Block,
-        CAT_CONTROL,
-        "repeat",
-        {},
-        {}
+            120, 100,
+            C_Block,
+            CAT_CONTROL,
+            "repeat",
+            {},
+            {}
     };
     blockMap["repeat_until"] = {
-        120, 100,
-        C_Block,
-        CAT_CONTROL,
-        "repeat",
-        {},
-        {{50 , INPUT_BOOLEAN,"true"}}
+            120, 100,
+            C_Block,
+            CAT_CONTROL,
+            "repeat",
+            {},
+            {{50 , INPUT_BOOLEAN,"true"}}
     };
-
     return true;
 }
 
