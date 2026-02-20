@@ -4,6 +4,8 @@
 #include "SDL2/SDL_ttf.h"
 #include "Graphic_Element.h"
 #include "motion_functions.h"
+#include "sound_functions.h"
+#include "sensing_functions.h"
 #include "looks_functions.h"
 #include "constants.h"
 #include "Entity.h"
@@ -584,8 +586,8 @@ void Get_event() {
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
         Handle_event_for_code_button(e);
-        Handle_event_for_flag_button(e);
-        Handle_event_for_stop_button(e);
+        Handle_event_for_flag_button(e,flag_button);
+        Handle_event_for_stop_button(e,stop_button);
         Handle_event_for_motion_sprite(e,now_sprite);
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
@@ -740,8 +742,7 @@ void Update() {
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
-        Draw_flag_button(renderer,flag_button,green_flag);
-        Draw_stop_button(renderer,stop_button,stop_sign);
+        Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
 
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
@@ -804,8 +805,6 @@ void Update() {
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Stage_Content(renderer);
         Draw_Character(renderer, now_sprite);
-        Draw_size_report(renderer, main_font, now_sprite);
-        Draw_costume_report(renderer,main_font,now_sprite);
     }
     SDL_RenderPresent(renderer);
 }
