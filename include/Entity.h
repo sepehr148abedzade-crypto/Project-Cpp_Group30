@@ -143,8 +143,17 @@ struct BackdropMenu{
     bool is_open;
 };
 
-
-
+struct InformationOfCharacter{
+    SDL_Rect rect;
+    bool active = false;
+    std::string text;
+    double* linkedValue;
+};
+extern InformationOfCharacter name_of_sprite;
+extern InformationOfCharacter positionX;
+extern InformationOfCharacter positionY;
+extern InformationOfCharacter direction;
+extern InformationOfCharacter size;
 struct Button{
     SDL_Rect rect={0,0,0,0};
     int radius ;
@@ -160,6 +169,9 @@ extern Button Top_button;
 extern Button categories[8];
 extern Button flag_button;
 extern Button stop_button;
+extern Button Sounds_button;
+extern Button show_button;
+extern Button hide_button;
 extern std::vector<Blocks> active_blocks;
 extern std::vector<Blocks> menu_blocks;
 extern int sidebar_scroll_y;
@@ -172,6 +184,14 @@ extern std::map<std::string, SDL_Texture*> blockLibrary;
 void Init_Button();
 void Init_flag_button();
 void Init_stop_button();
+void Init_sound_button();
+void Init_hide_button();
+void Init_show_button();
+void Init_sprite_box(Character &sprite);
+void Init_positionX_box(Character &sprite);
+void Init_positionY_box(Character &sprite);
+void Init_direction_box(Character &sprite);
+void Init_size_box(Character &sprite);
 void Init_Load_button();
 void Init_code_button(SDL_Renderer* renderer, TTF_Font* font);
 

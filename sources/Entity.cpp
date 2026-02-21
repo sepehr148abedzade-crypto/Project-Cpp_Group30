@@ -62,6 +62,57 @@ void Init_stop_button(){
     stop_button.second_color = {179, 210, 253};
     stop_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
 };
+
+Button Sounds_button{};
+void Init_sound_button(){
+    Sounds_button.rect = {230, 55, 80, 40};
+    Sounds_button.first_color = {217,227,242};
+    Sounds_button.second_color = {229,240,255};
+    Sounds_button.third_color = white;
+    Sounds_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+}
+Button show_button{};
+void Init_show_button(){
+    show_button.rect = {stage.x+50,stage.y+stage.h+80,20,20};
+    show_button.first_color = white;
+    show_button.second_color = {122, 175, 255};
+    show_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+};
+Button hide_button{};
+void Init_hide_button(){
+    hide_button.rect = {stage.x+70,stage.y+stage.h+80,20,20};
+    hide_button.first_color = white;
+    hide_button.second_color = {122, 175, 255};
+    hide_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+};
+
+InformationOfCharacter name_of_sprite;
+void Init_sprite_box(Character &sprite){
+    name_of_sprite.rect ={stage.x+50,stage.y+stage.h+30,120,30};
+    name_of_sprite.text = sprite.name;
+}
+
+InformationOfCharacter positionX;
+void Init_positionX_box(Character &sprite){
+    positionX.rect ={stage.x+240,stage.y+stage.h+30,40,30};
+    positionX.linkedValue = &sprite.x;
+}
+InformationOfCharacter positionY;
+void Init_positionY_box(Character &sprite){
+    positionY.rect ={stage.x+335,stage.y+stage.h+30,40,30};
+    positionY.linkedValue = &sprite.y;
+}
+InformationOfCharacter direction;
+void Init_direction_box(Character &sprite){
+    direction.rect ={stage.x+305,stage.y+stage.h+75,70,30};
+    direction.linkedValue = &sprite.degree;
+}
+InformationOfCharacter size;
+void Init_size_box(Character &sprite){
+    size.rect ={stage.x+160,stage.y+stage.h+75,60,30};
+    size.linkedValue = &sprite.size;
+}
+
 Character cat;
 Character cat_running;
 Character now_sprite = cat;

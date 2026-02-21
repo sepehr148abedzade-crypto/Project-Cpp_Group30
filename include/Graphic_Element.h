@@ -11,7 +11,6 @@
 #include <Game.h>
 
 
-extern bool flag_active;
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
@@ -68,4 +67,15 @@ void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();
 void DrawBackdropLibrary(SDL_Renderer* renderer, TTF_Font* font);
 void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font,Blocks* block);
+void Draw_sound_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
+void Draw_report_informationOfCharacter_box(SDL_Renderer* renderer,InformationOfCharacter &information);
+void Draw_X_text(SDL_Renderer* renderer,SDL_Texture* texture);
+void Draw_Y_text(SDL_Renderer* renderer,SDL_Texture* texture);
+void Draw_sprite_text(SDL_Renderer* renderer,SDL_Texture* texture);
+void Draw_size_text(SDL_Renderer* renderer,SDL_Texture* texture);
+void Draw_direction_text(SDL_Renderer* renderer,SDL_Texture* texture);
+void Draw_show_text(SDL_Renderer* renderer,SDL_Texture* texture);
+void Draw_show_and_hide_button(SDL_Renderer* renderer,Button &button1,Button &button2,SDL_Texture* texture1,SDL_Texture* texture2,Character &sprite);
+void Handle_event_for_show_button(SDL_Event &e , Button &button,Character &sprite);
+void Handle_event_for_hide_button(SDL_Event &e , Button &button,Character &sprite);
 #endif //GRAPHIC_ELEMENT_H
