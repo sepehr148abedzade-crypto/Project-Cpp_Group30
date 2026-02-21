@@ -88,11 +88,20 @@ struct BlockTemplate {
     std::vector<InputField> inputs;
 };
 
+struct Costume{
+    std::string name;
+    SDL_Texture* texture;
+    const char* path;
+};
+
+extern Costume cat1;
+extern Costume cat2;
+
 struct Character{
     std::string name;
     double x = 0;
     double y = 0;
-    double degree = 0;
+    double degree ;
     double size = 0.25;
     double width=0;
     double height=0;
@@ -100,15 +109,14 @@ struct Character{
     bool is_mouse_on = false;
     std::string monologue;
     std::string think;
-    SDL_Texture* texture= nullptr;
     const char* path;
-    std::vector<SDL_Texture*> costumes;
-    int currentCostumeIndex;
+    std::vector<Costume*> costumes;
+    int currentCostumeIndex = 0;
 };
 
 extern Character cat;
 extern Character cat_running;
-extern Character now_sprite;
+extern Character* now_sprite;
 
 struct Blocks{
     string id;
@@ -166,7 +174,7 @@ struct Button{
 };
 extern Button Load_button;
 extern Button Top_button;
-extern Button categories[8];
+extern Button categories[9];
 extern Button flag_button;
 extern Button stop_button;
 extern Button Sounds_button;
@@ -194,5 +202,5 @@ void Init_direction_box(Character &sprite);
 void Init_size_box(Character &sprite);
 void Init_Load_button();
 void Init_code_button(SDL_Renderer* renderer, TTF_Font* font);
-
+void Init_costume();
 #endif //ENTITY_H

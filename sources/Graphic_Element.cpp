@@ -387,7 +387,7 @@ void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_RenderFillRect(renderer, &left_bar);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&left_bar);
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         filledCircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2) - 10, code_button[i].radius,
                          code_button[i].first_color.r, code_button[i].first_color.g, code_button[i].first_color.b, SDL_ALPHA_OPAQUE);
 
@@ -602,27 +602,27 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
     }
 }
 
-void Draw_Character(SDL_Renderer* renderer,Character &sprite){
+void Draw_Character(SDL_Renderer* renderer,Character* sprite){
     double centerX = stage.x + ((double )stage.w/2);
     double centerY = stage.y + ((double)stage.h/2);
 
     SDL_Rect dest;
-    dest.w = (int)(sprite.width);
-    dest.h = (int)(sprite.height);
-    dest.x = (int)(centerX + sprite.x - ((double)dest.w/2));
-    dest.y = (int)(centerY + sprite.y - ((double)dest.h/2));
+    dest.w = (int)(sprite->width);
+    dest.h = (int)(sprite->height);
+    dest.x = (int)(centerX + sprite->x - ((double)dest.w/2));
+    dest.y = (int)(centerY + sprite->y - ((double)dest.h/2));
 
-    if(sprite.isvisible)
-        SDL_RenderCopyEx(renderer,sprite.texture, nullptr,&dest,-sprite.degree, nullptr,SDL_FLIP_NONE);
+    if(sprite->isvisible)
+        SDL_RenderCopyEx(renderer,sprite->costumes[sprite->currentCostumeIndex]->texture, nullptr,&dest,-sprite->degree, nullptr,SDL_FLIP_NONE);
 }
 
 void Handle_event_for_code_button(SDL_Event &e) {
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (e.button.button == SDL_BUTTON_LEFT) {
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 9; i++) {
                 if (Is_mouse_on(categories[i].rect.x, categories[i].rect.y, categories[i].rect.w,
                                 categories[i].rect.h)) {
-                    for (int j = 0; j < 8; j++) {
+                    for (int j = 0; j < 9; j++) {
                         categories[j].is_mouse_click_on = false;
                     }
                     categories[i].is_mouse_click_on = true;
@@ -649,7 +649,7 @@ void Handle_event_for_stop_button(SDL_Event &e , Button &button){
         }
     }
 }
-void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
+void Handle_event_for_motion_sprite(SDL_Event &e, Character* sprite) {
     if (draggable) {
         static int mouse_firstX, mouse_firstY;
         if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -657,29 +657,29 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
             mouse_firstY = e.button.y;
             double stage_centerX = stage.x + (stage.w / 2);
             double stage_centerY = stage.y + (stage.h / 2);
-            if (Is_mouse_on((int) (sprite.x + stage_centerX - (sprite.width / 2)),
-                            (int) (sprite.y + stage_centerY - (sprite.height / 2)),
-                            (int) sprite.width, (int) sprite.height))
-                sprite.is_mouse_on = true;
+            if (Is_mouse_on((int) (sprite->x + stage_centerX - (sprite->width / 2)),
+                            (int) (sprite->y + stage_centerY - (sprite->height / 2)),
+                            (int) sprite->width, (int) sprite->height))
+                sprite->is_mouse_on = true;
         }
         if (e.type == SDL_MOUSEBUTTONUP) {
             if (e.button.button == SDL_BUTTON_LEFT) {
-                if (!Limit_CharacterY(sprite) || !Limit_CharacterX(sprite)) {
+                if (!Limit_CharacterY(*sprite) || !Limit_CharacterX(*sprite)) {
                     double stage_centerX = stage.x + (stage.w / 2);
                     double stage_centerY = stage.y + (stage.h / 2);
-                    sprite.x = mouse_firstX - stage_centerX;
-                    sprite.y = mouse_firstY - stage_centerY;
+                    sprite->x = mouse_firstX - stage_centerX;
+                    sprite->y = mouse_firstY - stage_centerY;
                 }
-                sprite.is_mouse_on = false;
+                sprite->is_mouse_on = false;
             }
         }
-        if (e.type == SDL_MOUSEMOTION && sprite.is_mouse_on) {
+        if (e.type == SDL_MOUSEMOTION && sprite->is_mouse_on) {
             int mouseX = e.motion.x;
             int mouseY = e.motion.y;
             double stage_centerX = stage.x + (stage.w / 2);
             double stage_centerY = stage.y + (stage.h / 2);
-            sprite.x = mouseX - stage_centerX;
-            sprite.y = mouseY - stage_centerY;
+            sprite->x = mouseX - stage_centerX;
+            sprite->y = mouseY - stage_centerY;
         }
     }
 }
@@ -794,7 +794,7 @@ void Draw_report_informationOfCharacter_box(SDL_Renderer* renderer,InformationOf
 }
 
 void Draw_X_text(SDL_Renderer* renderer,SDL_Texture* texture){
-    SDL_Rect rect ={stage.x+210,stage.y+stage.h+30,40,30};
+    SDL_Rect rect ={stage.x+170,stage.y+stage.h+30,40,30};
     int texture_w, texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
     SDL_Rect textPosition = {
@@ -805,7 +805,7 @@ void Draw_X_text(SDL_Renderer* renderer,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 void Draw_Y_text(SDL_Renderer* renderer,SDL_Texture* texture){
-    SDL_Rect rect ={stage.x+305,stage.y+stage.h+30,40,30};
+    SDL_Rect rect ={stage.x+270,stage.y+stage.h+30,40,30};
     int texture_w, texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
     SDL_Rect textPosition = {
@@ -827,7 +827,7 @@ void Draw_sprite_text(SDL_Renderer* renderer,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 void Draw_size_text(SDL_Renderer* renderer,SDL_Texture* texture){
-    SDL_Rect rect ={stage.x+110,stage.y+stage.h+75,60,30};
+    SDL_Rect rect ={stage.x+110,stage.y+stage.h+75,70,30};
     int texture_w, texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
     SDL_Rect textPosition = {
@@ -838,7 +838,7 @@ void Draw_size_text(SDL_Renderer* renderer,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 void Draw_direction_text(SDL_Renderer* renderer,SDL_Texture* texture){
-    SDL_Rect rect ={stage.x+245,stage.y+stage.h+75,60,30};
+    SDL_Rect rect ={stage.x+235,stage.y+stage.h+75,70,30};
     int texture_w, texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
     SDL_Rect textPosition = {
@@ -860,8 +860,8 @@ void Draw_show_text(SDL_Renderer* renderer,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
-void Draw_show_and_hide_button(SDL_Renderer* renderer,Button &button1,Button &button2,SDL_Texture* texture1,SDL_Texture* texture2,Character &sprite){
-    if(sprite.isvisible)
+void Draw_show_and_hide_button(SDL_Renderer* renderer,Button &button1,Button &button2,SDL_Texture* texture1,SDL_Texture* texture2,Character* sprite){
+    if(sprite->isvisible)
         SDL_SetRenderDrawColor(renderer, button1.second_color.r, button1.second_color.g,
                                button1.second_color.b, SDL_ALPHA_OPAQUE);
     else {
@@ -885,7 +885,7 @@ void Draw_show_and_hide_button(SDL_Renderer* renderer,Button &button1,Button &bu
     };
     SDL_RenderCopy(renderer, texture1, nullptr, &textPosition1);
 
-    if (!sprite.isvisible) {
+    if (!sprite->isvisible) {
         SDL_SetRenderDrawColor(renderer, button2.second_color.r, button2.second_color.g,
                                button2.second_color.b, SDL_ALPHA_OPAQUE);
     }
@@ -913,20 +913,65 @@ void Draw_show_and_hide_button(SDL_Renderer* renderer,Button &button1,Button &bu
     SDL_RenderDrawRect(renderer,&button2.rect);
 }
 
-void Handle_event_for_show_button(SDL_Event &e , Button &button,Character &sprite){
+void Handle_event_for_show_button(SDL_Event &e , Button &button,Character* sprite){
     if(e.type== SDL_MOUSEBUTTONDOWN){
         if(e.button.button == SDL_BUTTON_LEFT){
             if(Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h))
-                sprite.isvisible = true;
+                sprite->isvisible = true;
         }
     }
 }
 
-void Handle_event_for_hide_button(SDL_Event &e , Button &button,Character &sprite){
+void Handle_event_for_hide_button(SDL_Event &e , Button &button,Character* sprite){
     if(e.type== SDL_MOUSEBUTTONDOWN){
         if(e.button.button == SDL_BUTTON_LEFT){
             if(Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h))
-                sprite.isvisible= false;
+                sprite->isvisible= false;
         }
     }
+}
+
+void Draw_name_of_character(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_positionX(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_size(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_direction(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }

@@ -30,13 +30,13 @@ Button Load_button{};
 void Init_Load_button(){
     Load_button.rect = {Get_width()/2,Get_height()/2,0,0};
 };
-Button categories[8];
+Button categories[9];
 void Init_code_button(SDL_Renderer* renderer, TTF_Font* font) {
-    string labels[] = {"Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables"};
-    uint32_t colors[] = {0x4C97FF, 0x9966FF, 0xD65BE5, 0xFFBF00, 0xFFAB19, 0x4CBFE6, 0x59C059, 0xFF8C1A};
+    string labels[] = {"Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables","My Blocks"};
+    uint32_t colors[] = {0x4C97FF, 0x9966FF, 0xD65BE5, 0xFFBF00, 0xFFAB19, 0x4CBFE6, 0x59C059, 0xFF8C1A,0xFF6680};
 
     int currentY = 95;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         categories[i].rect={0,currentY,60,60};
         categories[i].radius = 10;
         categories[i].Label_texture = LoadText(renderer, font, labels[i], white);
@@ -94,12 +94,12 @@ void Init_sprite_box(Character &sprite){
 
 InformationOfCharacter positionX;
 void Init_positionX_box(Character &sprite){
-    positionX.rect ={stage.x+240,stage.y+stage.h+30,40,30};
+    positionX.rect ={stage.x+200,stage.y+stage.h+30,70,30};
     positionX.linkedValue = &sprite.x;
 }
 InformationOfCharacter positionY;
 void Init_positionY_box(Character &sprite){
-    positionY.rect ={stage.x+335,stage.y+stage.h+30,40,30};
+    positionY.rect ={stage.x+300,stage.y+stage.h+30,70,30};
     positionY.linkedValue = &sprite.y;
 }
 InformationOfCharacter direction;
@@ -109,10 +109,19 @@ void Init_direction_box(Character &sprite){
 }
 InformationOfCharacter size;
 void Init_size_box(Character &sprite){
-    size.rect ={stage.x+160,stage.y+stage.h+75,60,30};
+    size.rect ={stage.x+160,stage.y+stage.h+75,70,30};
     size.linkedValue = &sprite.size;
 }
 
 Character cat;
 Character cat_running;
-Character now_sprite = cat;
+Character* now_sprite = &cat;
+
+Costume cat1;
+Costume cat2;
+void Init_costume(){
+    cat1.name = "costume1";
+    cat1.path = "asset/images/sprite/cat.png";
+    cat2.name = "costume2";
+    cat2.path = "asset/images/sprite/cat_running.png";
+}

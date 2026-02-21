@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "iomanip"
 #include "TextureManager.h"
 #include "iostream"
 #include "SDL2/SDL_ttf.h"
@@ -29,6 +30,11 @@ SDL_Texture* Y_text = nullptr;
 SDL_Texture* size_text = nullptr;
 SDL_Texture* sprite_text = nullptr;
 SDL_Texture* direction_text = nullptr;
+SDL_Texture* positionX_text = nullptr;
+SDL_Texture* positionY_text = nullptr;
+SDL_Texture* size_of_sprite_text = nullptr;
+SDL_Texture* name_of_sprite_text = nullptr;
+SDL_Texture* direction_of_sprite_text = nullptr;;
 SDL_Texture* show_text = nullptr;
 SDL_Texture* S_text = nullptr;
 SDL_Texture* H_text = nullptr;
@@ -62,7 +68,6 @@ bool stop = false;
 string saveInputText;
 string textToDraw;
 string textInput;
-
 std::string GetUniqueBackdropName(std::string baseName) {
     int counter = 1;
     std::string finalName = baseName;
@@ -186,6 +191,11 @@ bool Init_Game(){
     direction_text = LoadText(renderer,report_font,"Direction",{100,100,100});
     show_text = LoadText(renderer,report_font,"Show",{100,100,100});
     sprite_text = LoadText(renderer,report_font,"Sprite",{100,100,100});
+    positionX_text = LoadText(renderer,report_font,to_string(now_sprite->x),{100,100,100});
+    positionY_text = LoadText(renderer,report_font, to_string(now_sprite->y),{100,100,100});
+    size_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->size),{100,100,100});
+    direction_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->degree),{100,100,100});
+    name_of_sprite_text = LoadText(renderer,report_font,now_sprite->name,{100,100,100});
     S_text = LoadText(renderer,report_font,"S",{100,100,100});
     H_text = LoadText(renderer,report_font,"H",{100,100,100});
     code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
@@ -193,24 +203,24 @@ bool Init_Game(){
         std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
         return false;
     }
+    Init_costume();
     Init_code_button(renderer,code_bar_font);
     LoadAllAssets(renderer);
     Init_Menu_Blocks();
     Init_flag_button();
     Init_stop_button();
     Init_sound_button();
-    Init_sprite_box(now_sprite);
-    Init_positionX_box(now_sprite);
-    Init_positionY_box(now_sprite);
-    Init_size_box(now_sprite);
-    Init_direction_box(now_sprite);
+    Init_sprite_box(*now_sprite);
+    Init_positionX_box(*now_sprite);
+    Init_positionY_box(*now_sprite);
+    Init_size_box(*now_sprite);
+    Init_direction_box(*now_sprite);
     Init_show_button();
     Init_hide_button();
     LoadBackdropLibraryManual(renderer);
     SDL_StartTextInput();
-    Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
-    Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
-    now_sprite = cat;
+    Load_Character(renderer,&cat,&cat1);
+    Load_Character(renderer,&cat,&cat2);
     return true;
 }
 
@@ -1009,9 +1019,17 @@ void Update() {
         Draw_sprite_text(renderer,sprite_text);
         Draw_show_text(renderer,show_text);
         Draw_show_and_hide_button(renderer,show_button,hide_button,S_text,H_text,now_sprite);
-        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
-
+        name_of_sprite_text = LoadText(renderer,report_font,now_sprite->name,{100,100,100});
+        Draw_name_of_character(renderer,name_of_sprite,name_of_sprite_text);
+        positionX_text = LoadText(renderer,report_font,to_string(now_sprite->x),{100,100,100});
+        Draw_positionX(renderer,positionX,positionX_text);
+        positionY_text = LoadText(renderer,report_font, to_string(-now_sprite->y),{100,100,100});
+        Draw_positionX(renderer,positionY,positionY_text);
         Draw_Stage_Content(renderer);
+        size_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->size*500),{100,100,100});
+        Draw_size(renderer,size,size_of_sprite_text);
+        direction_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->degree),{100,100,100});
+        Draw_direction(renderer,direction,direction_of_sprite_text);
         Draw_Character(renderer, now_sprite);
         if (isSaveModalOpen) {
             DrawSaveModal(renderer, main_font);
