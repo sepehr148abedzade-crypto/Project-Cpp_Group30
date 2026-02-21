@@ -2,29 +2,34 @@
 #include "Entity.h"
 #include "constants.h"
 #include <SDL2/SDL2_gfx.h>
+#include "sensing_functions.h"
 #include <vector>
 #include <ctime>
 #include <cstdlib>
-
+bool flag_active = false;
 EditorSettings globalEditor;
 Blocks* draggedBlock = nullptr;
+
 bool isBackdropMenuOpen = false;
 bool isLibraryOpen = false;
 bool isStageSelected = false;
+
 int offsetX = 0, offsetY = 0;
 int sidebar_scroll_y = 0;
+int selectedBackdropIndex = 0;
+int backdropScrollY = 0;
+
 std::vector<BackdropItem> libraryItems;
 std::vector<Backdrop> libraryBackdrops;
 std::vector<Backdrop> projectBackdrops;
-int selectedBackdropIndex = 0;
+
+
 Tab currentTab = CODE;
 
 SDL_Texture* icon_gallery = nullptr;
 SDL_Texture* icon_paint = nullptr;
 SDL_Texture* icon_upload = nullptr;
 SDL_Texture* icon_surprise = nullptr;
-int backdropScrollY = 0;
-
 
 SDL_Color white = {255,255,255};
 SDL_Color black = {0,0,0};
@@ -36,15 +41,17 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     color.a = SDL_ALPHA_OPAQUE;
     return color;
 }
+
 int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font ) {
     int totalWidth =20;
     totalWidth += Get_text_width(font,BT.Back_label);
     for (size_t i = 0 ; i <BT.inputs.size();++i) {
-        if (BT.inputs[i].type==INPUT_NUMBER) {
             totalWidth+=5;
             string v = i<value.size() ? value[i]:BT.inputs[i].defaultValue;
-            totalWidth+= Get_text_width(font,BT.Back_label);
-        }
+        int textWidth = Get_text_width(font, v);
+        int inputWidth = max(40, textWidth + 10);
+        totalWidth += inputWidth;
+
         if (i < BT.labels.size()) {
             totalWidth += 5;
             totalWidth += Get_text_width(font, BT.labels[i]);
@@ -52,7 +59,6 @@ int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font
     }
     return totalWidth;
 }
-
 
 int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color ) {
     SDL_Texture* text_tex = LoadText(renderer, font,text,color);
@@ -92,33 +98,6 @@ SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer) {
     return target;
 }
 
-void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser) {
-    if (!target) return;
-
-    SDL_SetRenderTarget(renderer, target);
-
-    if (isEraser) {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    } else {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-    }
-
-    int radius = isEraser ? 10 : 3;
-
-    for (int w = -radius; w <= radius; w++) {
-        for (int h = -radius; h <= radius; h++) {
-            if (w * w + h * h <= radius * radius) {
-                SDL_RenderDrawLine(renderer, x1 + w, y1 + h, x2 + w, y2 + h);
-            }
-        }
-    }
-
-    SDL_SetRenderTarget(renderer, NULL);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-}
-
 SDL_Texture* GetCurrentLayer() {
     if (currentTab == BACKDROPS) {
         if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
@@ -128,148 +107,9 @@ SDL_Texture* GetCurrentLayer() {
     return nullptr;
 }
 
-void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName) {
-    int barX = 110, barY = 95, barW = 920, barH = 110;
-    SDL_Rect topBar = { barX, barY, barW, barH };
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &topBar);
-
-    Drawtext(renderer, font, "Name:", barX + 20, barY + 20, {100, 100, 100, 255}, false);
-
-    SDL_Rect nameBox = { barX + 80, barY + 15, 180, 35 };
-    SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
-    SDL_RenderFillRect(renderer, &nameBox);
-
-    string displayName = itemName;
-    if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-        displayName = projectBackdrops[selectedBackdropIndex].name;
-    }
-    Drawtext(renderer, font, displayName, nameBox.x + 10, nameBox.y + 5, {0, 0, 0, 255}, false);
-
-    int toolX = 115, toolY = 220, btnS = 45;
-    for (int i = 0; i < 8; i++) {
-        SDL_Rect r = { toolX + (i % 2) * 55, toolY + (i / 2) * 55, btnS, btnS };
-        bool isActive = false;
-
-        if (i == 1 && globalEditor.activeTool == TOOL_PEN) isActive = true;
-        else if (i == 3 && globalEditor.activeTool == TOOL_LINE) isActive = true;
-        else if (i == 4 && globalEditor.activeTool == TOOL_CIRCLE) isActive = true;
-        else if (i == 5 && globalEditor.activeTool == TOOL_TEXT) isActive = true;
-        else if (i == 6 && globalEditor.activeTool == TOOL_FILL) isActive = true;
-        else if (i == 7 && globalEditor.activeTool == TOOL_ERASER) isActive = true;
-
-        if (isActive) {
-            SDL_SetRenderDrawColor(renderer, 66, 133, 244, 40);
-            SDL_RenderFillRect(renderer, &r);
-            SDL_SetRenderDrawColor(renderer, 66, 133, 244, 255);
-        } else {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            SDL_RenderFillRect(renderer, &r);
-            SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
-        }
-        SDL_RenderDrawRect(renderer, &r);
-
-        if (i == 1) Drawtext(renderer, font, "P", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 3) Drawtext(renderer, font, "/", r.x + 18, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 4) Drawtext(renderer, font, "O", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        else if (i == 5) Drawtext(renderer, font, "T", r.x + 12, r.y + 2, {0, 0, 0, 255}, false);
-        else if (i == 6) {
-            Drawtext(renderer, font, "F", r.x + 15, r.y + 12, {0, 0, 0, 255}, false);
-        }
-        else if (i == 7) Drawtext(renderer, font, "E", r.x + 15, r.y + 12, {255, 0, 0, 255}, false);
-    }
-
-    SDL_Rect canvasBG = { 240, 220, 780, 520 };
-    SDL_SetRenderDrawColor(renderer, 232, 237, 247, 255);
-    SDL_RenderFillRect(renderer, &canvasBG);
-
-    if (currentTex) {
-        SDL_Rect imgPos = { 330, 280, 600, 380 };
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &imgPos);
-        SDL_RenderCopy(renderer, currentTex,
-nullptr, &imgPos);
-
-        if (selectedBackdropIndex >= 0 && projectBackdrops[selectedBackdropIndex].drawingLayer) {
-            SDL_SetTextureBlendMode(projectBackdrops[selectedBackdropIndex].drawingLayer, SDL_BLENDMODE_BLEND);
-            SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &imgPos);
-        }
-
-        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-        SDL_RenderDrawRect(renderer, &imgPos);
-    }
-}
-
-void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
-    if (!target) return;
-    SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-    SDL_Rect r = { x - globalEditor.brushSize / 2, y - globalEditor.brushSize / 2, globalEditor.brushSize, globalEditor.brushSize };
-    SDL_RenderFillRect(renderer, &r);
-    SDL_SetRenderTarget(renderer,
-nullptr);
-}
-
-void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
-    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, target);
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-    SDL_Rect r = { x - 10, y - 10, 20, 20 };
-    SDL_RenderFillRect(renderer, &r);
-
-    SDL_SetRenderTarget(renderer, oldTarget);
-}
-
-void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill) {
-    if (!target || radius <= 0) return;
-    SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-
-    if (fill) {
-        for (int w = 0; w < radius * 2; w++) {
-            for (int h = 0; h < radius * 2; h++) {
-                int dx = radius - w;
-                int dy = radius - h;
-                if ((dx * dx + dy * dy) <= (radius * radius)) {
-                    SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
-                }
-            }
-        }
-    } else {
-        int x = radius - 1;
-        int y = 0;
-        int dx = 1;
-        int dy = 1;
-        int err = dx - (radius << 1);
-        while (x >= y) {
-            SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
-            SDL_RenderDrawPoint(renderer, centerX + y, centerY + x);
-            SDL_RenderDrawPoint(renderer, centerX - y, centerY + x);
-            SDL_RenderDrawPoint(renderer, centerX - x, centerY + y);
-            SDL_RenderDrawPoint(renderer, centerX - x, centerY - y);
-            SDL_RenderDrawPoint(renderer, centerX - y, centerY - x);
-            SDL_RenderDrawPoint(renderer, centerX + y, centerY - x);
-            SDL_RenderDrawPoint(renderer, centerX + x, centerY - y);
-            if (err <= 0) { y++; err += dy; dy += 2; }
-            if (err > 0) { x--; dx += 2; err += dx - (radius << 1); }
-        }
-    }
-    SDL_SetRenderTarget(renderer, nullptr);
-}
-
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer) {
     SDL_SetRenderTarget(renderer, target);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, nullptr);
-}
-
-void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer) {
-    SDL_SetRenderTarget(renderer, target);
-    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderTarget(renderer, nullptr);
 }
@@ -341,7 +181,13 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
                 case Simple_Block:
                     DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font,nullptr);
                     break;
-                case C_Block: C_Block:Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font, nullptr);
+                case C_Block:
+                    Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font, nullptr);
+                    break;
+                case Expression_Block:
+                    DrawExpressionBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,blockMap[mb.id], mb.values, color, font, nullptr);
+                    break;
+
             }
         }
     }
@@ -404,7 +250,39 @@ void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTe
         current_x += input_width + 5;
 
     }
+}
+void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block) {
 
+    roundedBoxRGBA(renderer, x, y, x + w, y + h, 10, color.r, color.g, color.b, color.a);
+
+    roundedRectangleRGBA(renderer, x, y, x + w, y + h, 10, 0, 0, 0, 255);
+
+    int current_x = x +5;
+
+    if (!BT.Back_label.empty()) {
+        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y -6,
+                               {255,255,255,255}) + 8;
+    }
+
+    for (size_t i = 0; i < values.size(); i++) {
+        string val = values[i];
+
+        if (block && block->is_editing && block->active_value_index == (int)i) {
+            val += "|";
+        }
+
+        int text_width = Get_text_width(font, val);
+        int input_width = max(35, text_width +12);
+
+        roundedBoxRGBA(renderer, current_x, y +3, current_x + input_width, y +23,8, 255, 255, 255, 255);
+        int text_x = current_x + (input_width - text_width) / 2;
+        Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
+        current_x += input_width + 5;
+        if (i < BT.labels.size()) {
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
+                                  {255,255,255,255}) + 8;
+        }
+    }
 }
 SDL_Color GetBlockColor(Block_category cat) {
     switch (cat) {
@@ -430,8 +308,12 @@ void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
                 break;
                 case C_Block:
                 Draw_C_Blocks(renderer,b.rect.x, b.rect.y, b.rect.w, b.rect.h, blockMap[b.id], b.values, color, font, &b);
+                break;
+                 case Expression_Block:
+                DrawExpressionBlock(renderer, b.rect.x, b.rect.y, b.rect.w, b.rect.h,
+                                  blockMap[b.id], b.values, color, font, &b);
+                break;
         }
-        //DrawBlockInputs(renderer, font, b);
     }
 }
 
@@ -467,7 +349,7 @@ void Draw_BlueBar_Top(SDL_Renderer* renderer,int width,SDL_Texture* logo){
     }
 }
 
-void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
+void Draw_Top_Button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture){
     if (Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h)) {
         SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
                                button.second_color.b, SDL_ALPHA_OPAQUE);
@@ -487,6 +369,60 @@ void Draw_Top_Button(SDL_Renderer* renderer,Button button,SDL_Texture* texture){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
+void Draw_flag_and_stop_button(SDL_Renderer* renderer,Button &button1,Button &button2,SDL_Texture* texture1,SDL_Texture* texture2){
+    if (Is_mouse_on(button1.rect.x,button1.rect.y,button1.rect.w,button1.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button1.second_color.r, button1.second_color.g,
+                               button1.second_color.b, SDL_ALPHA_OPAQUE);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, button1.first_color.r, button1.first_color.g,
+                               button1.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(flag_active) {
+        SDL_SetRenderDrawColor(renderer, button1.third_color.r, button1.third_color.g,
+                               button1.third_color.b, SDL_ALPHA_OPAQUE);
+    }
+
+    SDL_RenderFillRect(renderer, &button1.rect);
+    int texture1_w, texture1_h;
+    SDL_QueryTexture(texture1, nullptr, nullptr, &texture1_w, &texture1_h);
+    double scale1 = std::min(
+            (double)button1.rect.w / texture1_w,
+            (double)button1.rect.h / texture1_h
+            );
+    int new1_w = texture1_w * scale1;
+    int new1_h = texture1_h * scale1;
+    SDL_Rect textPosition1 = {
+            button1.rect.x + (button1.rect.w - new1_w) / 2,
+            button1.rect.y + (button1.rect.h - new1_h) / 2,
+            new1_w, new1_h
+    };
+    SDL_RenderCopy(renderer, texture1, nullptr, &textPosition1);
+
+    if (Is_mouse_on(button2.rect.x,button2.rect.y,button2.rect.w,button2.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button2.second_color.r, button2.second_color.g,
+                               button2.second_color.b, SDL_ALPHA_OPAQUE);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, button2.first_color.r, button2.first_color.g,
+                               button2.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button2.rect);
+    int texture2_w, texture2_h;
+    SDL_QueryTexture(texture2, nullptr, nullptr, &texture2_w, &texture2_h);
+    double scale2 = std::min(
+            (double)button2.rect.w / texture2_w,
+            (double)button2.rect.h / texture2_h
+    );
+    int new2_w = texture2_w * scale2;
+    int new2_h = texture2_h * scale2;
+    SDL_Rect textPosition2 = {
+            button2.rect.x + (button2.rect.w - new2_w) / 2,
+            button2.rect.y + (button2.rect.h - new2_h) / 2,
+            new2_w, new2_h
+    };
+    SDL_RenderCopy(renderer, texture2, nullptr, &textPosition2);
+}
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_Rect left_bar = {0, 95, 60, Get_height() - 48};
     SDL_SetRenderDrawColor(renderer, 249, 249, 249, SDL_ALPHA_OPAQUE);
@@ -542,7 +478,6 @@ void Draw_RunningBar(SDL_Renderer* renderer){
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
-
 }
 
 void Draw_Character_Show_Bar(SDL_Renderer* renderer){
@@ -562,6 +497,7 @@ void Draw_Information_of_Character(SDL_Renderer* renderer){
     SDL_RenderDrawRect(renderer,&rect);
     SDL_RenderDrawLine(renderer,1040,Get_height()/2+30+100,1040+(Get_width()-1040-100),Get_height()/2+30+100);
 }
+
 void DrawBackdropCircleButton(SDL_Renderer* renderer){
     int sw = Get_width();
     int sh = Get_height();
@@ -686,8 +622,7 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderDrawRect(renderer, &thumbRect);
 
-    Drawtext(renderer, font, "Backdrops", cx, thumbRect.y + thumbRect.h + 8, {130, 130, 130}, true);
-    Drawtext(renderer, font, "1", cx, thumbRect.y + thumbRect.h + 24, {130, 130, 130}, true);
+    Drawtext(renderer, font, "Backdrops", cx-1, thumbRect.y + thumbRect.h + 8, {130, 130, 130}, true);
 
     int spacing = 45;
     if (isBackdropMenuOpen) {
@@ -707,14 +642,6 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
         SDL_Rect iconRect = { cx - 10, cy - 10, 20, 20 };
         SDL_RenderCopy(renderer, icon_gallery, NULL, &iconRect);
     }
-}
-
-void Draw_Stage_Bar(SDL_Renderer* renderer){
-    SDL_Rect rect = {Get_width()-100+5,Get_height()/2+30,85,Get_height()/2-80};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer,&rect);
-    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer,&rect);
 }
 
 void Draw_Character(SDL_Renderer* renderer,Character &sprite){
@@ -747,34 +674,55 @@ void Handle_event_for_code_button(SDL_Event &e) {
     }
 }
 
-void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite){
-    static int mouse_firstX , mouse_firstY;
-    if(e.type == SDL_MOUSEBUTTONDOWN){
-        mouse_firstX = e.button.x;
-        mouse_firstY = e.button.y;
-        double stage_centerX = stage.x + (stage.w/2);
-        double stage_centerY = stage.y + (stage.h/2);
-        if(Is_mouse_on((int)(sprite.x+stage_centerX-(sprite.width/2)),(int)(sprite.y+stage_centerY-(sprite.height/2)),
-                       (int)sprite.width,(int)sprite.height)) sprite.is_mouse_on = true;
-    }
-    if(e.type==SDL_MOUSEBUTTONUP){
-        if(e.button.button == SDL_BUTTON_LEFT) {
-            if(!Limit_CharacterY(sprite) || !Limit_CharacterX(sprite)){
-                double stage_centerX = stage.x + (stage.w/2);
-                double stage_centerY = stage.y + (stage.h/2);
-                sprite.x = mouse_firstX - stage_centerX;
-                sprite.y = mouse_firstY - stage_centerY;
-            }
-            sprite.is_mouse_on = false;
+void Handle_event_for_flag_button(SDL_Event &e , Button &button){
+    if(e.type== SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            if(Is_mouse_on(button.rect.x,button.rect.h,button.rect.w,button.rect.h))
+                flag_active = true;
         }
     }
-    if(e.type == SDL_MOUSEMOTION && sprite.is_mouse_on) {
-        int mouseX = e.motion.x;
-        int mouseY = e.motion.y;
-        double stage_centerX = stage.x + (stage.w/2);
-        double stage_centerY = stage.y + (stage.h/2);
-        sprite.x = mouseX - stage_centerX;
-        sprite.y = mouseY - stage_centerY;
+}
+
+void Handle_event_for_stop_button(SDL_Event &e , Button &button){
+    if(e.type== SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            if(Is_mouse_on(button.rect.x,button.rect.h,button.rect.w,button.rect.h))
+                flag_active= false;
+        }
+    }
+}
+void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
+    if (draggable) {
+        static int mouse_firstX, mouse_firstY;
+        if (e.type == SDL_MOUSEBUTTONDOWN) {
+            mouse_firstX = e.button.x;
+            mouse_firstY = e.button.y;
+            double stage_centerX = stage.x + (stage.w / 2);
+            double stage_centerY = stage.y + (stage.h / 2);
+            if (Is_mouse_on((int) (sprite.x + stage_centerX - (sprite.width / 2)),
+                            (int) (sprite.y + stage_centerY - (sprite.height / 2)),
+                            (int) sprite.width, (int) sprite.height))
+                sprite.is_mouse_on = true;
+        }
+        if (e.type == SDL_MOUSEBUTTONUP) {
+            if (e.button.button == SDL_BUTTON_LEFT) {
+                if (!Limit_CharacterY(sprite) || !Limit_CharacterX(sprite)) {
+                    double stage_centerX = stage.x + (stage.w / 2);
+                    double stage_centerY = stage.y + (stage.h / 2);
+                    sprite.x = mouse_firstX - stage_centerX;
+                    sprite.y = mouse_firstY - stage_centerY;
+                }
+                sprite.is_mouse_on = false;
+            }
+        }
+        if (e.type == SDL_MOUSEMOTION && sprite.is_mouse_on) {
+            int mouseX = e.motion.x;
+            int mouseY = e.motion.y;
+            double stage_centerX = stage.x + (stage.w / 2);
+            double stage_centerY = stage.y + (stage.h / 2);
+            sprite.x = mouseX - stage_centerX;
+            sprite.y = mouseY - stage_centerY;
+        }
     }
 }
 
@@ -784,7 +732,7 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+5,stage.y+5,texture_w+10,25};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
@@ -795,13 +743,46 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
-
+void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
+    std::string message = "Timer : " + to_string(time/1000);
+    SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
+    int texture_w,texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
+    SDL_Rect rect = {stage.x+stage.w-70,stage.y+5,texture_w+10,30};
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2 ,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
+    std::string message = sprite.name + " " + "costume number is : " + to_string(sprite.costumes.size());
+    SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
+    int texture_w,texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
+    SDL_Rect rect = {stage.x+5,stage.y+25+5,texture_w+10,25};
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2 ,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
 void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);
@@ -818,7 +799,7 @@ void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
-    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&rect);

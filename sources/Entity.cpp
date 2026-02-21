@@ -47,7 +47,21 @@ void Init_code_button(SDL_Renderer* renderer, TTF_Font* font) {
         currentY += 60;
     }
 }
-
+Button flag_button{};
+void Init_flag_button(){
+    flag_button.rect = {stage.x, stage.y-45, 40, 40};
+    flag_button.first_color = {229,240,249};
+    flag_button.second_color = {179, 210, 253};
+    flag_button.third_color = {160,180,255};
+    flag_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+}
+Button stop_button{};
+void Init_stop_button(){
+    stop_button.rect = {stage.x+flag_button.rect.w + 10, stage.y-45, 40, 40};
+    stop_button.first_color = {229,240,249};
+    stop_button.second_color = {179, 210, 253};
+    stop_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+};
 Character cat;
 Character cat_running;
-Character now_sprite = cat_running;
+Character now_sprite = cat;
