@@ -20,9 +20,18 @@ SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
+SDL_Texture* Sound_text = nullptr;
 SDL_Texture* green_flag = nullptr;
 SDL_Texture* stop_sign = nullptr;
 SDL_Texture* cat_texture = nullptr;
+SDL_Texture* X_text = nullptr;
+SDL_Texture* Y_text = nullptr;
+SDL_Texture* size_text = nullptr;
+SDL_Texture* sprite_text = nullptr;
+SDL_Texture* direction_text = nullptr;
+SDL_Texture* show_text = nullptr;
+SDL_Texture* S_text = nullptr;
+SDL_Texture* H_text = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
@@ -127,7 +136,6 @@ bool Loading(){
         return false;
     }
     SDL_Texture* Loading_text = LoadText(renderer,loading_font,"Scratch is loading...",white);
-
     SDL_SetRenderDrawColor(renderer,77,151,255,SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     Init_Load_button();
@@ -161,10 +169,25 @@ bool Init_Game(){
         std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
         return false;
     }
+    thinking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+    if(thinking_font== nullptr){
+        std::cout << "Thinking Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
     File_Text = LoadText(renderer,main_font,"File",white);
+    Sound_text = LoadText(renderer,main_font,"Sounds",{120,147,149});
     Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
     SetWindowIcon(main_window,"asset/images/logo/icon.png");
-
+    green_flag = LoadTexture(renderer,"asset/images/logo/flag.png");
+    stop_sign = LoadTexture(renderer,"asset/images/logo/stop.png");
+    X_text = LoadText(renderer,report_font,"X",{100,100,100});
+    Y_text = LoadText(renderer,report_font,"Y",{100,100,100});
+    size_text = LoadText(renderer,report_font,"Size",{100,100,100});
+    direction_text = LoadText(renderer,report_font,"Direction",{100,100,100});
+    show_text = LoadText(renderer,report_font,"Show",{100,100,100});
+    sprite_text = LoadText(renderer,report_font,"Sprite",{100,100,100});
+    S_text = LoadText(renderer,report_font,"S",{100,100,100});
+    H_text = LoadText(renderer,report_font,"H",{100,100,100});
     code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
     if(code_bar_font == nullptr){
         std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
@@ -173,11 +196,21 @@ bool Init_Game(){
     Init_code_button(renderer,code_bar_font);
     LoadAllAssets(renderer);
     Init_Menu_Blocks();
+    Init_flag_button();
+    Init_stop_button();
+    Init_sound_button();
+    Init_sprite_box(now_sprite);
+    Init_positionX_box(now_sprite);
+    Init_positionY_box(now_sprite);
+    Init_size_box(now_sprite);
+    Init_direction_box(now_sprite);
+    Init_show_button();
+    Init_hide_button();
     LoadBackdropLibraryManual(renderer);
     SDL_StartTextInput();
     Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
     Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
-    now_sprite = cat_running;
+    now_sprite = cat;
     return true;
 }
 
@@ -561,112 +594,6 @@ void HandleBlockEvent(SDL_Event& e){
     }
 }
 
-//SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
-//        if(!font) {
-//                std::cout << "font is not find! SDL_Error : " << TTF_GetError() << std::endl;
-//                return nullptr;
-//        }
-//        SDL_Surface* text_surface = TTF_RenderText_Blended(font,text.c_str(),color);
-//        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,text_surface);
-//        SDL_FreeSurface(text_surface);
-//        return texture;
-//}
-//int Get_text_width(TTF_Font* font,string text ) {
-//    int width ;
-//    TTF_SizeText(font,text.c_str(),&width,nullptr);
-//    return width;
-//}
-//
-//bool Loading(){
-//        if(TTF_Init()==-1){
-//                std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
-//                return false;
-//        }
-//        loading_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",50);
-//        if(loading_font== nullptr){
-//                std::cout << "Loading Font could not be found! Error: " << TTF_GetError() << std::endl;
-//                return false;
-//        }
-//        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
-//        if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-//                std::cout << "SDL could not initialize! SDL_Error : " << SDL_GetError() << std::endl;
-//                return false;
-//        }
-//        main_window= SDL_CreateWindow(
-//                "Scratch",
-//                SDL_WINDOWPOS_CENTERED,
-//                SDL_WINDOWPOS_CENTERED,
-//                Get_width(),
-//                Get_width(),
-//                SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED |SDL_WINDOW_RESIZABLE
-//        );
-//
-//        if(main_window == nullptr) {
-//                std::cout << "main_window could not be created! SDL_Error : " << SDL_GetError() << std::endl;
-//                return false;
-//        }
-//
-//        renderer = SDL_CreateRenderer(main_window,-1,SDL_RENDERER_ACCELERATED);
-//
-//        if(renderer == nullptr) {
-//                std::cout << "renderer could not be created! SDL_Error : " << SDL_GetError() << std::endl;
-//                return false;
-//        }
-//        SDL_Texture* Loading_text = LoadText(renderer,loading_font,"Scratch is loading...",white);
-//
-//        SDL_SetRenderDrawColor(renderer,77,151,255,SDL_ALPHA_OPAQUE);
-//        SDL_RenderClear(renderer);
-//        Init_Load_button();
-//        Draw_loading_window(renderer,Load_button,Loading_text);
-//        SDL_RenderPresent(renderer);
-//        //SDL_Delay(3000);
-//}
-//
-//bool Init_Game(){
-//        SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
-//        SDL_RenderClear(renderer);
-//
-//        if(TTF_Init()==-1){
-//                std::cout << "TTF_Init Error: " << TTF_GetError() << std::endl;
-//                return false;
-//        }
-//        main_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",15);
-//        edit_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",40);
-//        if(main_font== nullptr){
-//                std::cout << "Font could not be found! Error: " << TTF_GetError() << std::endl;
-//                return false;
-//        }
-//        Init_Button();
-//        report_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",10);
-//        if(report_font== nullptr){
-//            std::cout << "Report Font could not be found! Error: " << TTF_GetError() << std::endl;
-//            return false;
-//        }
-//        talking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
-//        if(talking_font== nullptr){
-//            std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
-//            return false;
-//        }
-//        File_Text = LoadText(renderer,main_font,"File",white);
-//        Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
-//        SetWindowIcon(main_window,"asset/images/logo/icon.png");
-//
-//        code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
-//        if(code_bar_font == nullptr){
-//                std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
-//                return false;
-//        }
-//        Init_code_button(renderer,code_bar_font);
-//        LoadAllAssets(renderer);
-//        Init_Menu_Blocks();
-//        LoadBackdropLibraryManual(renderer);
-//        SDL_StartTextInput();
-//        Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
-//        Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
-//        now_sprite = cat_running;
-//        return true;
-//}
-
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
     if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
         if (mx < 110 && currentTab == BACKDROPS) {
@@ -898,6 +825,8 @@ void Get_event() {
         Handle_event_for_motion_sprite(e,now_sprite);
         Handle_event_for_flag_button(e,flag_button);
         Handle_event_for_stop_button(e,stop_button);
+        Handle_event_for_show_button(e,show_button,now_sprite);
+        Handle_event_for_hide_button(e,hide_button,now_sprite);
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
@@ -1018,13 +947,12 @@ void Update() {
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
-
+    Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
-        Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
 
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
@@ -1066,9 +994,21 @@ void Update() {
         }
 
         Draw_Information_of_Character(renderer);
+        //Draw_sound_button(renderer,Sounds_button,Sound_text);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
-
+        Draw_report_informationOfCharacter_box(renderer,name_of_sprite);
+        Draw_report_informationOfCharacter_box(renderer,direction);
+        Draw_report_informationOfCharacter_box(renderer,size);
+        Draw_report_informationOfCharacter_box(renderer,positionX);
+        Draw_report_informationOfCharacter_box(renderer,positionY);
+        Draw_X_text(renderer,X_text);
+        Draw_Y_text(renderer,Y_text);
+        Draw_size_text(renderer,size_text);
+        Draw_direction_text(renderer,direction_text);
+        Draw_sprite_text(renderer,sprite_text);
+        Draw_show_text(renderer,show_text);
+        Draw_show_and_hide_button(renderer,show_button,hide_button,S_text,H_text,now_sprite);
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
 
         Draw_Stage_Content(renderer);
