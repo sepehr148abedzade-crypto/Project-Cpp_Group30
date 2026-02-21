@@ -39,6 +39,7 @@ void HandleContinuousDrawing(int mx, int my);
 void HandleCanvasMouseUp(int mx, int my);
 void HandleCanvasMouseDown(int mx, int my);
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e);
+void HandleSaveModalClick(int mx, int my);
 void Handle_Tab_Switch(int mx, int my);
 void Handle_Backdrop_Selection(int mx, int my);
 void Handle_Backdrop_Menu_Clicks(int mx, int my);

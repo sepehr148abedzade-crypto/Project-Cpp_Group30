@@ -858,32 +858,59 @@ void HandleBrushSizeSelection(int mx, int my) {
     }
 }
 
+void HandleSaveModalClick(int mx, int my) {
+    if (!isSaveModalOpen) return;
+
+    int centerX = Get_width() / 2;
+    int centerY = Get_height() / 2;
+
+    SDL_Rect saveBtn = { centerX - 110, centerY + 50, 100, 40 };
+    SDL_Rect cancelBtn = { centerX + 10, centerY + 50, 100, 40 };
+
+    if (mx >= saveBtn.x && mx <= saveBtn.x + saveBtn.w &&
+        my >= saveBtn.y && my <= saveBtn.y + saveBtn.h) {
+
+        string nameToSave = (saveInputText.empty()) ? "Untitled" : saveInputText;
+        SaveToLibrary(nameToSave, renderer);
+    }
+    else if (mx >= cancelBtn.x && mx <= cancelBtn.x + cancelBtn.w &&
+             my >= cancelBtn.y && my <= cancelBtn.y + cancelBtn.h) {
+
+        isSaveModalOpen = false;
+        saveInputText = "";
+        SDL_StopTextInput();
+    }
+}
+
 void SaveToLibrary(string name, SDL_Renderer* renderer) {
-    if (selectedBackdropIndex < 0 || selectedBackdropIndex >= (int)projectBackdrops.size()) return;
+    if (selectedBackdropIndex < 0 || selectedBackdropIndex >= (int)projectBackdrops.size()) {
+        isSaveModalOpen = false;
+        return;
+    }
 
     Backdrop& bd = projectBackdrops[selectedBackdropIndex];
     int w, h;
     SDL_QueryTexture(bd.texture, NULL, NULL, &w, &h);
 
-    SDL_Texture* combinedTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, w, h);
-    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    SDL_Texture* combinedTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (combinedTex) {
+        SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+        SDL_SetRenderTarget(renderer, combinedTex);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
 
-    SDL_SetRenderTarget(renderer, combinedTex);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, bd.texture, NULL, NULL);
+        if (bd.drawingLayer) {
+            SDL_RenderCopy(renderer, bd.drawingLayer, NULL, NULL);
+        }
 
-    SDL_RenderCopy(renderer, bd.texture, NULL, NULL);
-    if (bd.drawingLayer) {
-        SDL_RenderCopy(renderer, bd.drawingLayer, NULL, NULL);
+        SDL_SetRenderTarget(renderer, oldTarget);
+
+        BackdropItem newItem;
+        newItem.texture = combinedTex;
+        newItem.name = name;
+        libraryItems.push_back(newItem);
     }
-
-    SDL_SetRenderTarget(renderer, oldTarget);
-
-    BackdropItem newItem;
-    newItem.texture = combinedTex;
-    newItem.name = name;
-    libraryItems.push_back(newItem);
 
     isSaveModalOpen = false;
     saveInputText = "";
@@ -893,23 +920,41 @@ void SaveToLibrary(string name, SDL_Renderer* renderer) {
 void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
-        if (e.type == SDL_QUIT) stop = true;
-        Handle_event_for_code_button(e);
-        Handle_event_for_motion_sprite(e,now_sprite);
-        Handle_event_for_flag_button(e,flag_button);
-        Handle_event_for_stop_button(e,stop_button);
-        int mx, my;
-        Uint32 mouseState = SDL_GetMouseState(&mx, &my);
-        bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
+        if (e.type == SDL_QUIT) {
+            stop = true;
+            return;
+        }
 
-        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            if (isLibraryOpen) {
+        int mx, my;
+        SDL_GetMouseState(&mx, &my);
+
+        if (isSaveModalOpen) {
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+                HandleSaveModalClick(mx, my);
+            }
+            HandleKeyboardInput(e);
+            if (isSaveModalOpen) continue;
+        }
+
+        if (isLibraryOpen) {
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
                 if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) isLibraryOpen = false;
                 else HandleLibraryClick(mx, my);
-            } else {
-                Handle_Tab_Switch(mx, my);
+            }
+            continue;
+        }
+
+        Handle_event_for_code_button(e);
+        Handle_event_for_flag_button(e, flag_button);
+        Handle_event_for_stop_button(e, stop_button);
+        Handle_event_for_motion_sprite(e, now_sprite);
+
+        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+            Handle_Tab_Switch(mx, my);
+            Handle_Backdrop_Menu_Clicks(mx, my);
+
+            if (currentTab == BACKDROPS) {
                 Handle_Backdrop_Selection(mx, my);
-                Handle_Backdrop_Menu_Clicks(mx, my);
                 HandleToolSelection(mx, my);
                 HandleColorSelection(mx, my);
                 HandleBrushSizeSelection(mx, my);
@@ -918,13 +963,22 @@ void Get_event() {
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseDown(mx,my);
+            if (currentTab == BACKDROPS) {
+                HandleCanvasMouseUp(mx, my);
+            }
         }
 
-        if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
-            HandleContinuousDrawing(mx, my);
+        Uint32 mouseState = SDL_GetMouseState(NULL, NULL);
+        if ((mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) && currentTab == BACKDROPS && !isSaveModalOpen) {
+            if (!(mx > Get_width() - 100 && my > Get_height() / 2)) {
+                HandleContinuousDrawing(mx, my);
+            }
         }
-        HandleBlockEvent(e);
+
+        if (currentTab == CODE) {
+            HandleBlockEvent(e);
+        }
+
         HandleKeyboardInput(e);
     }
 }
@@ -1079,6 +1133,7 @@ void Update() {
     }
     SDL_RenderPresent(renderer);
 }
+
 void Render(){
         SDL_RenderPresent(renderer);
 }
