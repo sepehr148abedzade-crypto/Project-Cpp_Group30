@@ -4,61 +4,54 @@
 #include <fstream>
 #include <sstream>
 
-void SaveProject(const std::string& filename) {
-    std::ofstream file(filename);
-    if (!file.is_open()) return;
+void SaveProjectToFile(string filename) {
+    ofstream outFile(filename);
+    if (!outFile.is_open()) return;
 
-    for (auto& ch : allCharacters) {
-        file << "CHARACTER|" << ch.name << "|" << ch.x << "|" << ch.y << "|" << ch.size << "|" << ch.isvisible << "\n";
+    outFile << projectBackdrops.size() << endl;
+    for (const auto& bd : projectBackdrops) {
+        outFile << bd.name << endl;
     }
 
-    for (auto& block : active_blocks) {
-        file << "BLOCK|" << block.id << "|" << block.rect.x << "|" << block.rect.y;
-        for (const auto& val : block.values) {
-            file << "|" << val;
-        }
-        file << "\n";
-    }
+    outFile << selectedBackdropIndex << endl;
 
-    file.close();
+    outFile << now_sprite.name << "|" << now_sprite.x << "|" << now_sprite.y << endl;
+
+    outFile.close();
 }
 
-void LoadProject(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) return;
+void LoadProjectFromFile(string filename) {
+    ifstream inFile(filename);
+    if (!inFile.is_open()) return;
 
-    active_blocks.clear();
-    allCharacters.clear();
+    projectBackdrops.clear();
 
-    std::string line;
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string type;
-        std::getline(ss, type, '|');
+    int backdropCount;
+    if (!(inFile >> backdropCount)) return;
+    string dummy;
+    getline(inFile, dummy);
 
-        if (type == "CHARACTER") {
-            Character ch;
-            std::string xStr, yStr, sizeStr, visStr;
-            std::getline(ss, ch.name, '|');
-            std::getline(ss, xStr, '|'); ch.x = std::stod(xStr);
-            std::getline(ss, yStr, '|'); ch.y = std::stod(yStr);
-            std::getline(ss, sizeStr, '|'); ch.size = std::stoi(sizeStr);
-            std::getline(ss, visStr, '|'); ch.isvisible = (visStr == "1");
-            allCharacters.push_back(ch);
-        } else if (type == "BLOCK") {
-            Blocks b;
-            std::string idStr, xStr, yStr;
-            std::getline(ss, idStr, '|'); b.id = std::stoi(idStr);
-            std::getline(ss, xStr, '|'); b.rect.x = std::stoi(xStr);
-            std::getline(ss, yStr, '|'); b.rect.y = std::stoi(yStr);
-            std::string val;
-            while (std::getline(ss, val, '|')) {
-                b.values.push_back(val);
-            }
-            active_blocks.push_back(b);
+    for (int i = 0; i < backdropCount; i++) {
+        string bName;
+        getline(inFile, bName);
+        AddBackdropToProject(nullptr, bName, false, true);
+    }
+
+    inFile >> selectedBackdropIndex;
+    getline(inFile, dummy);
+
+    string spriteLine;
+    if (getline(inFile, spriteLine)) {
+        stringstream ss(spriteLine);
+        string nameStr, xStr, yStr;
+        if (getline(ss, nameStr, '|') && getline(ss, xStr, '|') && getline(ss, yStr, '|')) {
+            now_sprite.name = nameStr;
+            now_sprite.x = stoi(xStr);
+            now_sprite.y = stoi(yStr);
         }
     }
-    file.close();
+
+    inFile.close();
 }
 
 void NewProject() {

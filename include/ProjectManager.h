@@ -3,9 +3,10 @@
 
 #include <string>
 #include <vector>
+#include "Graphic_Element.h"
 
-void SaveProject(const std::string& filename);
-void LoadProject(const std::string& filename);
+void SaveProjectToFile(string filename);
+void LoadProjectFromFile(string filename);
 void NewProject();
 
 #endif //PROJECT_CPP_GROUP30_PROJECTMANAGER_H

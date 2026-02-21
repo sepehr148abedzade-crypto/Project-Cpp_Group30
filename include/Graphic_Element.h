@@ -63,6 +63,7 @@ void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
 void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropThumbnail(SDL_Renderer* renderer, SDL_Texture* tex, SDL_Rect area);
 void DrawBackdropCircleButton(SDL_Renderer* renderer);
+void Draw_File_Dropdown(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropSubMenu(SDL_Renderer* renderer);
 void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();

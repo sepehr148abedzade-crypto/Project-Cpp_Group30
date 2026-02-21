@@ -19,12 +19,12 @@ vector<categoryInfo> categoryOrder {
         {CAT_VARIABLES,true,0},
     };
 
-Button Top_button{};
+Button Top_button[4];
 void Init_Button() {
-    Top_button.rect = {140, 0, 40, 48};
-    Top_button.first_color = {77, 151, 255, 150};
-    Top_button.second_color = {66, 128, 217};
-    Top_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Top_button[0].rect = {140, 0, 40, 48};
+    Top_button[0].first_color = {77, 151, 255, 150};
+    Top_button[0].second_color = {66, 128, 217};
+    Top_button[0].is_mouse_on = Is_mouse_on(Top_button[0].rect.x,Top_button[0].rect.y,Top_button[0].rect.w,Top_button[0].rect.h);
 }
 Button Load_button{};
 void Init_Load_button(){
@@ -53,14 +53,14 @@ void Init_flag_button(){
     flag_button.first_color = {229,240,249};
     flag_button.second_color = {179, 210, 253};
     flag_button.third_color = {160,180,255};
-    flag_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    flag_button.is_mouse_on = Is_mouse_on(Top_button[0].rect.x,Top_button[0].rect.y,Top_button[0].rect.w,Top_button[0].rect.h);
 }
 Button stop_button{};
 void Init_stop_button(){
     stop_button.rect = {stage.x+flag_button.rect.w + 10, stage.y-45, 40, 40};
     stop_button.first_color = {229,240,249};
     stop_button.second_color = {179, 210, 253};
-    stop_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    stop_button.is_mouse_on = Is_mouse_on(Top_button[0].rect.x,Top_button[0].rect.y,Top_button[0].rect.w,Top_button[0].rect.h);
 };
 Character cat;
 Character cat_running;

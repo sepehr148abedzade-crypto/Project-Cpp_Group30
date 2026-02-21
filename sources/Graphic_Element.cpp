@@ -683,6 +683,34 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
     }
 }
 
+void Draw_File_Dropdown(SDL_Renderer* renderer, TTF_Font* font) {
+    if (!isFileMenuOpen) return;
+
+    SDL_Rect menuBG = { Top_button[0].rect.x, 48, 150, 105 }; // ارتفاع بیشتر برای 3 گزینه
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &menuBG);
+
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(renderer, &menuBG);
+
+    int mx, my;
+    SDL_GetMouseState(&mx, &my);
+
+    for (int i = 0; i < 3; i++) {
+        SDL_Rect itemRect = { menuBG.x, menuBG.y + (i * 35), 150, 35 };
+        if (mx >= itemRect.x && mx <= itemRect.x + itemRect.w && my >= itemRect.y && my <= itemRect.y + itemRect.h) {
+            SDL_SetRenderDrawColor(renderer, 77, 151, 255, 50);
+            SDL_RenderFillRect(renderer, &itemRect);
+        }
+    }
+
+    SDL_Color textColor = {50, 50, 50, 255};
+    Drawtext(renderer, font, "New Project", menuBG.x + 10, menuBG.y + 8, textColor, false);
+    Drawtext(renderer, font, "Save Project", menuBG.x + 10, menuBG.y + 43, textColor, false);
+    Drawtext(renderer, font, "Load Project", menuBG.x + 10, menuBG.y + 78, textColor, false);
+}
+
 void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     std::string message = sprite.name + " " + "size is : " + to_string(sprite.size*500);
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});

@@ -25,6 +25,8 @@ add_executable(Project_Cpp_Group30 sources/main.cpp
         include/sensing_functions.h
         sources/Paint_Editor.cpp
         include/Paint_Editor.h
+        include/ProjectManager.h
+        sources/ProjectManager.cpp
 )
 
 

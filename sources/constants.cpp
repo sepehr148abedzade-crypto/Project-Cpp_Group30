@@ -1,7 +1,7 @@
 #include "constants.h"
 #include "Entity.h"
 #include "SDL2/SDL.h"
-
+bool isFileMenuOpen = false;
 int Get_width(){
     SDL_DisplayMode DM;
     SDL_GetCurrentDisplayMode(0,&DM);

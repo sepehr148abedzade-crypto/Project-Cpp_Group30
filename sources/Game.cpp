@@ -14,6 +14,8 @@
 #include <map>
 #include <cmath>
 #include "Paint_Editor.h"
+#include "ProjectManager.h"
+
 using namespace std;
 
 SDL_Window* main_window = nullptr;
@@ -930,7 +932,22 @@ void Get_event() {
 
         if (isSaveModalOpen) {
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-                HandleSaveModalClick(mx, my);
+                int centerX = Get_width() / 2;
+                int centerY = Get_height() / 2;
+                SDL_Rect saveBtn = { centerX - 110, centerY + 50, 100, 40 };
+                SDL_Rect cancelBtn = { centerX + 10, centerY + 50, 100, 40 };
+
+                if (mx >= saveBtn.x && mx <= saveBtn.x + saveBtn.w && my >= saveBtn.y && my <= saveBtn.y + saveBtn.h) {
+                    string finalName = (saveInputText.empty() ? "project" : saveInputText) + ".txt";
+                    SaveProjectToFile(finalName);
+                    isSaveModalOpen = false;
+                    SDL_StopTextInput();
+                }
+                else if (mx >= cancelBtn.x && mx <= cancelBtn.x + cancelBtn.w && my >= cancelBtn.y && my <= cancelBtn.y + cancelBtn.h) {
+                    isSaveModalOpen = false;
+                    saveInputText = "";
+                    SDL_StopTextInput();
+                }
             }
             HandleKeyboardInput(e);
             if (isSaveModalOpen) continue;
@@ -950,39 +967,60 @@ void Get_event() {
         Handle_event_for_motion_sprite(e, now_sprite);
 
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            Handle_Tab_Switch(mx, my);
-            Handle_Backdrop_Menu_Clicks(mx, my);
+            if (isFileMenuOpen) {
+                SDL_Rect newRect  = { Top_button[0].rect.x, 48, 150, 35 };
+                SDL_Rect saveRect = { Top_button[0].rect.x, 83, 150, 35 };
+                SDL_Rect loadRect = { Top_button[0].rect.x, 118, 150, 35 };
 
-            if (currentTab == BACKDROPS) {
-                Handle_Backdrop_Selection(mx, my);
-                HandleToolSelection(mx, my);
-                HandleColorSelection(mx, my);
-                HandleBrushSizeSelection(mx, my);
-                HandleCanvasMouseDown(mx, my);
+                if (mx >= newRect.x && mx <= newRect.x + newRect.w && my >= newRect.y && my <= newRect.y + newRect.h) {
+                    projectBackdrops.clear();
+                    CreateNewPaintBackdrop();
+                    selectedBackdropIndex = 0;
+                }
+                else if (mx >= saveRect.x && mx <= saveRect.x + saveRect.w && my >= saveRect.y && my <= saveRect.y + saveRect.h) {
+                    isSaveModalOpen = true;
+                    saveInputText = "";
+                    SDL_StartTextInput();
+                }
+                else if (mx >= loadRect.x && mx <= loadRect.x + loadRect.w && my >= loadRect.y && my <= loadRect.y + loadRect.h) {
+                    LoadProjectFromFile("save_data.txt");
+                }
+                isFileMenuOpen = false;
+            }
+            else if (Is_mouse_on(Top_button[0].rect.x, Top_button[0].rect.y, Top_button[0].rect.w, Top_button[0].rect.h)) {
+                isFileMenuOpen = true;
+            }
+
+            if (!isFileMenuOpen) {
+                Handle_Tab_Switch(mx, my);
+                Handle_Backdrop_Menu_Clicks(mx, my);
+                if (currentTab == BACKDROPS) {
+                    Handle_Backdrop_Selection(mx, my);
+                    HandleToolSelection(mx, my);
+                    HandleColorSelection(mx, my);
+                    HandleBrushSizeSelection(mx, my);
+                    HandleCanvasMouseDown(mx, my);
+                }
             }
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            if (currentTab == BACKDROPS) {
-                HandleCanvasMouseUp(mx, my);
-            }
+            if (currentTab == BACKDROPS) HandleCanvasMouseUp(mx, my);
         }
 
         Uint32 mouseState = SDL_GetMouseState(NULL, NULL);
-        if ((mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) && currentTab == BACKDROPS && !isSaveModalOpen) {
-            if (!(mx > Get_width() - 100 && my > Get_height() / 2)) {
+        if ((mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) && currentTab == BACKDROPS && !isSaveModalOpen && !isFileMenuOpen && !isLibraryOpen) {
+            if (mx > 330 && mx < 930 && my > 280 && my < 660) {
                 HandleContinuousDrawing(mx, my);
             }
         }
 
-        if (currentTab == CODE) {
+        if (currentTab == CODE && !isFileMenuOpen && !isSaveModalOpen) {
             HandleBlockEvent(e);
         }
-
         HandleKeyboardInput(e);
     }
 }
-
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     int sw = Get_width();
     int stageW = 486;
@@ -1069,7 +1107,6 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 
 void Update() {
     UpdateMenuState();
-
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -1077,8 +1114,8 @@ void Update() {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
-        Draw_Top_Button(renderer, Top_button, File_Text);
-        Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
+        Draw_Top_Button(renderer, Top_button[0], File_Text);
+        Draw_flag_and_stop_button(renderer, flag_button, stop_button, green_flag, stop_sign);
 
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
@@ -1096,18 +1133,15 @@ void Update() {
                 baseTex = projectBackdrops[selectedBackdropIndex].texture;
                 bName = projectBackdrops[selectedBackdropIndex].name;
             }
-
             Draw_Image_Editor(renderer, main_font, baseTex, bName);
 
             if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
                 if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
-                    int curX, curY;
-                    SDL_GetMouseState(&curX, &curY);
+                    int curX, curY; SDL_GetMouseState(&curX, &curY);
                     int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
                     SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
                     for (int a = 0; a < 360; a++) {
-                        float r1 = a * M_PI / 180.0f;
-                        float r2 = (a + 1) * M_PI / 180.0f;
+                        float r1 = a * M_PI / 180.0f; float r2 = (a + 1) * M_PI / 180.0f;
                         SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)), circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
                     }
                 }
@@ -1122,14 +1156,12 @@ void Update() {
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
-
-        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
-
         Draw_Stage_Content(renderer);
         Draw_Character(renderer, now_sprite);
-        if (isSaveModalOpen) {
-            DrawSaveModal(renderer, main_font);
-        }
+
+        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
+        if (isFileMenuOpen) Draw_File_Dropdown(renderer, main_font);
+        if (isSaveModalOpen) DrawSaveModal(renderer, main_font);
     }
     SDL_RenderPresent(renderer);
 }
