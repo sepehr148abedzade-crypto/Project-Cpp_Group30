@@ -25,6 +25,14 @@ add_executable(Project_Cpp_Group30 sources/main.cpp
         include/sensing_functions.h
         sources/Paint_Editor.cpp
         include/Paint_Editor.h
+        sources/sound_panel.cpp
+        include/sound_panel.h
+        sources/script.cpp
+        include/script.h
+        include/script_engine.h
+        sources/script_engine.cpp
+        sources/event_system.cpp
+        include/event_system.h
 )
 
 
