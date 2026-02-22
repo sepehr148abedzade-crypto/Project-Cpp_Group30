@@ -15,6 +15,7 @@
 #include <map>
 #include <cmath>
 #include "Paint_Editor.h"
+#include "SDL2/SDL_mixer.h"
 using namespace std;
 
 SDL_Window* main_window = nullptr;
@@ -22,9 +23,11 @@ SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
 SDL_Texture* Sound_text = nullptr;
+SDL_Texture* Backdrop_text = nullptr;
+SDL_Texture* Back_text = nullptr;
+SDL_Texture* code_text = nullptr;
 SDL_Texture* green_flag = nullptr;
 SDL_Texture* stop_sign = nullptr;
-SDL_Texture* cat_texture = nullptr;
 SDL_Texture* X_text = nullptr;
 SDL_Texture* Y_text = nullptr;
 SDL_Texture* size_text = nullptr;
@@ -38,6 +41,19 @@ SDL_Texture* direction_of_sprite_text = nullptr;;
 SDL_Texture* show_text = nullptr;
 SDL_Texture* S_text = nullptr;
 SDL_Texture* H_text = nullptr;
+SDL_Texture* Run_text = nullptr;
+SDL_Texture* volumeUp_text = nullptr;
+SDL_Texture* volumeDown_text = nullptr;
+SDL_Texture* increase_frequency_text = nullptr;
+SDL_Texture* decrease_frequency_text = nullptr;
+SDL_Texture* Timer_text = nullptr;
+SDL_Texture* size_button_text = nullptr;
+SDL_Texture* next_costume_text = nullptr;
+SDL_Texture* costume_number_text = nullptr;
+SDL_Texture* volume_text = nullptr;
+SDL_Texture* volume_value = nullptr;
+SDL_Texture* frequency_text = nullptr;
+SDL_Texture* frequency_value = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
@@ -150,6 +166,7 @@ bool Loading(){
 }
 
 bool Init_Game(){
+    IMG_Init(IMG_INIT_PNG);
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -181,6 +198,17 @@ bool Init_Game(){
     }
     File_Text = LoadText(renderer,main_font,"File",white);
     Sound_text = LoadText(renderer,main_font,"Sounds",{120,147,149});
+    Backdrop_text = LoadText(renderer,main_font,"Backdrop",{120,147,149});
+    Back_text = LoadText(renderer,main_font,"Back",{120,147,149});
+    code_text = LoadText(renderer,main_font,"Code",{120,147,149});
+    Timer_text = LoadText(renderer,main_font,"Timer",{100,100,100});
+    size_button_text = LoadText(renderer,main_font,"Size",{100,100,100});
+    volume_value = LoadText(renderer,main_font,to_string(volume),{100,100,100});
+    volume_text = LoadText(renderer,main_font,"Volume : ",{100,100,100});
+    frequency_value = LoadText(renderer,main_font,to_string(frequency),{100,100,100});
+    frequency_text = LoadText(renderer,main_font,"Frequency : ",{100,100,100});
+    next_costume_text = LoadText(renderer,main_font,"next costume",{100,100,100});
+    costume_number_text = LoadText(renderer,main_font,"costume number",{100,100,100});
     Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
     SetWindowIcon(main_window,"asset/images/logo/icon.png");
     green_flag = LoadTexture(renderer,"asset/images/logo/flag.png");
@@ -198,11 +226,17 @@ bool Init_Game(){
     name_of_sprite_text = LoadText(renderer,report_font,now_sprite->name,{100,100,100});
     S_text = LoadText(renderer,report_font,"S",{100,100,100});
     H_text = LoadText(renderer,report_font,"H",{100,100,100});
+    Run_text = LoadText(renderer,main_font,"Run",white);
+    volumeUp_text = LoadText(renderer,main_font,"Volume Up",white);
+    volumeDown_text = LoadText(renderer,main_font,"Volume Down",white);
+    increase_frequency_text = LoadText(renderer,main_font,"Increase Frequency",white);
+    decrease_frequency_text = LoadText(renderer,main_font,"Decrease Frequency",white);
     code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
     if(code_bar_font == nullptr){
         std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
         return false;
     }
+    Init_structOfCharacter();
     Init_costume();
     Init_code_button(renderer,code_bar_font);
     LoadAllAssets(renderer);
@@ -210,6 +244,9 @@ bool Init_Game(){
     Init_flag_button();
     Init_stop_button();
     Init_sound_button();
+    Init_Back_button();
+    Init_Backdrop_button();
+    Init_code_button();
     Init_sprite_box(*now_sprite);
     Init_positionX_box(*now_sprite);
     Init_positionY_box(*now_sprite);
@@ -217,10 +254,21 @@ bool Init_Game(){
     Init_direction_box(*now_sprite);
     Init_show_button();
     Init_hide_button();
-    LoadBackdropLibraryManual(renderer);
-    SDL_StartTextInput();
+    Init_run_sound_button();
+    Init_volumeUp_button();
+    Init_volumeDown_button();
+    Init_increase_frequency_button();
+    Init_decrease_frequency_button();
+    Init_timer_button();
+    Init_size_button();
+    Init_next_costume_button();
+    Init_volume_button();
+    Init_frequency_button();
+    Init_costume_number_button();
     Load_Character(renderer,&cat,&cat1);
     Load_Character(renderer,&cat,&cat2);
+    LoadBackdropLibraryManual(renderer);
+    SDL_StartTextInput();
     return true;
 }
 
@@ -837,6 +885,21 @@ void Get_event() {
         Handle_event_for_stop_button(e,stop_button);
         Handle_event_for_show_button(e,show_button,now_sprite);
         Handle_event_for_hide_button(e,hide_button,now_sprite);
+        Handle_event_for_Back_button(e,&Back_button);
+        Handle_event_for_Backdrop_button(e,&Backdrop_button);
+        Handle_event_for_sound_button(e,&Sounds_button);
+        Handle_event_for_Code_button(e,&code_button);
+        Handle_event_for_run_button(e,&run_sound_button);
+        Handle_event_for_volumeUp_button(e,&volumeUp_button);
+        Handle_event_for_volumeDown_button(e,&volumeDown_button);
+        Handle_event_for_increaseFrequency_button(e,&increase_frequency_button);
+        Handle_event_for_decreaseFrequency_button(e,&decrease_frequency_button);
+        if(currentTab == CODE) {
+            Handle_event_for_timer_button(e, &Timer_button);
+            Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
+            Handle_event_for_costume_number_button(e, &costume_number_button);
+            Handle_event_for_size_button(e, &size_button);
+        }
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
@@ -957,24 +1020,38 @@ void Update() {
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
-    Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
+    Draw_flag_and_stop_button(renderer, flag_button, stop_button, green_flag, stop_sign);
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
-
+        if (currentTab == SOUNDS) {
+            Draw_sound_panel(renderer);
+            Draw_sounds_functions_button(renderer, run_sound_button, Run_text);
+            Draw_sounds_functions_button(renderer, volumeUp_button, volumeUp_text);
+            Draw_sounds_functions_button(renderer, volumeDown_button, volumeDown_text);
+            Draw_sounds_functions_button(renderer, increase_frequency_button, increase_frequency_text);
+            Draw_sounds_functions_button(renderer, decrease_frequency_button, decrease_frequency_text);
+            Draw_report_button(renderer,&volume_button,volume_value);
+            Draw_volume_text(renderer,volume_text);
+            Draw_report_button(renderer,&frequency_button,frequency_value);
+            Draw_frequency_text(renderer,frequency_text);
+        }
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
             Draw_Menu_Blocks(renderer, code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
-        }
-        else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
+            Draw_report_button(renderer, &Timer_button, Timer_text);
+            Draw_report_button(renderer, &size_button, size_button_text);
+            Draw_report_button(renderer, &next_costume_button, next_costume_text);
+            Draw_report_button(renderer, &costume_number_button, costume_number_text);
+        } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
-            SDL_Texture* baseTex = nullptr;
+            SDL_Texture *baseTex = nullptr;
             string bName = "Backdrop";
             if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
                 baseTex = projectBackdrops[selectedBackdropIndex].texture;
@@ -983,57 +1060,69 @@ void Update() {
 
             Draw_Image_Editor(renderer, main_font, baseTex, bName);
 
-            if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+            if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int) projectBackdrops.size()) {
                 if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
                     int curX, curY;
                     SDL_GetMouseState(&curX, &curY);
-                    int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+                    int radius = (int) sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
+                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g,
+                                           globalEditor.currentColor.b, 255);
                     for (int a = 0; a < 360; a++) {
                         float r1 = a * M_PI / 180.0f;
                         float r2 = (a + 1) * M_PI / 180.0f;
-                        SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)), circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
+                        SDL_RenderDrawLine(renderer, circleStartX + (int) (radius * cos(r1)),
+                                           circleStartY + (int) (radius * sin(r1)),
+                                           circleStartX + (int) (radius * cos(r2)),
+                                           circleStartY + (int) (radius * sin(r2)));
                     }
-                }
-                else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) {
-                    int curX, curY; SDL_GetMouseState(&curX, &curY);
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+                } else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) {
+                    int curX, curY;
+                    SDL_GetMouseState(&curX, &curY);
+                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g,
+                                           globalEditor.currentColor.b, 255);
                     SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
                 }
             }
         }
-
         Draw_Information_of_Character(renderer);
-        //Draw_sound_button(renderer,Sounds_button,Sound_text);
+        Draw_Code_button(renderer, code_button, code_text);
+        Draw_sound_button(renderer, Sounds_button, Sound_text);
+        Draw_Backdrop_button(renderer, Backdrop_button, Backdrop_text);
+        Draw_Back_button(renderer, Back_button, Back_text);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
-        Draw_report_informationOfCharacter_box(renderer,name_of_sprite);
-        Draw_report_informationOfCharacter_box(renderer,direction);
-        Draw_report_informationOfCharacter_box(renderer,size);
-        Draw_report_informationOfCharacter_box(renderer,positionX);
-        Draw_report_informationOfCharacter_box(renderer,positionY);
-        Draw_X_text(renderer,X_text);
-        Draw_Y_text(renderer,Y_text);
-        Draw_size_text(renderer,size_text);
-        Draw_direction_text(renderer,direction_text);
-        Draw_sprite_text(renderer,sprite_text);
-        Draw_show_text(renderer,show_text);
-        Draw_show_and_hide_button(renderer,show_button,hide_button,S_text,H_text,now_sprite);
-        name_of_sprite_text = LoadText(renderer,report_font,now_sprite->name,{100,100,100});
-        Draw_name_of_character(renderer,name_of_sprite,name_of_sprite_text);
-        positionX_text = LoadText(renderer,report_font,to_string(now_sprite->x),{100,100,100});
-        Draw_positionX(renderer,positionX,positionX_text);
-        positionY_text = LoadText(renderer,report_font, to_string(-now_sprite->y),{100,100,100});
-        Draw_positionX(renderer,positionY,positionY_text);
         Draw_Stage_Content(renderer);
-        size_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->size*500),{100,100,100});
-        Draw_size(renderer,size,size_of_sprite_text);
-        direction_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->degree),{100,100,100});
-        Draw_direction(renderer,direction,direction_of_sprite_text);
+        Draw_report_informationOfCharacter_box(renderer, name_of_sprite);
+        Draw_report_informationOfCharacter_box(renderer, direction);
+        Draw_report_informationOfCharacter_box(renderer, size);
+        Draw_report_informationOfCharacter_box(renderer, positionX);
+        Draw_report_informationOfCharacter_box(renderer, positionY);
+        Draw_X_text(renderer, X_text);
+        Draw_Y_text(renderer, Y_text);
+        Draw_size_text(renderer, size_text);
+        Draw_direction_text(renderer, direction_text);
+        Draw_sprite_text(renderer, sprite_text);
+        Draw_show_text(renderer, show_text);
+        volume_value = LoadText(renderer,main_font,to_string(volume),{100,100,100});
+        frequency_value = LoadText(renderer,main_font,to_string(frequency),{100,100,100});
+        Draw_show_and_hide_button(renderer, show_button, hide_button, S_text, H_text, now_sprite);
+        name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, {100, 100, 100});
+        Draw_name_of_character(renderer, name_of_sprite, name_of_sprite_text);
+        positionX_text = LoadText(renderer, report_font, to_string((int)now_sprite->x), {100, 100, 100});
+        Draw_positionX(renderer, positionX, positionX_text);
+        positionY_text = LoadText(renderer, report_font, to_string(-(int)now_sprite->y), {100, 100, 100});
+        Draw_positionX(renderer, positionY, positionY_text);
+        size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size *500)), {100, 100, 100});
+        Draw_size(renderer, size, size_of_sprite_text);
+        direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), {100, 100, 100});
+        Draw_direction(renderer, direction, direction_of_sprite_text);
         Draw_Character(renderer, now_sprite);
-        if (isSaveModalOpen) {
-            DrawSaveModal(renderer, main_font);
-        }
+        if (is_timer) timer(renderer, report_font);
+        if (is_size_on) Draw_size_report(renderer, report_font, now_sprite);
+        if (is_costume_number_on) Draw_costume_report(renderer, report_font, now_sprite);
+    }
+    if (isSaveModalOpen) {
+        DrawSaveModal(renderer, main_font);
     }
     SDL_RenderPresent(renderer);
 }
@@ -1044,6 +1133,7 @@ void Render(){
 void Clean(){
         TTF_CloseFont(main_font);
         TTF_Quit();
+        Mix_CloseAudio();
         SDL_DestroyWindow(main_window);
         SDL_DestroyRenderer(renderer);
         SDL_Quit();
