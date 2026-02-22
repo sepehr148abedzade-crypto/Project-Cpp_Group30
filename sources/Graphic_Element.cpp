@@ -744,7 +744,7 @@ void Handle_event_for_next_costume_button(SDL_Event &e,SDL_Renderer* renderer,Bu
     }
 }
 void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character* sprite){
-    std::string message = sprite->name + " " + "size is : " + to_string((int)sprite->size*500);
+    std::string message = sprite->name + " " + "size is : " + to_string((int)(sprite->size*500));
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
