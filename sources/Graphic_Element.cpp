@@ -42,6 +42,67 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     return color;
 }
 
+bool isCharacterSubMenuOpen = false;
+int btn_cx = 70;
+int btn_cy = 0;
+int radius = 30;
+
+
+void DrawCharacterSubMenu(SDL_Renderer* renderer) {
+    if (currentTab == COSTUMES && isCharacterSubMenuOpen) {
+        filledCircleRGBA(renderer, btn_cx, btn_cy - 70, 22, 77, 151, 255, 255);
+        if (icon_paint) {
+            SDL_Rect paintRect = {btn_cx - 12, btn_cy - 82, 24, 24};
+            SDL_RenderCopy(renderer, icon_paint, NULL, &paintRect);
+        }
+
+        filledCircleRGBA(renderer, btn_cx, btn_cy - 120, 22, 77, 151, 255, 255);
+        if (icon_upload) {
+            SDL_Rect uploadRect = {btn_cx - 12, btn_cy - 132, 24, 24};
+            SDL_RenderCopy(renderer, icon_upload, NULL, &uploadRect);
+        }
+    }
+}
+
+void Update_Character_Menu_State() {
+    int mx, my;
+    SDL_GetMouseState(&mx, &my);
+
+    btn_cx = Get_width() - 130;
+    btn_cy = Get_height() - 100;
+    radius = 18;
+
+    bool isOverPaint = (sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2)) <= radius);
+    bool isOverUpload = (sqrt(pow(mx - btn_cx, 2) + pow(my - (btn_cy - 40), 2)) <= radius);
+
+    if (isOverPaint || isOverUpload) {
+        isCharacterSubMenuOpen = true;
+    }
+    else {
+        isCharacterSubMenuOpen = false;
+    }
+}
+
+void Draw_Character_Floating_Buttons(SDL_Renderer* renderer) {
+    btn_cx = Get_width() - 130;
+    btn_cy = Get_height() - 100;
+    radius = 18;
+
+    if (isCharacterSubMenuOpen) {
+        filledCircleRGBA(renderer, btn_cx, btn_cy - 40, radius, 77, 151, 255, 255);
+        if (icon_upload) {
+            SDL_Rect r = {btn_cx - 9, btn_cy - 49, 18, 18};
+            SDL_RenderCopy(renderer, icon_upload, NULL, &r);
+        }
+    }
+
+    filledCircleRGBA(renderer, btn_cx, btn_cy, radius, 100, 164, 255, 255);
+    if (icon_paint) {
+        SDL_Rect r = {btn_cx - 9, btn_cy - 9, 18, 18};
+        SDL_RenderCopy(renderer, icon_paint, NULL, &r);
+    }
+}
+
 int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font ) {
     int totalWidth =20;
     totalWidth += Get_text_width(font,BT.Back_label);
@@ -185,6 +246,7 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
         }
     }
 }
+
 void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font, Blocks* block ) {
     roundedBoxRGBA(renderer,x,y+10,x+w,y+h-10,0,color.r,color.g,color.b,color.a);
     Imaginary_circle C1 {x+20,y-10,15 };
@@ -222,6 +284,7 @@ void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,Bloc
     }
 
     }
+
 void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font,Blocks* block) {
     SDL_Rect head{x,y , w,35};
     roundedBoxRGBA(renderer ,head.x,head.y,head.x +head.w,head.y+head.h,5,color.r,color.g,color.b,color.a);
@@ -245,6 +308,7 @@ void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTe
     }
 
 }
+
 SDL_Color GetBlockColor(Block_category cat) {
     switch (cat) {
         case CAT_MOTION : return {76, 151, 255,255}; break;
@@ -380,6 +444,7 @@ void Draw_flag_and_stop_button(SDL_Renderer* renderer,Button &button1,Button &bu
     };
     SDL_RenderCopy(renderer, texture2, nullptr, &textPosition2);
 }
+
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_Rect left_bar = {0, 95, 60, Get_height() - 48};
     SDL_SetRenderDrawColor(renderer, 249, 249, 249, SDL_ALPHA_OPAQUE);
@@ -648,6 +713,7 @@ void Handle_event_for_stop_button(SDL_Event &e , Button &button){
         }
     }
 }
+
 void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
     if (draggable) {
         static int mouse_firstX, mouse_firstY;
@@ -728,6 +794,7 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
+
 void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
     std::string message = "Timer : " + to_string(time/1000);
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
@@ -745,6 +812,7 @@ void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
+
 void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     std::string message = sprite.name + " " + "costume number is : " + to_string(sprite.costumes.size());
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
@@ -762,6 +830,7 @@ void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
+
 void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
     int texture_w,texture_h;

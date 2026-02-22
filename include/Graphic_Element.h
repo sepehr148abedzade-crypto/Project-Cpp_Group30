@@ -18,6 +18,7 @@ extern bool isLibraryOpen;
 extern bool isStageSelected;
 extern int backdropScrollY;
 extern SDL_Color white;
+extern bool isCharacterSubMenuOpen;
 
 enum Tab { CODE, BACKDROPS, SOUNDS , COSTUMES};
 extern Tab currentTab;
@@ -64,6 +65,9 @@ void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropThumbnail(SDL_Renderer* renderer, SDL_Texture* tex, SDL_Rect area);
 void DrawBackdropCircleButton(SDL_Renderer* renderer);
 void Draw_File_Dropdown(SDL_Renderer* renderer, TTF_Font* font);
+void Update_Character_Menu_State();
+void Draw_Character_Floating_Buttons(SDL_Renderer* renderer);
+void DrawCharacterSubMenu(SDL_Renderer* renderer);
 void DrawBackdropSubMenu(SDL_Renderer* renderer);
 void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();

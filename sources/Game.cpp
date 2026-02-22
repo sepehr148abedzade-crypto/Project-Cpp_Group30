@@ -1107,6 +1107,8 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 
 void Update() {
     UpdateMenuState();
+    Update_Character_Menu_State();
+
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -1128,43 +1130,51 @@ void Update() {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
             SDL_Texture* baseTex = nullptr;
-            string bName = "Backdrop";
-            if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
-                baseTex = projectBackdrops[selectedBackdropIndex].texture;
-                bName = projectBackdrops[selectedBackdropIndex].name;
-            }
-            Draw_Image_Editor(renderer, main_font, baseTex, bName);
+            string itemName = "Item";
 
-            if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
-                if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
-                    int curX, curY; SDL_GetMouseState(&curX, &curY);
-                    int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-                    for (int a = 0; a < 360; a++) {
-                        float r1 = a * M_PI / 180.0f; float r2 = (a + 1) * M_PI / 180.0f;
-                        SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)), circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
-                    }
+            if (currentTab == BACKDROPS) {
+                if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
+                    baseTex = projectBackdrops[selectedBackdropIndex].texture;
+                    itemName = projectBackdrops[selectedBackdropIndex].name;
                 }
-                else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) {
-                    int curX, curY; SDL_GetMouseState(&curX, &curY);
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
-                    SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
+            } else {
+                if (!now_sprite.costumes.empty()) {
+                    baseTex = now_sprite.costumes[now_sprite.currentCostumeIndex];
                 }
+                itemName = now_sprite.name;
             }
+            Draw_Image_Editor(renderer, main_font, baseTex, itemName);
         }
 
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
         Draw_Stage_Content(renderer);
-        Draw_Character(renderer, now_sprite);
 
-        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
-        if (isFileMenuOpen) Draw_File_Dropdown(renderer, main_font);
-        if (isSaveModalOpen) DrawSaveModal(renderer, main_font);
+        Draw_Character(renderer, now_sprite);
+        for (auto& sprite : allCharacters) {
+            if (sprite.isvisible) {
+                Draw_Character(renderer, sprite);
+            }
+        }
+
+        if (isBackdropMenuOpen) {
+            DrawBackdropSubMenu(renderer);
+        }
+
+        Draw_Character_Floating_Buttons(renderer);
+
+        if (isFileMenuOpen) {
+            Draw_File_Dropdown(renderer, main_font);
+        }
+
+        if (isSaveModalOpen) {
+            DrawSaveModal(renderer, main_font);
+        }
     }
     SDL_RenderPresent(renderer);
 }
+
 
 void Render(){
         SDL_RenderPresent(renderer);
