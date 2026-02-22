@@ -1107,11 +1107,24 @@ void Get_event() {
         Handle_event_for_motion_sprite(e,now_sprite);
         Handle_event_for_flag_button(e,flag_button);
         Handle_event_for_stop_button(e,stop_button);
-        if(currentTab == CODE){
-
+        Handle_event_for_show_button(e,show_button,now_sprite);
+        Handle_event_for_hide_button(e,hide_button,now_sprite);
+        Handle_event_for_Back_button(e,&Back_button);
+        Handle_event_for_Backdrop_button(e,&Backdrop_button);
+        Handle_event_for_sound_button(e,&Sounds_button);
+        Handle_event_for_Code_button(e,&code_button);
+        if(currentTab == SOUNDS) {
+            Handle_event_for_run_button(e, &run_sound_button);
+            Handle_event_for_volumeUp_button(e, &volumeUp_button);
+            Handle_event_for_volumeDown_button(e, &volumeDown_button);
+            Handle_event_for_increaseFrequency_button(e, &increase_frequency_button);
+            Handle_event_for_decreaseFrequency_button(e, &decrease_frequency_button);
         }
-        if(currentTab == SOUNDS){
-
+        if(currentTab == CODE) {
+            Handle_event_for_timer_button(e, &Timer_button);
+            Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
+            Handle_event_for_costume_number_button(e, &costume_number_button);
+            Handle_event_for_size_button(e, &size_button);
         }
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
