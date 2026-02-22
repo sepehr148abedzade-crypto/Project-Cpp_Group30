@@ -120,8 +120,8 @@ struct Blocks{
     int active_value_index = -1;
     vector<Blocks*> children;
     Blocks* parent;
-
-    Blocks* next = nullptr;
+    Blocks* next;
+    Blocks* prev;
 };
 
 struct Backdrop {
@@ -160,7 +160,9 @@ extern Button Top_button;
 extern Button categories[8];
 extern Button flag_button;
 extern Button stop_button;
-extern std::vector<Blocks> active_blocks;
+//extern std::vector<Blocks> active_blocks;
+ extern vector<vector<Blocks>> blockChains;
+ extern int draggedChainIndex ;
 extern std::vector<Blocks> menu_blocks;
 extern int sidebar_scroll_y;
 extern Blocks* draggedBlock;

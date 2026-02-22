@@ -19,6 +19,8 @@ int sidebar_scroll_y = 0;
 int selectedBackdropIndex = 0;
 int backdropScrollY = 0;
 
+extern int draggedChainIndex;
+
 std::vector<BackdropItem> libraryItems;
 std::vector<Backdrop> libraryBackdrops;
 std::vector<Backdrop> projectBackdrops;
@@ -187,6 +189,10 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
                 case Expression_Block:
                     DrawExpressionBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,blockMap[mb.id], mb.values, color, font, nullptr);
                     break;
+                case Bool_Block:
+                    DrawBoolBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,
+                                blockMap[mb.id], mb.values, color, font, nullptr);
+                    break;
 
             }
         }
@@ -284,6 +290,45 @@ void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,Bloc
         }
     }
 }
+void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
+                   BlockTemplate& BT, vector<string>& values,
+                   SDL_Color color, TTF_Font* font, Blocks* block) {
+
+    roundedBoxRGBA(renderer, x, y, x + w, y + h, 5,
+                   color.r, color.g, color.b, color.a);
+
+    roundedRectangleRGBA(renderer, x, y, x + w, y + h, 5, 0, 0, 0, 255);
+
+    int current_x = x + 5;
+
+    if (!BT.Back_label.empty()) {
+        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y-6 ,
+                               {255,255,255,255}) + 5;
+    }
+
+    for (size_t i = 0; i < values.size(); i++) {
+        string val = values[i];
+
+        if (block && block->is_editing && block->active_value_index == (int)i) {
+            val += "|";
+        }
+
+        int text_width = Get_text_width(font, val);
+        int input_width = max(35, text_width +12);
+
+        roundedBoxRGBA(renderer, current_x, y +3,current_x + input_width, y + 23,4, 255, 255, 255, 255);
+
+        int text_x = current_x + (input_width - text_width) / 2;
+        Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
+
+        current_x += input_width + 5;
+
+        if (i < BT.labels.size()) {
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
+                                  {255,255,255,255}) + 5;
+        }
+    }
+}
 SDL_Color GetBlockColor(Block_category cat) {
     switch (cat) {
         case CAT_MOTION : return {76, 151, 255,255}; break;
@@ -300,19 +345,71 @@ SDL_Color GetBlockColor(Block_category cat) {
 }
 
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
-    for (auto& b : active_blocks) {
-        SDL_Color color= GetBlockColor(blockMap[b.id].category);
-        switch (b.type) {
-            case Simple_Block :
-                DrawSimpleBlocks(renderer,b.rect.x,b.rect.y,b.rect.w,b.rect.h,blockMap[b.id],b.values,color,font,&b);
-                break;
+    for (int c = 0; c < blockChains.size(); c++) {
+        if (c == draggedChainIndex) continue;
+
+        for (auto& block : blockChains[c]) {
+            SDL_Color color = GetBlockColor(blockMap[block.id].category);
+
+            switch (block.type) {
+                case Simple_Block:
+                    DrawSimpleBlocks(renderer, block.rect.x, block.rect.y,
+                                   block.rect.w, block.rect.h,
+                                   blockMap[block.id], block.values,
+                                   color, font, &block);
+                    break;
                 case C_Block:
-                Draw_C_Blocks(renderer,b.rect.x, b.rect.y, b.rect.w, b.rect.h, blockMap[b.id], b.values, color, font, &b);
-                break;
-                 case Expression_Block:
-                DrawExpressionBlock(renderer, b.rect.x, b.rect.y, b.rect.w, b.rect.h,
-                                  blockMap[b.id], b.values, color, font, &b);
-                break;
+                    Draw_C_Blocks(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+                case Expression_Block:
+                    DrawExpressionBlock(renderer, block.rect.x, block.rect.y,
+                                      block.rect.w, block.rect.h,
+                                      blockMap[block.id], block.values,
+                                      color, font, &block);
+                    break;
+                case Bool_Block:
+                    DrawBoolBlock(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+            }
+        }
+    }
+
+    if (draggedChainIndex != -1) {
+        for (auto& block : blockChains[draggedChainIndex]) {
+            SDL_Color color = GetBlockColor(blockMap[block.id].category);
+            switch (block.type) {
+                case Simple_Block:
+                    DrawSimpleBlocks(renderer, block.rect.x, block.rect.y,
+                                   block.rect.w, block.rect.h,
+                                   blockMap[block.id], block.values,
+                                   color, font, &block);
+                    break;
+                case C_Block:
+                    Draw_C_Blocks(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+                case Expression_Block:
+                    DrawExpressionBlock(renderer, block.rect.x, block.rect.y,
+                                      block.rect.w, block.rect.h,
+                                      blockMap[block.id], block.values,
+                                      color, font, &block);
+                    break;
+                case Bool_Block:
+                    DrawBoolBlock(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+            }
+
         }
     }
 }

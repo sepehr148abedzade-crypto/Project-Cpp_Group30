@@ -14,6 +14,7 @@
 #include <map>
 #include <cmath>
 #include "Paint_Editor.h"
+#include <algorithm>
 using namespace std;
 
 SDL_Window* main_window = nullptr;
@@ -35,6 +36,8 @@ Character* currentSprite = nullptr;
 SDL_Texture* globalDrawingLayer = nullptr;
 
 std::vector<Character> allCharacters;
+vector<vector<Blocks>> blockChains;
+ int draggedChainIndex= -1;
 
 int lastMouseX = -1;
 int lastMouseY = -1;
@@ -72,6 +75,87 @@ std::string GetUniqueBackdropName(std::string baseName) {
         }
     }
     return finalName;
+}
+bool FindClickedBlock(int mx, int my, int& chainIdx, int& blockIdx) {
+    for (int c = 0; c < blockChains.size(); c++) {
+        for (int b = 0; b < blockChains[c].size(); b++) {
+            SDL_Rect rect = blockChains[c][b].rect;
+            if (mx >= rect.x && mx <= rect.x + rect.w &&
+                my >= rect.y && my <= rect.y + rect.h) {
+                chainIdx = c;
+                blockIdx = b;
+                return true;
+                }
+        }
+    }
+    return false;
+}
+void SplitChain(int chainIdx, int blockIdx) {
+    if (chainIdx < 0 || chainIdx >= blockChains.size()) return;
+    if (blockIdx <= 0 || blockIdx >= blockChains[chainIdx].size()) return;
+
+    vector<Blocks> firstPart, secondPart;
+    for (int i = 0; i < blockIdx; i++) {
+        firstPart.push_back(blockChains[chainIdx][i]);
+    }
+    for (int i = blockIdx; i < blockChains[chainIdx].size(); i++) {
+        secondPart.push_back(blockChains[chainIdx][i]);
+    }
+    blockChains.erase(blockChains.begin() + chainIdx);
+    if (!firstPart.empty()) {
+        blockChains.push_back(firstPart);
+    }
+    if (!secondPart.empty()) {
+        blockChains.push_back(secondPart);
+    }
+}
+void MergeChains(int targetIdx, int sourceIdx, bool toTop) {
+    if (targetIdx < 0 || targetIdx >= blockChains.size()) return;
+    if (sourceIdx < 0 || sourceIdx >= blockChains.size()) return;
+    if (targetIdx == sourceIdx) return;
+
+    if (toTop) {
+        blockChains[targetIdx].insert(
+            blockChains[targetIdx].begin(),
+            blockChains[sourceIdx].begin(),
+            blockChains[sourceIdx].end()
+        );
+    } else {
+        blockChains[targetIdx].insert(
+            blockChains[targetIdx].end(),
+            blockChains[sourceIdx].begin(),
+            blockChains[sourceIdx].end()
+        );
+    }
+
+    blockChains.erase(blockChains.begin() + sourceIdx);
+}
+bool IsNearForSnap(Blocks& block1, Blocks& block2) {
+    int verticalGap1 = block2.rect.y - (block1.rect.y + block1.rect.h);
+    bool horizontallyAligned1 = (abs(block1.rect.x - block2.rect.x) < 10);
+
+    int verticalGap2 = block1.rect.y - (block2.rect.y + block2.rect.h);
+    bool horizontallyAligned2 = (abs(block1.rect.x - block2.rect.x) < 10);
+
+    return (horizontallyAligned1 && abs(verticalGap1) < 10) ||
+           (horizontallyAligned2 && abs(verticalGap2) < 10);
+}
+void SnapBlocks(Blocks& upperBlock, Blocks& lowerBlock) {
+
+    lowerBlock.rect.x = upperBlock.rect.x;
+    lowerBlock.rect.y = upperBlock.rect.y + upperBlock.rect.h - 5;
+
+    upperBlock.next = &lowerBlock;
+    lowerBlock.prev = &upperBlock;
+}
+
+void SnapBlocksToTop(Blocks& newTopBlock, Blocks& existingChain) {
+
+    newTopBlock.rect.x = existingChain.rect.x;
+    newTopBlock.rect.y = existingChain.rect.y - newTopBlock.rect.h + 5;
+
+    newTopBlock.next = &existingChain;
+    existingChain.prev = &newTopBlock;
 }
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
@@ -333,30 +417,43 @@ bool IsCircleClicked(int mx, int my, int cx, int cy, int r) {
 void CheckInputClick(int mx, int my) {
     SDL_Point mPos = {mx, my};
     bool foundFocus = false;
-    for (int i = active_blocks.size() - 1; i >= 0; i--) {
-        if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
-            for (size_t j = 0; j < active_blocks[i].values.size(); j++) {
-                int px = blockMap[active_blocks[i].id].inputs[j].posX;
-                int centerY = active_blocks[i].rect.h / 2;
-                SDL_Rect inputArea = {
-                        active_blocks[i].rect.x + px - 20,
-                        active_blocks[i].rect.y + centerY - 10,
+
+    for (auto& chain : blockChains) {
+        for (auto& block : chain) {
+            block.is_editing = false;
+            block.active_value_index = -1;
+        }
+    }
+    for (int c = blockChains.size() - 1; c >= 0; c--) {
+        for (int b = blockChains[c].size() - 1; b >= 0; b--) {
+            Blocks& block = blockChains[c][b];
+
+            if (SDL_PointInRect(&mPos, &block.rect)) {
+                for (size_t j = 0; j < block.values.size(); j++) {
+                    int px = blockMap[block.id].inputs[j].posX;
+                    int centerY = block.rect.h / 2;
+                    SDL_Rect inputArea = {
+                        block.rect.x + px - 20,
+                        block.rect.y + centerY - 10,
                         40, 20
-                };
-                if (SDL_PointInRect(&mPos, &inputArea)) {
-                    for(auto& b : active_blocks) b.is_editing = false;
-                    active_blocks[i].is_editing = true;
-                    active_blocks[i].active_value_index = (int)j;
-                    foundFocus = true;
-                    break;
+                    };
+
+                    if (SDL_PointInRect(&mPos, &inputArea)) {
+                        block.is_editing = true;
+                        block.active_value_index = (int)j;
+                        block.values[j] = "";
+                        SDL_StartTextInput();
+                        foundFocus = true;
+                        break;
+                    }
                 }
+                if (foundFocus) break;
             }
+            if (foundFocus) break;
         }
         if (foundFocus) break;
     }
-   if (!foundFocus) {
-        for(auto& b : active_blocks) b.is_editing = false;
-    }
+
 }
 
 bool IsValidChar(char c, InputType type) {
@@ -433,42 +530,47 @@ void HandleKeyboardInput(SDL_Event& e) {
         }
         return;
     }
-    for (auto& b : active_blocks) {
-        if (b.is_editing && b.active_value_index != -1 && b.active_value_index < (int)b.values.size()) {
-            string& str = b.values[b.active_value_index];
-            InputType currentType = blockMap[b.id].inputs[b.active_value_index].type;
 
-            if (e.type == SDL_KEYDOWN) {
-                if (e.key.keysym.sym == SDLK_BACKSPACE && !str.empty()) {
-                    str.pop_back();
-                    UpdateBlockWidth(b, code_bar_font);
-                } else if (e.key.keysym.sym == SDLK_RETURN) {
-                    int Last_Index = b.active_value_index;
-                    b.is_editing = false;
-                    b.active_value_index = -1;
-                    SDL_StopTextInput();
+    for (auto& chain : blockChains) {
+        for (auto& block : chain) {
+            if (block.is_editing && block.active_value_index != -1 &&
+                block.active_value_index < (int)block.values.size()) {
 
-                    if (str.empty() && Last_Index != -1) {
-                        str = blockMap[b.id].inputs[Last_Index].defaultValue;
-                        UpdateBlockWidth(b, code_bar_font);
+                string& str = block.values[block.active_value_index];
+                InputType currentType = blockMap[block.id].inputs[block.active_value_index].type;
+
+                if (e.type == SDL_KEYDOWN) {
+                    if (e.key.keysym.sym == SDLK_BACKSPACE && !str.empty()) {
+                        str.pop_back();
+                        UpdateBlockWidth(block, code_bar_font);
+                    } else if (e.key.keysym.sym == SDLK_RETURN) {
+                        int Last_Index = block.active_value_index;
+                        block.is_editing = false;
+                        block.active_value_index = -1;
+                        SDL_StopTextInput();
+
+                        if (str.empty() && Last_Index != -1) {
+                            str = blockMap[block.id].inputs[Last_Index].defaultValue;
+                            UpdateBlockWidth(block, code_bar_font);
+                        }
                     }
-                }
-            } else if (e.type == SDL_TEXTINPUT) {
-                bool valid_char = false;
-                if (currentType == INPUT_NUMBER) {
-                    valid_char = (e.text.text[0] >= '0' && e.text.text[0] <= '9') ||
-                                  e.text.text[0] == '-' || e.text.text[0] == '.';
-                } else if (currentType == INPUT_TEXT) {
-                    valid_char = (e.text.text[0] >= 32 && e.text.text[0] <= 126);
-                } else {
-                    valid_char = true;
-                }
+                } else if (e.type == SDL_TEXTINPUT) {
+                    bool valid_char = false;
+                    if (currentType == INPUT_NUMBER) {
+                        valid_char = (e.text.text[0] >= '0' && e.text.text[0] <= '9') ||
+                                      e.text.text[0] == '-' || e.text.text[0] == '.';
+                    } else if (currentType == INPUT_TEXT) {
+                        valid_char = (e.text.text[0] >= 32 && e.text.text[0] <= 126);
+                    } else {
+                        valid_char = true;
+                    }
 
-                if (valid_char && str.length() < 20) {
-                    str += e.text.text;
-                    UpdateBlockWidth(b, code_bar_font);
+                    if (valid_char && str.length() < 20) {
+                        str += e.text.text;
+                        UpdateBlockWidth(block, code_bar_font);
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
@@ -494,6 +596,9 @@ void HandleBlockEvent(SDL_Event& e){
     int mx, my;
     SDL_GetMouseState(&mx, &my);
     SDL_Point mPos = {mx, my};
+
+    static int draggedChainIndex = -1;
+    static int offsetX = 0, offsetY = 0;
     if (e.type == SDL_MOUSEWHEEL) {
         if (mx > 60 && mx < 310) {
             sidebar_scroll_y += e.wheel.y * 25;
@@ -501,9 +606,12 @@ void HandleBlockEvent(SDL_Event& e){
             if (sidebar_scroll_y < -3000) sidebar_scroll_y = -3000;
         }
     }
+
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
         bool clickedOnInput = false;
         bool clickedOnMenu = false;
+        CheckInputClick(mx, my);
+
         if (mx > 60 && mx < 310 && my > 95) {
             for (auto& mb : menu_blocks) {
                 SDL_Rect actual_pos = mb.rect;
@@ -521,101 +629,105 @@ void HandleBlockEvent(SDL_Event& e){
                     new_block.rect.h = blockMap[mb.id].height;
                     new_block.rect.x = mx - new_block.rect.w/2;
                     new_block.rect.y = my - new_block.rect.h/2;
-                    active_blocks.push_back(new_block);
-                    draggedBlock = &active_blocks.back();
-                    offsetX=mx - draggedBlock->rect.x;
-                    offsetY=my - draggedBlock->rect.y;
+
+                    blockChains.push_back({new_block});
+                    draggedChainIndex = blockChains.size() - 1;
+                    offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
+                    offsetY = my - blockChains[draggedChainIndex][0].rect.y;
                     clickedOnMenu = true;
                     break;
                 }
             }
         }
+
         if (!clickedOnMenu) {
-            for (auto& block : active_blocks) {
-                if (blockMap.count(block.id)) {
-
-                    int current_x = block.rect.x + 5;
-                    current_x += Get_text_width(code_bar_font, blockMap[block.id].Back_label) + 5;
-
-                    for (size_t i = 0; i < block.values.size(); i++) {
-                        string val = block.values[i];
-                        int text_width = Get_text_width(code_bar_font, val);
-                        int input_width = max(40, text_width + 10);
-
-                        SDL_Rect input_rect = {
-                            current_x,
-                            block.rect.y + 9,
-                            input_width - 3,
-                            20
-                        };
-
-                        if (SDL_PointInRect(&mPos, &input_rect)) {
-                            for (auto& b : active_blocks) {
-                                b.is_editing = false;
-                                b.active_value_index = -1;
-                            }
-                            block.is_editing = true;
-                            block.active_value_index = i;
-                            block.values[i] = "";
-                            SDL_StartTextInput();
-                            clickedOnInput = true;
-                            break;
-                        }
-
-                        current_x += input_width + 5;
-
-                        if (i < blockMap[block.id].labels.size()) {
-                            current_x += Get_text_width(code_bar_font, blockMap[block.id].labels[i]) + 5;
-                        }
-                    }
+            int chainIdx, blockIdx;
+            if (FindClickedBlock(mx, my, chainIdx, blockIdx)) {
+                if (blockIdx > 0) {
+                    SplitChain(chainIdx, blockIdx);
+                    FindClickedBlock(mx, my, chainIdx, blockIdx);
                 }
-                if (clickedOnInput) break;
+
+                draggedChainIndex = chainIdx;
+                offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
+                offsetY = my - blockChains[draggedChainIndex][0].rect.y;
             }
         }
-
-            if (!clickedOnInput) {
-                for (int i = active_blocks.size()-1; i>=0; i--) {
-                    if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
-                        draggedBlock = &active_blocks[i];
-                        offsetX= mx-active_blocks[i].rect.x;
-                        offsetY=my-active_blocks[i].rect.y;
-                        Blocks temp = active_blocks[i];
-                        active_blocks.erase(active_blocks.begin()+i);
-                        active_blocks.push_back(temp);
-                        draggedBlock = &active_blocks.back();
-                        break;
-                    }
-                }
-            }
-        }
-
-
-    if (e.type == SDL_MOUSEMOTION && draggedBlock != nullptr) {
-        draggedBlock->rect.x = mx - offsetX;
-        draggedBlock->rect.y = my - offsetY;
     }
-    if (e.type == SDL_MOUSEBUTTONUP) {
-        if (draggedBlock != nullptr) {
-            int safeZoneX_Start = 310;
-            int safeZoneY_Start = 95;
 
-            bool shouldDelete = false;
-            if (draggedBlock->rect.x < safeZoneX_Start ||
-                draggedBlock->rect.y < safeZoneY_Start ||
-                draggedBlock->rect.x > 900) {
+    if (e.type == SDL_MOUSEMOTION && draggedChainIndex != -1) {
+        int deltaX = mx - offsetX - blockChains[draggedChainIndex][0].rect.x;
+        int deltaY = my - offsetY - blockChains[draggedChainIndex][0].rect.y;
+
+        for (auto& block : blockChains[draggedChainIndex]) {
+            block.rect.x += deltaX;
+            block.rect.y += deltaY;
+        }
+    }
+
+    if (e.type == SDL_MOUSEBUTTONUP && draggedChainIndex != -1) {
+        int safeZoneX_Start = 310;
+        int safeZoneY_Start = 95;
+
+        bool shouldDelete = false;
+        for (auto& block : blockChains[draggedChainIndex]) {
+            if (block.rect.x < safeZoneX_Start || block.rect.y < safeZoneY_Start || block.rect.x > 900) {
                 shouldDelete = true;
+                break;
             }
-            if (shouldDelete) {
-                for (auto it = active_blocks.begin(); it != active_blocks.end(); ++it) {
-                    if (&(*it) == draggedBlock) {
-                        draggedBlock = nullptr;
-                        active_blocks.erase(it);
-                        break;
+        }
+
+        if (shouldDelete) {
+            blockChains.erase(blockChains.begin() + draggedChainIndex);
+        }
+        else {
+            bool snapped = false;
+
+            for (int i = 0; i < blockChains.size(); i++) {
+                if (i == draggedChainIndex) continue;
+                if (blockChains[i].empty()) continue;
+
+                Blocks& firstBlock = blockChains[i].front();
+                Blocks& lastBlock = blockChains[i].back();
+                Blocks& draggedFirst = blockChains[draggedChainIndex].front();
+                Blocks& draggedLast = blockChains[draggedChainIndex].back();
+
+                if (IsNearForSnap(lastBlock, draggedFirst)) {
+                    int deltaY = (lastBlock.rect.y + lastBlock.rect.h - 5) - draggedFirst.rect.y;
+                    for (auto& block : blockChains[draggedChainIndex]) {
+                        block.rect.y += deltaY;
+                        block.rect.x = lastBlock.rect.x;
                     }
+
+                    if (i < draggedChainIndex) {
+                        MergeChains(i, draggedChainIndex, false);
+                    } else {
+                        MergeChains(i, draggedChainIndex, false);
+                    }
+                    snapped = true;
+                    break;
+                }
+
+                if (IsNearForSnap(draggedLast, firstBlock)) {
+                    int deltaY = (firstBlock.rect.y - draggedLast.rect.h + 5) - draggedFirst.rect.y;
+                    for (auto& block : blockChains[draggedChainIndex]) {
+                        block.rect.y += deltaY;
+                        block.rect.x = firstBlock.rect.x;
+                    }
+
+                    if (i < draggedChainIndex) {
+                        MergeChains(i, draggedChainIndex, true);
+                    } else {
+                        MergeChains(i, draggedChainIndex, true);
+                    }
+                    snapped = true;
+                    break;
                 }
             }
-             draggedBlock = nullptr;
+
         }
+
+        draggedChainIndex = -1;
     }
 }
 
@@ -872,7 +984,7 @@ void Get_event() {
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseDown(mx,my);
+            HandleCanvasMouseUp(mx,my);
         }
 
         if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {

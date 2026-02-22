@@ -69,4 +69,6 @@ void UpdateMenuState();
 void DrawBackdropLibrary(SDL_Renderer* renderer, TTF_Font* font);
 void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font,Blocks* block);
 void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
+void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
+BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
 #endif //GRAPHIC_ELEMENT_H
