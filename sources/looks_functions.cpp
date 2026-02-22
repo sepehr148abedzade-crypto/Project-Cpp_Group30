@@ -4,6 +4,8 @@
 #include "Graphic_Element.h"
 #include "Entity.h"
 
+bool is_costume_number_on = false;
+bool is_size_on = false;
 void change_size_by(SDL_Renderer *renderer,double size,Character* sprite){
     if(Limit_CharacterX(*sprite) && Limit_CharacterY(*sprite)) {
         sprite->size += size / 1000;
@@ -47,14 +49,8 @@ void think_a_for_t_second(std::string message, Character* sprite){
 
 }
 
-void switch_costume_to(SDL_Renderer* renderer,double n,Character* sprite){
-    if(n<=1) {
+void switch_costume_to(SDL_Renderer* renderer,Character* sprite){
+    sprite->currentCostumeIndex++;
+    if(sprite->currentCostumeIndex>=sprite->costumes.size())
         sprite->currentCostumeIndex = 0;
-        return;
-    }
-    if(n>sprite->costumes.size()){
-        sprite->currentCostumeIndex = sprite->costumes.size()-1;
-        return;
-    }
-    sprite->currentCostumeIndex = n-1;
 }
