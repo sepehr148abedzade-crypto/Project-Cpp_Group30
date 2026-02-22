@@ -293,36 +293,23 @@ void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,Bloc
 void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
                    BlockTemplate& BT, vector<string>& values,
                    SDL_Color color, TTF_Font* font, Blocks* block) {
-
-    roundedBoxRGBA(renderer, x, y, x + w, y + h, 5,
-                   color.r, color.g, color.b, color.a);
-
+    roundedBoxRGBA(renderer, x, y, x + w, y + h, 5,color.r, color.g, color.b, color.a);
     roundedRectangleRGBA(renderer, x, y, x + w, y + h, 5, 0, 0, 0, 255);
-
     int current_x = x + 5;
-
-    if (!BT.Back_label.empty()) {
-        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y-6 ,
-                               {255,255,255,255}) + 5;
+    if (!BT.Back_label.empty()) {current_x = Draw_label(current_x, renderer, font, BT.Back_label, y-6 ,
+{255,255,255,255}) + 5;
     }
-
     for (size_t i = 0; i < values.size(); i++) {
         string val = values[i];
-
         if (block && block->is_editing && block->active_value_index == (int)i) {
             val += "|";
         }
-
         int text_width = Get_text_width(font, val);
         int input_width = max(35, text_width +12);
-
         roundedBoxRGBA(renderer, current_x, y +3,current_x + input_width, y + 23,4, 255, 255, 255, 255);
-
         int text_x = current_x + (input_width - text_width) / 2;
         Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
-
         current_x += input_width + 5;
-
         if (i < BT.labels.size()) {
             current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
                                   {255,255,255,255}) + 5;
@@ -348,8 +335,13 @@ void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
     for (int c = 0; c < blockChains.size(); c++) {
         if (c == draggedChainIndex) continue;
 
-        for (auto& block : blockChains[c]) {
+        for (int b = 0; b < blockChains[c].size(); b++) {
+            auto& block = blockChains[c][b];
             SDL_Color color = GetBlockColor(blockMap[block.id].category);
+
+            if (isExecuting && c == executingChainIndex && b == executingBlockIndex) {
+                color = {100, 255, 100, 255};
+            }
 
             switch (block.type) {
                 case Simple_Block:
@@ -409,7 +401,6 @@ void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
                                 color, font, &block);
                     break;
             }
-
         }
     }
 }

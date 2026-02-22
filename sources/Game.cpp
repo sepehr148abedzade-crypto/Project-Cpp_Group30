@@ -38,6 +38,14 @@ SDL_Texture* globalDrawingLayer = nullptr;
 std::vector<Character> allCharacters;
 vector<vector<Blocks>> blockChains;
  int draggedChainIndex= -1;
+int executingChainIndex = -1;
+int executingBlockIndex = -1;
+Uint32 executionStartTime = 0;
+bool isExecuting = false;
+
+Uint32 clickStartTime = 0;
+bool isClickAndHold = false;
+const Uint32 CLICK_THRESHOLD = 200;
 
 int lastMouseX = -1;
 int lastMouseY = -1;
@@ -76,6 +84,30 @@ std::string GetUniqueBackdropName(std::string baseName) {
     }
     return finalName;
 }
+
+void UpdateExecution() {
+    if (!isExecuting) return;
+    if (executingChainIndex < 0 || executingChainIndex >= blockChains.size()) {
+        isExecuting = false;
+        return;
+    }
+
+    Uint32 currentTime = SDL_GetTicks();
+    if (currentTime - executionStartTime > 500) {
+        executingBlockIndex++;
+
+        if (executingBlockIndex >= blockChains[executingChainIndex].size()) {
+            isExecuting = false;
+            executingChainIndex = -1;
+            executingBlockIndex = -1;
+        } else {
+            Blocks& block = blockChains[executingChainIndex][executingBlockIndex];
+            Executing_Motion_Blocks(block, now_sprite);
+            executionStartTime = currentTime;
+        }
+    }
+}
+
 bool FindClickedBlock(int mx, int my, int& chainIdx, int& blockIdx) {
     for (int c = 0; c < blockChains.size(); c++) {
         for (int b = 0; b < blockChains[c].size(); b++) {
@@ -133,7 +165,6 @@ void MergeChains(int targetIdx, int sourceIdx, bool toTop) {
 bool IsNearForSnap(Blocks& block1, Blocks& block2) {
     int verticalGap1 = block2.rect.y - (block1.rect.y + block1.rect.h);
     bool horizontallyAligned1 = (abs(block1.rect.x - block2.rect.x) < 10);
-
     int verticalGap2 = block1.rect.y - (block2.rect.y + block2.rect.h);
     bool horizontallyAligned2 = (abs(block1.rect.x - block2.rect.x) < 10);
 
@@ -156,6 +187,18 @@ void SnapBlocksToTop(Blocks& newTopBlock, Blocks& existingChain) {
 
     newTopBlock.next = &existingChain;
     existingChain.prev = &newTopBlock;
+}
+void ExecuteChain(int chainIndex) {
+    if (chainIndex < 0 || chainIndex >= blockChains.size()) return;
+
+    executingChainIndex = chainIndex;
+    executingBlockIndex = 0;
+    executionStartTime = SDL_GetTicks();
+    isExecuting = true;
+    if (!blockChains[executingChainIndex].empty()) {
+        Blocks& block = blockChains[executingChainIndex][0];
+        Executing_Motion_Blocks(block, now_sprite);
+    }
 }
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
@@ -271,11 +314,11 @@ void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
         block.rect.w=new_width;
     }
 }
-/*void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
+void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
     string ID = block.id;
         if (ID=="move") {
             double steps=stod(block.values[0]);
-            move_steps(steps,sprite);
+            move_steps_character(steps,sprite);
         }
         else if (ID=="tern_left") {
             double angel = stod(block.values[0]);
@@ -307,7 +350,7 @@ void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
             set_y_to(new_y,sprite);
         }
 
-}*/
+}
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
     if (!tex || !renderer) return;
@@ -608,9 +651,21 @@ void HandleBlockEvent(SDL_Event& e){
     }
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        clickStartTime = SDL_GetTicks();
+        isClickAndHold = false;
         bool clickedOnInput = false;
         bool clickedOnMenu = false;
         CheckInputClick(mx, my);
+        for (auto& chain : blockChains) {
+            for (auto& block : chain) {
+                if (block.is_editing) {
+                    clickedOnInput = true;
+                    break;
+                }
+            }
+            if (clickedOnInput) break;
+        }
+        if (clickedOnInput) return;
 
         if (mx > 60 && mx < 310 && my > 95) {
             for (auto& mb : menu_blocks) {
@@ -651,83 +706,85 @@ void HandleBlockEvent(SDL_Event& e){
                 draggedChainIndex = chainIdx;
                 offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
                 offsetY = my - blockChains[draggedChainIndex][0].rect.y;
+               // isClickAndHold = true;
             }
         }
     }
 
     if (e.type == SDL_MOUSEMOTION && draggedChainIndex != -1) {
-        int deltaX = mx - offsetX - blockChains[draggedChainIndex][0].rect.x;
-        int deltaY = my - offsetY - blockChains[draggedChainIndex][0].rect.y;
+        if (SDL_GetTicks() - clickStartTime > CLICK_THRESHOLD ||
+           abs(mx - offsetX - blockChains[draggedChainIndex][0].rect.x) > 5) {
+            int deltaX = mx - offsetX - blockChains[draggedChainIndex][0].rect.x;
+            int deltaY = my - offsetY - blockChains[draggedChainIndex][0].rect.y;
 
-        for (auto& block : blockChains[draggedChainIndex]) {
-            block.rect.x += deltaX;
-            block.rect.y += deltaY;
-        }
+            for (auto& block : blockChains[draggedChainIndex]) {
+                block.rect.x += deltaX;
+                block.rect.y += deltaY;
+            }
+           }
     }
 
-    if (e.type == SDL_MOUSEBUTTONUP && draggedChainIndex != -1) {
-        int safeZoneX_Start = 310;
-        int safeZoneY_Start = 95;
-
-        bool shouldDelete = false;
-        for (auto& block : blockChains[draggedChainIndex]) {
-            if (block.rect.x < safeZoneX_Start || block.rect.y < safeZoneY_Start || block.rect.x > 900) {
-                shouldDelete = true;
-                break;
-            }
+    if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        if (draggedChainIndex != -1 && SDL_GetTicks() - clickStartTime < CLICK_THRESHOLD && !isClickAndHold) {
+            ExecuteChain(draggedChainIndex);
         }
+        else if (draggedChainIndex != -1) {
+            int safeZoneX_Start = 310;
+            int safeZoneY_Start = 95;
 
-        if (shouldDelete) {
-            blockChains.erase(blockChains.begin() + draggedChainIndex);
-        }
-        else {
-            bool snapped = false;
-
-            for (int i = 0; i < blockChains.size(); i++) {
-                if (i == draggedChainIndex) continue;
-                if (blockChains[i].empty()) continue;
-
-                Blocks& firstBlock = blockChains[i].front();
-                Blocks& lastBlock = blockChains[i].back();
-                Blocks& draggedFirst = blockChains[draggedChainIndex].front();
-                Blocks& draggedLast = blockChains[draggedChainIndex].back();
-
-                if (IsNearForSnap(lastBlock, draggedFirst)) {
-                    int deltaY = (lastBlock.rect.y + lastBlock.rect.h - 5) - draggedFirst.rect.y;
-                    for (auto& block : blockChains[draggedChainIndex]) {
-                        block.rect.y += deltaY;
-                        block.rect.x = lastBlock.rect.x;
-                    }
-
-                    if (i < draggedChainIndex) {
-                        MergeChains(i, draggedChainIndex, false);
-                    } else {
-                        MergeChains(i, draggedChainIndex, false);
-                    }
-                    snapped = true;
-                    break;
-                }
-
-                if (IsNearForSnap(draggedLast, firstBlock)) {
-                    int deltaY = (firstBlock.rect.y - draggedLast.rect.h + 5) - draggedFirst.rect.y;
-                    for (auto& block : blockChains[draggedChainIndex]) {
-                        block.rect.y += deltaY;
-                        block.rect.x = firstBlock.rect.x;
-                    }
-
-                    if (i < draggedChainIndex) {
-                        MergeChains(i, draggedChainIndex, true);
-                    } else {
-                        MergeChains(i, draggedChainIndex, true);
-                    }
-                    snapped = true;
+            bool shouldDelete = false;
+            for (auto& block : blockChains[draggedChainIndex]) {
+                if (block.rect.x < safeZoneX_Start || block.rect.y < safeZoneY_Start || block.rect.x > 900) {
+                    shouldDelete = true;
                     break;
                 }
             }
 
+            if (shouldDelete) {
+                blockChains.erase(blockChains.begin() + draggedChainIndex);
+            }
+            else {
+                bool snapped = false;
+
+                for (int i = 0; i < blockChains.size(); i++) {
+                    if (i == draggedChainIndex) continue;
+                    if (blockChains[i].empty()) continue;
+
+                    Blocks& firstBlock = blockChains[i].front();
+                    Blocks& lastBlock = blockChains[i].back();
+                    Blocks& draggedFirst = blockChains[draggedChainIndex].front();
+                    Blocks& draggedLast = blockChains[draggedChainIndex].back();
+
+                    if (IsNearForSnap(lastBlock, draggedFirst)) {
+                        int deltaY = (lastBlock.rect.y + lastBlock.rect.h - 5) - draggedFirst.rect.y;
+                        for (auto& block : blockChains[draggedChainIndex]) {
+                            block.rect.y += deltaY;
+                            block.rect.x = lastBlock.rect.x;
+                        }
+
+                        MergeChains(i, draggedChainIndex, false);
+                        snapped = true;
+                        break;
+                    }
+
+                    if (IsNearForSnap(draggedLast, firstBlock)) {
+                        int deltaY = (firstBlock.rect.y - draggedLast.rect.h + 5) - draggedFirst.rect.y;
+                        for (auto& block : blockChains[draggedChainIndex]) {
+                            block.rect.y += deltaY;
+                            block.rect.x = firstBlock.rect.x;
+                        }
+
+                        MergeChains(i, draggedChainIndex, true);
+                        snapped = true;
+                        break;
+                    }
+                }
+
+            }
         }
 
         draggedChainIndex = -1;
+        isClickAndHold = false;
     }
 }
 
@@ -1081,6 +1138,7 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 
 void Update() {
     UpdateMenuState();
+    UpdateExecution();
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);

@@ -67,8 +67,6 @@ void Init_Menu_Blocks() {
                     b.rect.x = 80;
                     b.rect.y = currentY;
                     b.parent = nullptr;
-                    b.next = nullptr;
-                    b.prev = nullptr;
                     menu_blocks.push_back(b);
                     if (b.type == C_Block) {
                         spacing = b.rect.h + 15;
