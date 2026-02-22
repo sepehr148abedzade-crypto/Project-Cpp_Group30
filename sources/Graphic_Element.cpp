@@ -9,6 +9,7 @@
 #include <vector>
 #include <ctime>
 #include <cstdlib>
+
 EditorSettings globalEditor;
 Blocks* draggedBlock = nullptr;
 
@@ -20,6 +21,8 @@ int offsetX = 0, offsetY = 0;
 int sidebar_scroll_y = 0;
 int selectedBackdropIndex = 0;
 int backdropScrollY = 0;
+
+extern int draggedChainIndex;
 
 std::vector<BackdropItem> libraryItems;
 std::vector<Backdrop> libraryBackdrops;
@@ -48,11 +51,12 @@ int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font
     int totalWidth =20;
     totalWidth += Get_text_width(font,BT.Back_label);
     for (size_t i = 0 ; i <BT.inputs.size();++i) {
-        if (BT.inputs[i].type==INPUT_NUMBER) {
             totalWidth+=5;
             string v = i<value.size() ? value[i]:BT.inputs[i].defaultValue;
-            totalWidth+= Get_text_width(font,BT.Back_label);
-        }
+        int textWidth = Get_text_width(font, v);
+        int inputWidth = max(40, textWidth + 10);
+        totalWidth += inputWidth;
+
         if (i < BT.labels.size()) {
             totalWidth += 5;
             totalWidth += Get_text_width(font, BT.labels[i]);
@@ -182,7 +186,17 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
                 case Simple_Block:
                     DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font,nullptr);
                     break;
-                case C_Block: C_Block:Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font, nullptr);
+                case C_Block:
+                    Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font, nullptr);
+                    break;
+                case Expression_Block:
+                    DrawExpressionBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,blockMap[mb.id], mb.values, color, font, nullptr);
+                    break;
+                case Bool_Block:
+                    DrawBoolBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,
+                                blockMap[mb.id], mb.values, color, font, nullptr);
+                    break;
+
             }
         }
     }
@@ -245,7 +259,65 @@ void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTe
         current_x += input_width + 5;
 
     }
+}
+void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block) {
 
+    roundedBoxRGBA(renderer, x, y, x + w, y + h, 10, color.r, color.g, color.b, color.a);
+
+    roundedRectangleRGBA(renderer, x, y, x + w, y + h, 10, 0, 0, 0, 255);
+
+    int current_x = x +5;
+
+    if (!BT.Back_label.empty()) {
+        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y -6,
+                               {255,255,255,255}) + 8;
+    }
+
+    for (size_t i = 0; i < values.size(); i++) {
+        string val = values[i];
+
+        if (block && block->is_editing && block->active_value_index == (int)i) {
+            val += "|";
+        }
+
+        int text_width = Get_text_width(font, val);
+        int input_width = max(35, text_width +12);
+
+        roundedBoxRGBA(renderer, current_x, y +3, current_x + input_width, y +23,8, 255, 255, 255, 255);
+        int text_x = current_x + (input_width - text_width) / 2;
+        Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
+        current_x += input_width + 5;
+        if (i < BT.labels.size()) {
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
+                                  {255,255,255,255}) + 8;
+        }
+    }
+}
+void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
+                   BlockTemplate& BT, vector<string>& values,
+                   SDL_Color color, TTF_Font* font, Blocks* block) {
+    roundedBoxRGBA(renderer, x, y, x + w, y + h, 5,color.r, color.g, color.b, color.a);
+    roundedRectangleRGBA(renderer, x, y, x + w, y + h, 5, 0, 0, 0, 255);
+    int current_x = x + 5;
+    if (!BT.Back_label.empty()) {current_x = Draw_label(current_x, renderer, font, BT.Back_label, y-6 ,
+{255,255,255,255}) + 5;
+    }
+    for (size_t i = 0; i < values.size(); i++) {
+        string val = values[i];
+        if (block && block->is_editing && block->active_value_index == (int)i) {
+            val += "|";
+        }
+        int text_width = Get_text_width(font, val);
+        int input_width = max(35, text_width +12);
+        roundedBoxRGBA(renderer, current_x, y +3,current_x + input_width, y + 23,4, 255, 255, 255, 255);
+        int text_x = current_x + (input_width - text_width) / 2;
+        Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
+        current_x += input_width + 5;
+        if (i < BT.labels.size()) {
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
+                                  {255,255,255,255}) + 5;
+        }
+    }
 }
 SDL_Color GetBlockColor(Block_category cat) {
     switch (cat) {
@@ -263,14 +335,75 @@ SDL_Color GetBlockColor(Block_category cat) {
 }
 
 void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
-    for (auto& b : active_blocks) {
-        SDL_Color color= GetBlockColor(blockMap[b.id].category);
-        switch (b.type) {
-            case Simple_Block :
-                DrawSimpleBlocks(renderer,b.rect.x,b.rect.y,b.rect.w,b.rect.h,blockMap[b.id],b.values,color,font,&b);
-                break;
+    for (int c = 0; c < blockChains.size(); c++) {
+        if (c == draggedChainIndex) continue;
+
+        for (int b = 0; b < blockChains[c].size(); b++) {
+            auto& block = blockChains[c][b];
+            SDL_Color color = GetBlockColor(blockMap[block.id].category);
+
+            if (isExecuting && c == executingChainIndex && b == executingBlockIndex) {
+                color = {100, 255, 100, 255};
+            }
+
+            switch (block.type) {
+                case Simple_Block:
+                    DrawSimpleBlocks(renderer, block.rect.x, block.rect.y,
+                                   block.rect.w, block.rect.h,
+                                   blockMap[block.id], block.values,
+                                   color, font, &block);
+                    break;
                 case C_Block:
-                Draw_C_Blocks(renderer,b.rect.x, b.rect.y, b.rect.w, b.rect.h, blockMap[b.id], b.values, color, font, &b);
+                    Draw_C_Blocks(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+                case Expression_Block:
+                    DrawExpressionBlock(renderer, block.rect.x, block.rect.y,
+                                      block.rect.w, block.rect.h,
+                                      blockMap[block.id], block.values,
+                                      color, font, &block);
+                    break;
+                case Bool_Block:
+                    DrawBoolBlock(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+            }
+        }
+    }
+
+    if (draggedChainIndex != -1) {
+        for (auto& block : blockChains[draggedChainIndex]) {
+            SDL_Color color = GetBlockColor(blockMap[block.id].category);
+            switch (block.type) {
+                case Simple_Block:
+                    DrawSimpleBlocks(renderer, block.rect.x, block.rect.y,
+                                   block.rect.w, block.rect.h,
+                                   blockMap[block.id], block.values,
+                                   color, font, &block);
+                    break;
+                case C_Block:
+                    Draw_C_Blocks(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+                case Expression_Block:
+                    DrawExpressionBlock(renderer, block.rect.x, block.rect.y,
+                                      block.rect.w, block.rect.h,
+                                      blockMap[block.id], block.values,
+                                      color, font, &block);
+                    break;
+                case Bool_Block:
+                    DrawBoolBlock(renderer, block.rect.x, block.rect.y,
+                                block.rect.w, block.rect.h,
+                                blockMap[block.id], block.values,
+                                color, font, &block);
+                    break;
+            }
         }
         //DrawBlockInputs(renderer, font, b);
     }
@@ -601,6 +734,14 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
         SDL_Rect iconRect = { cx - 10, cy - 10, 20, 20 };
         SDL_RenderCopy(renderer, icon_gallery, NULL, &iconRect);
     }
+}
+
+void Draw_Stage_Bar(SDL_Renderer* renderer){
+    SDL_Rect rect = {Get_width()-100+5,Get_height()/2+30,85,Get_height()/2-80};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
 }
 
 void Draw_Character(SDL_Renderer* renderer,Character* sprite){

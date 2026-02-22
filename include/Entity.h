@@ -101,7 +101,7 @@ struct Character{
     std::string name;
     double x = 0;
     double y = 0;
-    double degree ;
+    double degree = 0;
     double size = 0.25;
     double width=0;
     double height=0;
@@ -128,8 +128,8 @@ struct Blocks{
     int active_value_index = -1;
     vector<Blocks*> children;
     Blocks* parent;
-
-    Blocks* next = nullptr;
+    Blocks* next;
+    Blocks* prev;
 };
 
 struct Backdrop {
@@ -194,7 +194,13 @@ extern Button costume_number_button;
 extern Button volume_button;
 extern Button frequency_button;
 extern Button decrease_frequency_button;
-extern std::vector<Blocks> active_blocks;
+//extern std::vector<Blocks> active_blocks;
+extern vector<vector<Blocks>> blockChains;
+extern int draggedChainIndex ;
+extern int executingChainIndex;
+extern int executingBlockIndex;
+extern Uint32 executionStartTime;
+extern bool isExecuting;
 extern std::vector<Blocks> menu_blocks;
 extern int sidebar_scroll_y;
 extern Blocks* draggedBlock;

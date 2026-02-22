@@ -50,5 +50,6 @@ void Update();
 void Render();
 void Clean();
 void SDL_wait_key();
+void Executing_Motion_Blocks(Blocks& block,Character& sprite );
 
 #endif //GAME_H

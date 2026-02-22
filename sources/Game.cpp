@@ -16,6 +16,8 @@
 #include <cmath>
 #include "Paint_Editor.h"
 #include "SDL2/SDL_mixer.h"
+#include "Paint_Editor.h"
+#include <algorithm>
 using namespace std;
 
 SDL_Window* main_window = nullptr;
@@ -66,6 +68,16 @@ Character* currentSprite = nullptr;
 SDL_Texture* globalDrawingLayer = nullptr;
 
 std::vector<Character> allCharacters;
+vector<vector<Blocks>> blockChains;
+ int draggedChainIndex= -1;
+int executingChainIndex = -1;
+int executingBlockIndex = -1;
+Uint32 executionStartTime = 0;
+bool isExecuting = false;
+
+Uint32 clickStartTime = 0;
+bool isClickAndHold = false;
+const Uint32 CLICK_THRESHOLD = 200;
 
 int lastMouseX = -1;
 int lastMouseY = -1;
@@ -84,6 +96,7 @@ bool stop = false;
 string saveInputText;
 string textToDraw;
 string textInput;
+
 std::string GetUniqueBackdropName(std::string baseName) {
     int counter = 1;
     std::string finalName = baseName;
@@ -102,6 +115,158 @@ std::string GetUniqueBackdropName(std::string baseName) {
         }
     }
     return finalName;
+}
+void Executing_Motion_Blocks(Blocks& block,Character* sprite ) {
+    string ID = block.id;
+    if (ID=="move") {
+        double steps=stod(block.values[0]);
+        move_steps_character(steps,sprite);
+    }
+    else if (ID=="tern_left") {
+        double angel = stod(block.values[0]);
+        turn_clockwise_character(angel,sprite);
+    }
+    else if (ID=="tern_right") {
+        double angel = stod(block.values[0]);
+        turn_clockwise_character(angel,sprite);
+    }
+    else if (ID=="change_x") {
+        double new_x = stod(block.values[0]);
+        change_x_by(new_x,sprite);
+    }
+    else if (ID=="change_y") {
+        double new_y = stod(block.values[0]);
+        change_y_by(new_y,sprite);
+    }
+    else if (ID=="go_to_x_y") {
+        double new_x = stod(block.values[0]);
+        double new_y = stod(block.values[1]);
+        go_to_x_y(new_x,new_y,sprite);
+    }
+    else if (ID=="set_x") {
+        double new_x = stod(block.values[0]);
+        set_x_to(new_x,sprite);
+    }
+    else if (ID=="set_y") {
+        double new_y = stod(block.values[0]);
+        set_y_to(new_y,sprite);
+    }
+
+}
+void UpdateExecution() {
+    if (!isExecuting) return;
+    if (executingChainIndex < 0 || executingChainIndex >= blockChains.size()) {
+        isExecuting = false;
+        return;
+    }
+
+    Uint32 currentTime = SDL_GetTicks();
+    if (currentTime - executionStartTime > 500) {
+        executingBlockIndex++;
+
+        if (executingBlockIndex >= blockChains[executingChainIndex].size()) {
+            isExecuting = false;
+            executingChainIndex = -1;
+            executingBlockIndex = -1;
+        } else {
+            Blocks& block = blockChains[executingChainIndex][executingBlockIndex];
+            Executing_Motion_Blocks(block, now_sprite);
+            executionStartTime = currentTime;
+        }
+    }
+}
+
+bool FindClickedBlock(int mx, int my, int& chainIdx, int& blockIdx) {
+    for (int c = 0; c < blockChains.size(); c++) {
+        for (int b = 0; b < blockChains[c].size(); b++) {
+            SDL_Rect rect = blockChains[c][b].rect;
+            if (mx >= rect.x && mx <= rect.x + rect.w &&
+                my >= rect.y && my <= rect.y + rect.h) {
+                chainIdx = c;
+                blockIdx = b;
+                return true;
+                }
+        }
+    }
+    return false;
+}
+void SplitChain(int chainIdx, int blockIdx) {
+    if (chainIdx < 0 || chainIdx >= blockChains.size()) return;
+    if (blockIdx <= 0 || blockIdx >= blockChains[chainIdx].size()) return;
+
+    vector<Blocks> firstPart, secondPart;
+    for (int i = 0; i < blockIdx; i++) {
+        firstPart.push_back(blockChains[chainIdx][i]);
+    }
+    for (int i = blockIdx; i < blockChains[chainIdx].size(); i++) {
+        secondPart.push_back(blockChains[chainIdx][i]);
+    }
+    blockChains.erase(blockChains.begin() + chainIdx);
+    if (!firstPart.empty()) {
+        blockChains.push_back(firstPart);
+    }
+    if (!secondPart.empty()) {
+        blockChains.push_back(secondPart);
+    }
+}
+void MergeChains(int targetIdx, int sourceIdx, bool toTop) {
+    if (targetIdx < 0 || targetIdx >= blockChains.size()) return;
+    if (sourceIdx < 0 || sourceIdx >= blockChains.size()) return;
+    if (targetIdx == sourceIdx) return;
+
+    if (toTop) {
+        blockChains[targetIdx].insert(
+            blockChains[targetIdx].begin(),
+            blockChains[sourceIdx].begin(),
+            blockChains[sourceIdx].end()
+        );
+    } else {
+        blockChains[targetIdx].insert(
+            blockChains[targetIdx].end(),
+            blockChains[sourceIdx].begin(),
+            blockChains[sourceIdx].end()
+        );
+    }
+
+    blockChains.erase(blockChains.begin() + sourceIdx);
+}
+bool IsNearForSnap(Blocks& block1, Blocks& block2) {
+    int verticalGap1 = block2.rect.y - (block1.rect.y + block1.rect.h);
+    bool horizontallyAligned1 = (abs(block1.rect.x - block2.rect.x) < 10);
+    int verticalGap2 = block1.rect.y - (block2.rect.y + block2.rect.h);
+    bool horizontallyAligned2 = (abs(block1.rect.x - block2.rect.x) < 10);
+
+    return (horizontallyAligned1 && abs(verticalGap1) < 10) ||
+           (horizontallyAligned2 && abs(verticalGap2) < 10);
+}
+void SnapBlocks(Blocks& upperBlock, Blocks& lowerBlock) {
+
+    lowerBlock.rect.x = upperBlock.rect.x;
+    lowerBlock.rect.y = upperBlock.rect.y + upperBlock.rect.h - 5;
+
+    upperBlock.next = &lowerBlock;
+    lowerBlock.prev = &upperBlock;
+}
+
+void SnapBlocksToTop(Blocks& newTopBlock, Blocks& existingChain) {
+
+    newTopBlock.rect.x = existingChain.rect.x;
+    newTopBlock.rect.y = existingChain.rect.y - newTopBlock.rect.h + 5;
+
+    newTopBlock.next = &existingChain;
+    existingChain.prev = &newTopBlock;
+}
+void ExecuteChain(int chainIndex) {
+    if (chainIndex < 0 || chainIndex >= blockChains.size()) return;
+
+    executingChainIndex = chainIndex;
+    executingBlockIndex = 0;
+    executionStartTime = SDL_GetTicks();
+    isExecuting = true;
+    if (!blockChains[executingChainIndex].empty()) {
+        Blocks& block = blockChains[executingChainIndex][0];
+        Executing_Motion_Blocks(block, now_sprite);
+    }
 }
 
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color){
@@ -157,6 +322,7 @@ bool Loading(){
         return false;
     }
     SDL_Texture* Loading_text = LoadText(renderer,loading_font,"Scratch is loading...",white);
+
     SDL_SetRenderDrawColor(renderer,77,151,255,SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     Init_Load_button();
@@ -278,43 +444,6 @@ void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
         block.rect.w=new_width;
     }
 }
-/*void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
-    string ID = block.id;
-        if (ID=="move") {
-            double steps=stod(block.values[0]);
-            move_steps(steps,sprite);
-        }
-        else if (ID=="tern_left") {
-            double angel = stod(block.values[0]);
-            turn_clockwise_character(angel,sprite);
-        }
-        else if (ID=="tern_right") {
-            double angel = stod(block.values[0]);
-            turn_clockwise_character(angel,sprite);
-        }
-        else if (ID=="change_x") {
-            double new_x = stod(block.values[0]);
-            change_x_by(new_x,sprite);
-        }
-        else if (ID=="change_y") {
-            double new_y = stod(block.values[0]);
-            change_y_by(new_y,sprite);
-        }
-        else if (ID=="go_to_x_y") {
-            double new_x = stod(block.values[0]);
-            double new_y = stod(block.values[1]);
-            go_to_x_y(new_x,new_y,sprite);
-        }
-        else if (ID=="set_x") {
-            double new_x = stod(block.values[0]);
-            set_x_to(new_x,sprite);
-        }
-        else if (ID=="set_y") {
-            double new_y = stod(block.values[0]);
-            set_y_to(new_y,sprite);
-        }
-
-}*/
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
     if (!tex || !renderer) return;
@@ -424,32 +553,44 @@ bool IsCircleClicked(int mx, int my, int cx, int cy, int r) {
 void CheckInputClick(int mx, int my) {
     SDL_Point mPos = {mx, my};
     bool foundFocus = false;
-    for (int i = active_blocks.size() - 1; i >= 0; i--) {
-        if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
-            for (size_t j = 0; j < active_blocks[i].values.size(); j++) {
-                int px = blockMap[active_blocks[i].id].inputs[j].posX;
-                int centerY = active_blocks[i].rect.h / 2;
-                SDL_Rect inputArea = {
-                        active_blocks[i].rect.x + px - 20,
-                        active_blocks[i].rect.y + centerY - 10,
-                        40, 20
-                };
-                if (SDL_PointInRect(&mPos, &inputArea)) {
-                    for(auto& b : active_blocks) b.is_editing = false;
-                    active_blocks[i].is_editing = true;
-                    active_blocks[i].active_value_index = (int)j;
-                    foundFocus = true;
-                    break;
+
+    for (auto& chain : blockChains) {
+        for (auto& block : chain) {
+            block.is_editing = false;
+            block.active_value_index = -1;
+        }
+    }
+    for (int c = blockChains.size() - 1; c >= 0; c--) {
+        for (int b = blockChains[c].size() - 1; b >= 0; b--) {
+            Blocks& block = blockChains[c][b];
+
+            if (SDL_PointInRect(&mPos, &block.rect)) {
+                for (size_t j = 0; j < block.values.size(); j++) {
+                    int px = blockMap[block.id].inputs[j].posX;
+                    int centerY = block.rect.h / 2;
+                    SDL_Rect inputArea = {
+                            block.rect.x + px - 20,
+                            block.rect.y + centerY - 10,
+                            40, 20
+                    };
+
+                    if (SDL_PointInRect(&mPos, &inputArea)) {
+                        block.is_editing = true;
+                        block.active_value_index = (int)j;
+                        block.values[j] = "";
+                        SDL_StartTextInput();
+                        foundFocus = true;
+                        break;
+                    }
                 }
+                if (foundFocus) break;
             }
+            if (foundFocus) break;
         }
         if (foundFocus) break;
     }
-   if (!foundFocus) {
-        for(auto& b : active_blocks) b.is_editing = false;
-    }
-}
 
+}
 bool IsValidChar(char c, InputType type) {
     if (type == INPUT_NUMBER) {
         return (c >= '0' && c <= '9') || c == '-';
@@ -522,6 +663,51 @@ void HandleKeyboardInput(SDL_Event& e) {
         } else if (e.type == SDL_TEXTINPUT) {
             textInput += e.text.text;
         }
+        return;
+    }
+
+    for (auto& chain : blockChains) {
+        for (auto& block : chain) {
+            if (block.is_editing && block.active_value_index != -1 &&
+                block.active_value_index < (int)block.values.size()) {
+
+                string& str = block.values[block.active_value_index];
+                InputType currentType = blockMap[block.id].inputs[block.active_value_index].type;
+
+                if (e.type == SDL_KEYDOWN) {
+                    if (e.key.keysym.sym == SDLK_BACKSPACE && !str.empty()) {
+                        str.pop_back();
+                        UpdateBlockWidth(block, code_bar_font);
+                    } else if (e.key.keysym.sym == SDLK_RETURN) {
+                        int Last_Index = block.active_value_index;
+                        block.is_editing = false;
+                        block.active_value_index = -1;
+                        SDL_StopTextInput();
+
+                        if (str.empty() && Last_Index != -1) {
+                            str = blockMap[block.id].inputs[Last_Index].defaultValue;
+                            UpdateBlockWidth(block, code_bar_font);
+                        }
+                    }
+                } else if (e.type == SDL_TEXTINPUT) {
+                    bool valid_char = false;
+                    if (currentType == INPUT_NUMBER) {
+                        valid_char = (e.text.text[0] >= '0' && e.text.text[0] <= '9') ||
+                                     e.text.text[0] == '-' || e.text.text[0] == '.';
+                    } else if (currentType == INPUT_TEXT) {
+                        valid_char = (e.text.text[0] >= 32 && e.text.text[0] <= 126);
+                    } else {
+                        valid_char = true;
+                    }
+
+                    if (valid_char && str.length() < 20) {
+                        str += e.text.text;
+                        UpdateBlockWidth(block, code_bar_font);
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -545,110 +731,152 @@ void HandleBlockEvent(SDL_Event& e){
     int mx, my;
     SDL_GetMouseState(&mx, &my);
     SDL_Point mPos = {mx, my};
+
+    static int draggedChainIndex = -1;
+    static int offsetX = 0, offsetY = 0;
     if (e.type == SDL_MOUSEWHEEL) {
         if (mx > 60 && mx < 310) {
             sidebar_scroll_y += e.wheel.y * 25;
             if (sidebar_scroll_y > 0) sidebar_scroll_y = 0;
-            if (sidebar_scroll_y < -1500) sidebar_scroll_y = -1500;
+            if (sidebar_scroll_y < -3000) sidebar_scroll_y = -3000;
         }
     }
+
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-         bool clickedOnInput = false;
+        clickStartTime = SDL_GetTicks();
+        isClickAndHold = false;
+        bool clickedOnInput = false;
         bool clickedOnMenu = false;
+        CheckInputClick(mx, my);
+        for (auto& chain : blockChains) {
+            for (auto& block : chain) {
+                if (block.is_editing) {
+                    clickedOnInput = true;
+                    break;
+                }
+            }
+            if (clickedOnInput) break;
+        }
+        if (clickedOnInput) return;
+
         if (mx > 60 && mx < 310 && my > 95) {
             for (auto& mb : menu_blocks) {
                 SDL_Rect actual_pos = mb.rect;
                 actual_pos.y += sidebar_scroll_y;
                 if (SDL_PointInRect(&mPos, &actual_pos)) {
                     Blocks new_block = mb;
-                    new_block.rect.x= mx- new_block.rect.w/2;
-                    new_block.rect.y= my- new_block.rect.h/2;
                     new_block.values.clear();
                     if (blockMap.count(mb.id)) {
                         for (auto& Input : blockMap[mb.id].inputs) {
                             new_block.values.push_back(Input.defaultValue);
                         }
                     }
-                    active_blocks.push_back(new_block);
-                    //UpdateBlockWidth(active_blocks.back(),code_bar_font);
-                    draggedBlock = &active_blocks.back();
-                    offsetX=mx - draggedBlock->rect.x;
-                    offsetY=my - draggedBlock->rect.y;
+                    int correct_width = calculatingWidthBlock(blockMap[mb.id], new_block.values, code_bar_font);
+                    new_block.rect.w = correct_width;
+                    new_block.rect.h = blockMap[mb.id].height;
+                    new_block.rect.x = mx - new_block.rect.w/2;
+                    new_block.rect.y = my - new_block.rect.h/2;
+
+                    blockChains.push_back({new_block});
+                    draggedChainIndex = blockChains.size() - 1;
+                    offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
+                    offsetY = my - blockChains[draggedChainIndex][0].rect.y;
                     clickedOnMenu = true;
                     break;
                 }
             }
         }
-        if (!clickedOnMenu) {
-            for (auto& block : active_blocks) {
-                if (blockMap.count(block.id)) {
-                    for (size_t i = 0; i < block.values.size(); i++) {
-                        int input_x=block.rect.x+blockMap[block.id].inputs[i].posX;
-                        string current_val = block.values[i];
-                        int text_width = Get_text_width(code_bar_font, current_val);
-                        int input_width = max(40, text_width + 10);
-                        SDL_Rect input_rect ={input_x-input_width/2,block.rect.y+12,input_width,20};
 
-                        if (SDL_PointInRect(&mPos, &input_rect)) {
-                            for (auto& b :active_blocks) {
-                                b.is_editing = false;
-                                b.active_value_index=-1;
-                            }
-                            block.is_editing = true;
-                            block.active_value_index=i;
-                            clickedOnInput = true;
-                            if (i < block.values.size()) {
-                                block.values[i] = "";
-                            }
-                            SDL_StartTextInput();
-                            break;
-                        }
-                    }
+        if (!clickedOnMenu) {
+            int chainIdx, blockIdx;
+            if (FindClickedBlock(mx, my, chainIdx, blockIdx)) {
+                if (blockIdx > 0) {
+                    SplitChain(chainIdx, blockIdx);
+                    FindClickedBlock(mx, my, chainIdx, blockIdx);
                 }
-                if (clickedOnInput) break;
-            }
-            if (!clickedOnInput) {
-                for (int i = active_blocks.size()-1; i>=0; i--) {
-                    if (SDL_PointInRect(&mPos, &active_blocks[i].rect)) {
-                        draggedBlock = &active_blocks[i];
-                        offsetX= mx-active_blocks[i].rect.x;
-                        offsetY=my-active_blocks[i].rect.y;
-                        Blocks temp = active_blocks[i];
-                        active_blocks.erase(active_blocks.begin()+i);
-                        active_blocks.push_back(temp);
-                        draggedBlock = &active_blocks.back();
-                        break;
-                    }
-                }
+
+                draggedChainIndex = chainIdx;
+                offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
+                offsetY = my - blockChains[draggedChainIndex][0].rect.y;
+                // isClickAndHold = true;
             }
         }
     }
-    if (e.type == SDL_MOUSEMOTION && draggedBlock != nullptr) {
-        draggedBlock->rect.x = mx - offsetX;
-        draggedBlock->rect.y = my - offsetY;
+
+    if (e.type == SDL_MOUSEMOTION && draggedChainIndex != -1) {
+        if (SDL_GetTicks() - clickStartTime > CLICK_THRESHOLD ||
+            abs(mx - offsetX - blockChains[draggedChainIndex][0].rect.x) > 5) {
+            int deltaX = mx - offsetX - blockChains[draggedChainIndex][0].rect.x;
+            int deltaY = my - offsetY - blockChains[draggedChainIndex][0].rect.y;
+
+            for (auto& block : blockChains[draggedChainIndex]) {
+                block.rect.x += deltaX;
+                block.rect.y += deltaY;
+            }
+        }
     }
-    if (e.type == SDL_MOUSEBUTTONUP) {
-        if (draggedBlock != nullptr) {
+
+    if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        if (draggedChainIndex != -1 && SDL_GetTicks() - clickStartTime < CLICK_THRESHOLD && !isClickAndHold) {
+            ExecuteChain(draggedChainIndex);
+        }
+        else if (draggedChainIndex != -1) {
             int safeZoneX_Start = 310;
             int safeZoneY_Start = 95;
 
             bool shouldDelete = false;
-            if (draggedBlock->rect.x < safeZoneX_Start ||
-                draggedBlock->rect.y < safeZoneY_Start ||
-                draggedBlock->rect.x > 900) {
-                shouldDelete = true;
+            for (auto& block : blockChains[draggedChainIndex]) {
+                if (block.rect.x < safeZoneX_Start || block.rect.y < safeZoneY_Start || block.rect.x > 900) {
+                    shouldDelete = true;
+                    break;
+                }
             }
+
             if (shouldDelete) {
-                for (auto it = active_blocks.begin(); it != active_blocks.end(); ++it) {
-                    if (&(*it) == draggedBlock) {
-                        draggedBlock = nullptr;
-                        active_blocks.erase(it);
+                blockChains.erase(blockChains.begin() + draggedChainIndex);
+            }
+            else {
+                bool snapped = false;
+
+                for (int i = 0; i < blockChains.size(); i++) {
+                    if (i == draggedChainIndex) continue;
+                    if (blockChains[i].empty()) continue;
+
+                    Blocks& firstBlock = blockChains[i].front();
+                    Blocks& lastBlock = blockChains[i].back();
+                    Blocks& draggedFirst = blockChains[draggedChainIndex].front();
+                    Blocks& draggedLast = blockChains[draggedChainIndex].back();
+
+                    if (IsNearForSnap(lastBlock, draggedFirst)) {
+                        int deltaY = (lastBlock.rect.y + lastBlock.rect.h - 5) - draggedFirst.rect.y;
+                        for (auto& block : blockChains[draggedChainIndex]) {
+                            block.rect.y += deltaY;
+                            block.rect.x = lastBlock.rect.x;
+                        }
+
+                        MergeChains(i, draggedChainIndex, false);
+                        snapped = true;
+                        break;
+                    }
+
+                    if (IsNearForSnap(draggedLast, firstBlock)) {
+                        int deltaY = (firstBlock.rect.y - draggedLast.rect.h + 5) - draggedFirst.rect.y;
+                        for (auto& block : blockChains[draggedChainIndex]) {
+                            block.rect.y += deltaY;
+                            block.rect.x = firstBlock.rect.x;
+                        }
+
+                        MergeChains(i, draggedChainIndex, true);
+                        snapped = true;
                         break;
                     }
                 }
+
             }
-             draggedBlock = nullptr;
         }
+
+        draggedChainIndex = -1;
+        isClickAndHold = false;
     }
 }
 
@@ -713,14 +941,6 @@ void Handle_Backdrop_Menu_Clicks(int mx, int my) {
         }
     }
 }
-
-void MapMouseToCanvas(int mx, int my, int* outX, int* outY, SDL_Texture* target) {
-    int tw, th;
-    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
-    *outX = (mx - 330) * tw / 600;
-    *outY = (my - 280) * th / 380;
-}
-
 void HandleToolSelection(int mx, int my) {
     int toolX = 115, toolY = 220, btnS = 45;
     for (int i = 0; i < 9; i++) {
@@ -750,7 +970,6 @@ void HandleToolSelection(int mx, int my) {
         }
     }
 }
-
 void HandleCanvasMouseDown(int mx, int my) {
     if (currentTab != BACKDROPS || selectedBackdropIndex < 0) return;
     if (mx < 330 || mx > 930 || my < 280 || my > 660) return;
@@ -787,7 +1006,12 @@ void HandleColorSelection(int mx, int my) {
         }
     }
 }
-
+void MapMouseToCanvas(int mx, int my, int* outX, int* outY, SDL_Texture* target) {
+    int tw, th;
+    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
+    *outX = (mx - 330) * tw / 600;
+    *outY = (my - 280) * th / 380;
+}
 void HandleCanvasMouseUp(int mx, int my) {
     if (selectedBackdropIndex < 0) return;
     SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
@@ -883,22 +1107,11 @@ void Get_event() {
         Handle_event_for_motion_sprite(e,now_sprite);
         Handle_event_for_flag_button(e,flag_button);
         Handle_event_for_stop_button(e,stop_button);
-        Handle_event_for_show_button(e,show_button,now_sprite);
-        Handle_event_for_hide_button(e,hide_button,now_sprite);
-        Handle_event_for_Back_button(e,&Back_button);
-        Handle_event_for_Backdrop_button(e,&Backdrop_button);
-        Handle_event_for_sound_button(e,&Sounds_button);
-        Handle_event_for_Code_button(e,&code_button);
-        Handle_event_for_run_button(e,&run_sound_button);
-        Handle_event_for_volumeUp_button(e,&volumeUp_button);
-        Handle_event_for_volumeDown_button(e,&volumeDown_button);
-        Handle_event_for_increaseFrequency_button(e,&increase_frequency_button);
-        Handle_event_for_decreaseFrequency_button(e,&decrease_frequency_button);
-        if(currentTab == CODE) {
-            Handle_event_for_timer_button(e, &Timer_button);
-            Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
-            Handle_event_for_costume_number_button(e, &costume_number_button);
-            Handle_event_for_size_button(e, &size_button);
+        if(currentTab == CODE){
+
+        }
+        if(currentTab == SOUNDS){
+
         }
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
@@ -930,7 +1143,6 @@ void Get_event() {
         HandleKeyboardInput(e);
     }
 }
-
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     int sw = Get_width();
     int stageW = 486;
@@ -1017,6 +1229,7 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 
 void Update() {
     UpdateMenuState();
+    UpdateExecution();
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
@@ -1051,7 +1264,7 @@ void Update() {
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
-            SDL_Texture *baseTex = nullptr;
+            SDL_Texture* baseTex = nullptr;
             string bName = "Backdrop";
             if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
                 baseTex = projectBackdrops[selectedBackdropIndex].texture;

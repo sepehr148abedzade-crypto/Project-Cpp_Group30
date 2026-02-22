@@ -45,21 +45,7 @@ void LoadBackdropLibraryManual(SDL_Renderer* renderer) {
         AddBackdropToProject(libraryItems[0].texture, libraryItems[0].name, false, false);    }
 }
 
-void AddBlock(const string& id, int x, int y, SDL_Texture* tex) {
-    Blocks newBlock;
-    newBlock.id = id;
-    newBlock.rect = {x, y, blockMap[id].width, blockMap[id].height};
-    newBlock.image = tex;
-    newBlock.is_editing = false;
-    newBlock.active_value_index = -1;
 
-    if (blockMap.count(id)) {
-        for (auto & input : blockMap[id].inputs) {
-            newBlock.values.push_back(input.defaultValue);
-        }
-    }
-    active_blocks.push_back(newBlock);
-}
 
 void Init_Menu_Blocks() {
     menu_blocks.clear();
@@ -80,6 +66,7 @@ void Init_Menu_Blocks() {
                     b.rect.h = blockMap[b.id].height;
                     b.rect.x = 80;
                     b.rect.y = currentY;
+                    b.parent = nullptr;
                     menu_blocks.push_back(b);
                     if (b.type == C_Block) {
                         spacing = b.rect.h + 15;
@@ -101,28 +88,20 @@ bool LoadAllAssets(SDL_Renderer* renderer){
     icon_surprise = IMG_LoadTexture(renderer, "asset/images/icon_surprise.png");
 
     blockMap["move"] = {160, 45, Simple_Block,CAT_MOTION,"move",{"steps"},{{72,INPUT_NUMBER,"10"}}};
-    blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
 
     blockMap["turn_left"] = {160, 45,Simple_Block,CAT_MOTION,"turn left" ,{"degrees"},{{80, INPUT_NUMBER, "15"}}};
-    blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
 
     blockMap["turn_right"] = {160, 45,Simple_Block,CAT_MOTION,"tern right",{"degrees"}, {{80, INPUT_NUMBER, "0"}}};
-    blockLibrary["move"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/move.png");
 
     blockMap["change_x"] = {145, 45,Simple_Block,CAT_MOTION,"change x by ",{},{{115, INPUT_NUMBER, "0"}}};
-    blockLibrary["change_x"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/change_x.png");
 
     blockMap["change_y"] = {145, 45,Simple_Block,CAT_MOTION,"change y by ",{}, {{115, INPUT_NUMBER, "0"}}};
-    blockLibrary["change_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/change_y.png");
 
     blockMap["go_to_x_y"] = {160, 45,Simple_Block,CAT_MOTION,"go to x:",{"y:"}, {{77, INPUT_NUMBER, "0"}, {135, INPUT_NUMBER, "0"}}};
-    blockLibrary["go_to_x_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/go_to_x_y.png");
 
     blockMap["set_x"] = {92, 45,Simple_Block,CAT_MOTION,"set x to ",{},{{70, INPUT_NUMBER, "0"}}};
-    blockLibrary["set_x"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/set_x.png");
 
     blockMap["set_y"] = {92, 45,Simple_Block,CAT_MOTION,"set y to ",{},{{70, INPUT_NUMBER, "0"}}};
-    blockLibrary["set_y"] = IMG_LoadTexture(renderer, "asset/images/Blocks/Motion/set_y.png");
 
     blockMap["say"] = {165,45,Simple_Block,CAT_LOOK,"say",{},{{80,INPUT_TEXT,"2"}}};
 
@@ -156,7 +135,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap["set_s_effect"]= {180 , 45 , Simple_Block,CAT_SOUND,"set",{"effect by"},{{70,INPUT_DROPDOWN,"pitch"},{140,INPUT_NUMBER,"10"}}};
 
-    /* blockMap["clear_sound"] = {120 , 45 , Simple_Block,CAT_SOUND,"clear sound effects",{},{}};
+     blockMap["clear_sound"] = {120 , 45 , Simple_Block,CAT_SOUND,"clear sound effects",{},{}};
 
      blockMap["change_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"change volume by",{},{{80, INPUT_NUMBER,"-10"}}};
 
@@ -164,7 +143,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
      //control
      blockMap["wait_second"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait",{"seconds"},{{80, INPUT_NUMBER,"1"}}};
 
-     blockMap["wait_until"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait until",{},{{80, INPUT_BOOLEAN,"true"}}};*/
+     blockMap["wait_until"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait until",{},{{80, INPUT_BOOLEAN,"true"}}};
 
     blockMap["if"] = {
             120, 100,
@@ -198,6 +177,174 @@ bool LoadAllAssets(SDL_Renderer* renderer){
             "repeat",
             {},
             {{50 , INPUT_BOOLEAN,"true"}}
+    };
+    blockMap["add"] = {
+        100, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "",
+        {"+"},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["subtract"] = {
+        120, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "",
+        {"-"},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["multiply"] = {
+        100, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "",
+        {"*"},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["divide"] = {
+        100, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "",
+        {"/"},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["pick_random"] = {
+        160, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "pick random",
+        {"to"},
+        {{50, INPUT_NUMBER, "1"}, {100, INPUT_NUMBER, "10"}}
+    };
+
+    blockMap["round"] = {
+        120, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "round",
+        {},
+        {{60, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["join"] = {
+        120, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "join",
+        {},
+        {{40, INPUT_TEXT, "hello"}, {80, INPUT_TEXT, "world"}}
+    };
+
+    blockMap["letter_of"] = {
+        150, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "letter",
+        {"of"},
+        {{40, INPUT_NUMBER, "1"}, {90, INPUT_TEXT, "apple"}}
+    };
+
+    blockMap["length"] = {
+        140, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "length of",
+        {},
+        {{70, INPUT_TEXT, "hello"}}
+    };
+    blockMap["mod"] = {
+        120, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "",
+        {"mod"},
+        {{40 , INPUT_NUMBER, ""},{80,INPUT_NUMBER,""}}
+    };
+    blockMap["greater_than"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "",
+        {">"},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["less_than"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "",
+        {"<"},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["equal"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "",
+        {"="},
+        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+    };
+
+    blockMap["and"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "",
+        {"and"},
+        {{30, INPUT_BOOLEAN, ""}, {70, INPUT_BOOLEAN, ""}}
+    };
+
+    blockMap["or"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "",
+        {"or"},
+        {{30, INPUT_BOOLEAN, ""}, {70, INPUT_BOOLEAN, ""}}
+    };
+
+    blockMap["not"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "not",
+        {},
+        {{50, INPUT_BOOLEAN, ""}}
+    };
+
+    blockMap["touching"] = {
+        140, 26,
+        Bool_Block,
+        CAT_SENSING,
+        "touching",
+        {},
+        {{80, INPUT_DROPDOWN, "mouse-pointer"}}
+    };
+    blockMap["contains"] = {
+        100, 26,
+        Bool_Block,
+        CAT_OPERATORS,
+        "",
+        {"contains","?"},
+        {{20 ,INPUT_TEXT,"apple"},{40,INPUT_TEXT,"a"}}
+
+    };
+    blockMap["function"] = {
+        100, 26,
+        Expression_Block,
+        CAT_OPERATORS,
+        "",
+        {"of"},
+        {{20 , INPUT_DROPDOWN,"abs"},{50, INPUT_NUMBER, ""}}
+
     };
     return true;
 }
