@@ -11,7 +11,10 @@
 #include <Game.h>
 
 
-
+extern bool isCharacterSubMenuOpen;
+extern int btn_cx;
+extern int btn_cy;
+extern int radius;
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
@@ -25,6 +28,8 @@ extern std::vector<Backdrop> projectBackdrops;
 extern int selectedBackdropIndex;
 extern int backdropScrollY;
 
+void Update_Character_Menu_State();
+void Draw_Character_Floating_Buttons(SDL_Renderer* renderer);
 void ApplyPen(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
 void ApplyEraser(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target,SDL_Renderer* renderer);

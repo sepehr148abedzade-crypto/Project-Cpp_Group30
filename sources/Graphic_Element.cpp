@@ -21,6 +21,11 @@ int offsetX = 0, offsetY = 0;
 int sidebar_scroll_y = 0;
 int selectedBackdropIndex = 0;
 int backdropScrollY = 0;
+bool isCharacterSubMenuOpen = false;
+int btn_cx = 0;
+int btn_cy = 0;
+int radius = 18;
+
 
 extern int draggedChainIndex;
 
@@ -45,6 +50,44 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     color.b = hexcolor & 0xFF;
     color.a = SDL_ALPHA_OPAQUE;
     return color;
+}
+
+void Update_Character_Menu_State() {
+    int mx, my;
+    SDL_GetMouseState(&mx, &my);
+
+    btn_cx = Get_width() - 130;
+    btn_cy = Get_height() - 100;
+    radius = 18;
+
+    bool isOverPaint = (sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2)) <= radius);
+    bool isOverUpload = (sqrt(pow(mx - btn_cx, 2) + pow(my - (btn_cy - 42), 2)) <= radius);
+
+    if (isOverPaint || isOverUpload) {
+        isCharacterSubMenuOpen = true;
+    } else {
+        isCharacterSubMenuOpen = false;
+    }
+}
+
+void Draw_Character_Floating_Buttons(SDL_Renderer* renderer) {
+    btn_cx = Get_width() - 130;
+    btn_cy = Get_height() - 100;
+    radius = 18;
+
+    if (isCharacterSubMenuOpen) {
+        filledCircleRGBA(renderer, btn_cx, btn_cy - 42, radius, 77, 151, 255, 255);
+        if (icon_upload) {
+            SDL_Rect r = {btn_cx - 9, btn_cy - 51, 18, 18};
+            SDL_RenderCopy(renderer, icon_upload, NULL, &r);
+        }
+    }
+
+    filledCircleRGBA(renderer, btn_cx, btn_cy, radius, 77, 151, 255, 255);
+    if (icon_paint) {
+        SDL_Rect r = {btn_cx - 9, btn_cy - 9, 18, 18};
+        SDL_RenderCopy(renderer, icon_paint, NULL, &r);
+    }
 }
 
 int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font ) {

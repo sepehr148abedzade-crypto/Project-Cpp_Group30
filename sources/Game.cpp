@@ -1103,29 +1103,32 @@ void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
+
         Handle_event_for_code_button(e);
-        Handle_event_for_motion_sprite(e,now_sprite);
-        Handle_event_for_flag_button(e,flag_button);
-        Handle_event_for_stop_button(e,stop_button);
-        Handle_event_for_show_button(e,show_button,now_sprite);
-        Handle_event_for_hide_button(e,hide_button,now_sprite);
-        Handle_event_for_Back_button(e,&Back_button);
-        Handle_event_for_Backdrop_button(e,&Backdrop_button);
-        Handle_event_for_sound_button(e,&Sounds_button);
-        Handle_event_for_Code_button(e,&code_button);
-        if(currentTab == SOUNDS) {
+        Handle_event_for_motion_sprite(e, now_sprite);
+        Handle_event_for_flag_button(e, flag_button);
+        Handle_event_for_stop_button(e, stop_button);
+        Handle_event_for_show_button(e, show_button, now_sprite);
+        Handle_event_for_hide_button(e, hide_button, now_sprite);
+        Handle_event_for_Back_button(e, &Back_button);
+        Handle_event_for_Backdrop_button(e, &Backdrop_button);
+        Handle_event_for_sound_button(e, &Sounds_button);
+        Handle_event_for_Code_button(e, &code_button);
+
+        if (currentTab == SOUNDS) {
             Handle_event_for_run_button(e, &run_sound_button);
             Handle_event_for_volumeUp_button(e, &volumeUp_button);
             Handle_event_for_volumeDown_button(e, &volumeDown_button);
             Handle_event_for_increaseFrequency_button(e, &increase_frequency_button);
             Handle_event_for_decreaseFrequency_button(e, &decrease_frequency_button);
         }
-        if(currentTab == CODE) {
+        if (currentTab == CODE) {
             Handle_event_for_timer_button(e, &Timer_button);
             Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
             Handle_event_for_costume_number_button(e, &costume_number_button);
             Handle_event_for_size_button(e, &size_button);
         }
+
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
@@ -1135,6 +1138,20 @@ void Get_event() {
                 if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) isLibraryOpen = false;
                 else HandleLibraryClick(mx, my);
             } else {
+                // چک کردن کلیک روی دکمه Paint (دایره اصلی کاراکتر)
+                double distPaint = sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2));
+                if (distPaint <= radius) {
+                    currentTab = COSTUMES;
+                }
+
+                // چک کردن کلیک روی دکمه Upload (اگر منو باز بود)
+                if (isCharacterSubMenuOpen) {
+                    double distUpload = sqrt(pow(mx - btn_cx, 2) + pow(my - (btn_cy - 42), 2));
+                    if (distUpload <= radius) {
+                        // اینجا می‌توانید تابع انتخاب فایل را فراخوانی کنید
+                    }
+                }
+
                 Handle_Tab_Switch(mx, my);
                 Handle_Backdrop_Selection(mx, my);
                 Handle_Backdrop_Menu_Clicks(mx, my);
@@ -1146,7 +1163,7 @@ void Get_event() {
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseDown(mx,my);
+            HandleCanvasMouseDown(mx, my);
         }
 
         if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
@@ -1243,15 +1260,19 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 void Update() {
     UpdateMenuState();
     UpdateExecution();
+    Update_Character_Menu_State();
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
+
     Draw_flag_and_stop_button(renderer, flag_button, stop_button, green_flag, stop_sign);
+
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
+
         if (currentTab == SOUNDS) {
             Draw_sound_panel(renderer);
             Draw_sounds_functions_button(renderer, run_sound_button, Run_text);
@@ -1259,11 +1280,12 @@ void Update() {
             Draw_sounds_functions_button(renderer, volumeDown_button, volumeDown_text);
             Draw_sounds_functions_button(renderer, increase_frequency_button, increase_frequency_text);
             Draw_sounds_functions_button(renderer, decrease_frequency_button, decrease_frequency_text);
-            Draw_report_button(renderer,&volume_button,volume_value);
-            Draw_volume_text(renderer,volume_text);
-            Draw_report_button(renderer,&frequency_button,frequency_value);
-            Draw_frequency_text(renderer,frequency_text);
+            Draw_report_button(renderer, &volume_button, volume_value);
+            Draw_volume_text(renderer, volume_text);
+            Draw_report_button(renderer, &frequency_button, frequency_value);
+            Draw_frequency_text(renderer, frequency_text);
         }
+
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
@@ -1276,40 +1298,21 @@ void Update() {
             Draw_report_button(renderer, &costume_number_button, costume_number_text);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
-
             SDL_Texture* baseTex = nullptr;
-            string bName = "Backdrop";
-            if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
+            string bName = "";
+
+            if (currentTab == COSTUMES && now_sprite != nullptr) {
+                if (!now_sprite->costumes.empty()) {
+                    baseTex = reinterpret_cast<SDL_Texture *>(now_sprite->costumes[now_sprite->currentCostumeIndex]);
+                    bName = now_sprite->name;
+                }
+            } else if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
                 baseTex = projectBackdrops[selectedBackdropIndex].texture;
                 bName = projectBackdrops[selectedBackdropIndex].name;
             }
-
             Draw_Image_Editor(renderer, main_font, baseTex, bName);
-
-            if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int) projectBackdrops.size()) {
-                if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
-                    int curX, curY;
-                    SDL_GetMouseState(&curX, &curY);
-                    int radius = (int) sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g,
-                                           globalEditor.currentColor.b, 255);
-                    for (int a = 0; a < 360; a++) {
-                        float r1 = a * M_PI / 180.0f;
-                        float r2 = (a + 1) * M_PI / 180.0f;
-                        SDL_RenderDrawLine(renderer, circleStartX + (int) (radius * cos(r1)),
-                                           circleStartY + (int) (radius * sin(r1)),
-                                           circleStartX + (int) (radius * cos(r2)),
-                                           circleStartY + (int) (radius * sin(r2)));
-                    }
-                } else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) {
-                    int curX, curY;
-                    SDL_GetMouseState(&curX, &curY);
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g,
-                                           globalEditor.currentColor.b, 255);
-                    SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
-                }
-            }
         }
+
         Draw_Information_of_Character(renderer);
         Draw_Code_button(renderer, code_button, code_text);
         Draw_sound_button(renderer, Sounds_button, Sound_text);
@@ -1318,40 +1321,49 @@ void Update() {
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
         Draw_Stage_Content(renderer);
+
         Draw_report_informationOfCharacter_box(renderer, name_of_sprite);
         Draw_report_informationOfCharacter_box(renderer, direction);
         Draw_report_informationOfCharacter_box(renderer, size);
         Draw_report_informationOfCharacter_box(renderer, positionX);
         Draw_report_informationOfCharacter_box(renderer, positionY);
+
         Draw_X_text(renderer, X_text);
         Draw_Y_text(renderer, Y_text);
         Draw_size_text(renderer, size_text);
         Draw_direction_text(renderer, direction_text);
         Draw_sprite_text(renderer, sprite_text);
         Draw_show_text(renderer, show_text);
-        volume_value = LoadText(renderer,main_font,to_string(volume),{100,100,100});
-        frequency_value = LoadText(renderer,main_font,to_string(frequency),{100,100,100});
+
         Draw_show_and_hide_button(renderer, show_button, hide_button, S_text, H_text, now_sprite);
-        name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, {100, 100, 100});
+
+        name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, { 100, 100, 100 });
         Draw_name_of_character(renderer, name_of_sprite, name_of_sprite_text);
-        positionX_text = LoadText(renderer, report_font, to_string((int)now_sprite->x), {100, 100, 100});
+        positionX_text = LoadText(renderer, report_font, to_string((int)now_sprite->x), { 100, 100, 100 });
         Draw_positionX(renderer, positionX, positionX_text);
-        positionY_text = LoadText(renderer, report_font, to_string(-(int)now_sprite->y), {100, 100, 100});
+        positionY_text = LoadText(renderer, report_font, to_string(-(int)now_sprite->y), { 100, 100, 100 });
         Draw_positionX(renderer, positionY, positionY_text);
-        size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size *500)), {100, 100, 100});
+        size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size * 500)), { 100, 100, 100 });
         Draw_size(renderer, size, size_of_sprite_text);
-        direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), {100, 100, 100});
+        direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), { 100, 100, 100 });
         Draw_direction(renderer, direction, direction_of_sprite_text);
+
         Draw_Character(renderer, now_sprite);
+
         if (is_timer) timer(renderer, report_font);
         if (is_size_on) Draw_size_report(renderer, report_font, now_sprite);
         if (is_costume_number_on) Draw_costume_report(renderer, report_font, now_sprite);
+
+        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
+
+        Draw_Character_Floating_Buttons(renderer);
     }
-    if (isSaveModalOpen) {
-        DrawSaveModal(renderer, main_font);
-    }
+
+    if (isSaveModalOpen) DrawSaveModal(renderer, main_font);
+
     SDL_RenderPresent(renderer);
 }
+
 void Render(){
         SDL_RenderPresent(renderer);
 }
