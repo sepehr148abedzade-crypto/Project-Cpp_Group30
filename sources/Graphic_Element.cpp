@@ -787,18 +787,26 @@ void Draw_Stage_Bar(SDL_Renderer* renderer){
     SDL_RenderDrawRect(renderer,&rect);
 }
 
-void Draw_Character(SDL_Renderer* renderer,Character* sprite){
-    double centerX = stage.x + ((double )stage.w/2);
-    double centerY = stage.y + ((double)stage.h/2);
+void Draw_Character(SDL_Renderer* renderer, Character* sprite) {
+    if (sprite == nullptr || sprite->costumes.empty() || !sprite->isvisible) return;
 
-    SDL_Rect dest;
-    dest.w = (int)(sprite->width);
-    dest.h = (int)(sprite->height);
-    dest.x = (int)(centerX + sprite->x - ((double)dest.w/2));
-    dest.y = (int)(centerY + sprite->y - ((double)dest.h/2));
+    Costume* curr = sprite->costumes[sprite->currentCostumeIndex];
+    int w, h;
+    SDL_QueryTexture(curr->texture, NULL, NULL, &w, &h);
 
-    if(sprite->isvisible)
-        SDL_RenderCopyEx(renderer,sprite->costumes[sprite->currentCostumeIndex]->texture, nullptr,&dest,0, nullptr,SDL_FLIP_NONE);
+    // اعمال ضریب سایز روی ابعاد اصلی تصویر
+    int finalW = (int)(w * sprite->size);
+    int finalH = (int)(h * sprite->size);
+
+    // مرکز تصویر را بر اساس x و y کاراکتر محاسبه می‌کنیم
+    SDL_Rect dest = {
+            (int)(sprite->x + 1070 - (finalW / 2)),
+            (int)(sprite->y + 245 - (finalH / 2)),
+            finalW,
+            finalH
+    };
+
+    SDL_RenderCopyEx(renderer, curr->texture, NULL, &dest, sprite->degree, NULL, SDL_FLIP_NONE);
 }
 
 void Handle_event_for_code_button(SDL_Event &e) {

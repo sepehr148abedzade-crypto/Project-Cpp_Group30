@@ -92,6 +92,7 @@ bool isDrawingCircle = false;
 bool isSaveModalOpen = false;
 bool isTyping = false;
 bool stop = false;
+bool isDrawingRect = false;
 
 string saveInputText;
 string textToDraw;
@@ -1099,6 +1100,78 @@ void SaveToLibrary(string name, SDL_Renderer* renderer) {
     SDL_StopTextInput();
 }
 
+void FlipCostumeHorizontal(Costume* costume) {
+    if (!costume || !costume->texture) return;
+
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* tempTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetTextureBlendMode(tempTex, SDL_BLENDMODE_BLEND);
+
+    SDL_SetRenderTarget(renderer, tempTex);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_HORIZONTAL);
+
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = tempTex;
+}
+
+void FlipCostumeVertical(Costume* costume) {
+    if (!costume || !costume->texture) return;
+
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* tempTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetTextureBlendMode(tempTex, SDL_BLENDMODE_BLEND);
+
+    SDL_SetRenderTarget(renderer, tempTex);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
+
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = tempTex;
+}
+
+void FlipHorizontal(Costume* costume) {
+    if (!costume || !costume->texture) return;
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+    SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_HORIZONTAL);
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = target;
+}
+
+void FlipVertical(Costume* costume) {
+    if (!costume || !costume->texture) return;
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+    SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, target);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = target;
+}
+
+
+
 void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
@@ -1138,17 +1211,22 @@ void Get_event() {
                 if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) isLibraryOpen = false;
                 else HandleLibraryClick(mx, my);
             } else {
-                // چک کردن کلیک روی دکمه Paint (دایره اصلی کاراکتر)
                 double distPaint = sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2));
-                if (distPaint <= radius) {
-                    currentTab = COSTUMES;
-                }
+                if (distPaint <= radius) currentTab = COSTUMES;
 
-                // چک کردن کلیک روی دکمه Upload (اگر منو باز بود)
-                if (isCharacterSubMenuOpen) {
-                    double distUpload = sqrt(pow(mx - btn_cx, 2) + pow(my - (btn_cy - 42), 2));
-                    if (distUpload <= radius) {
-                        // اینجا می‌توانید تابع انتخاب فایل را فراخوانی کنید
+                if (currentTab == COSTUMES && now_sprite != nullptr && !now_sprite->costumes.empty()) {
+                    Costume* curr = now_sprite->costumes[now_sprite->currentCostumeIndex];
+                    if (my >= 160 && my <= 190) {
+                        if (mx >= 350 && mx <= 450) FlipHorizontal(curr);
+                        else if (mx >= 460 && mx <= 560) FlipVertical(curr);
+                        else if (mx >= 570 && mx <= 620) {
+                            now_sprite->size += 0.05;
+                            if (now_sprite->size > 3.0) now_sprite->size = 3.0;
+                        }
+                        else if (mx >= 630 && mx <= 680) {
+                            now_sprite->size -= 0.05;
+                            if (now_sprite->size < 0.05) now_sprite->size = 0.05;
+                        }
                     }
                 }
 
@@ -1173,6 +1251,8 @@ void Get_event() {
         HandleKeyboardInput(e);
     }
 }
+
+
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     int sw = Get_width();
     int stageW = 486;
@@ -1272,7 +1352,6 @@ void Update() {
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
-
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
@@ -1293,7 +1372,6 @@ void Update() {
 
         volume_value = LoadText(renderer, main_font, to_string(volume), { 100,100,100 });
         frequency_value = LoadText(renderer, main_font, to_string(frequency), { 100,100,100 });
-
         Draw_show_and_hide_button(renderer, show_button, hide_button, S_text, H_text, now_sprite);
 
         name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, { 100, 100, 100 });
@@ -1305,7 +1383,7 @@ void Update() {
         positionY_text = LoadText(renderer, report_font, to_string(-(int)now_sprite->y), { 100, 100, 100 });
         Draw_positionX(renderer, positionY, positionY_text);
 
-        size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size * 500)), { 100, 100, 100 });
+        size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size * 100)), { 100, 100, 100 });
         Draw_size(renderer, size, size_of_sprite_text);
 
         direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), { 100, 100, 100 });
@@ -1351,26 +1429,58 @@ void Update() {
             if (currentTab == COSTUMES && now_sprite != nullptr) {
                 Draw_Image_Editor(renderer, main_font, nullptr, now_sprite->name);
 
+                SDL_Rect flipH_rect = { 350, 160, 100, 30 };
+                SDL_Rect flipV_rect = { 460, 160, 100, 30 };
+                SDL_Rect sizeUp_rect = { 570, 160, 50, 30 };
+                SDL_Rect sizeDown_rect = { 630, 160, 50, 30 };
+
+                SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
+                SDL_RenderFillRect(renderer, &flipH_rect);
+                SDL_RenderFillRect(renderer, &flipV_rect);
+                SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
+                SDL_RenderFillRect(renderer, &sizeUp_rect);
+                SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
+                SDL_RenderFillRect(renderer, &sizeDown_rect);
+
+                SDL_Texture* hTxt = LoadText(renderer, main_font, "Flip H", {255,255,255});
+                SDL_Texture* vTxt = LoadText(renderer, main_font, "Flip V", {255,255,255});
+                SDL_Texture* pTxt = LoadText(renderer, main_font, "+", {255,255,255});
+                SDL_Texture* mTxt = LoadText(renderer, main_font, "-", {255,255,255});
+                SDL_RenderCopy(renderer, hTxt, NULL, &flipH_rect);
+                SDL_RenderCopy(renderer, vTxt, NULL, &flipV_rect);
+                SDL_RenderCopy(renderer, pTxt, NULL, &sizeUp_rect);
+                SDL_RenderCopy(renderer, mTxt, NULL, &sizeDown_rect);
+                SDL_DestroyTexture(hTxt); SDL_DestroyTexture(vTxt);
+                SDL_DestroyTexture(pTxt); SDL_DestroyTexture(mTxt);
+
                 if (!now_sprite->costumes.empty()) {
-                    SDL_Texture* baseTex = (SDL_Texture*)now_sprite->costumes[now_sprite->currentCostumeIndex];
-                    int texW, texH;
-                    SDL_QueryTexture(baseTex, NULL, NULL, &texW, &texH);
+                    Costume* currentCostume = now_sprite->costumes[now_sprite->currentCostumeIndex];
+                    if (currentCostume && currentCostume->texture) {
+                        int texW, texH;
+                        SDL_QueryTexture(currentCostume->texture, NULL, NULL, &texW, &texH);
+                        float scale = 0.5f;
+                        int finalW = (int)(texW * scale);
+                        int finalH = (int)(texH * scale);
+                        SDL_Rect destRect = { 330 + (600 / 2) - (finalW / 2), 420 - (finalH / 2), finalW, finalH };
+                        SDL_RenderCopy(renderer, currentCostume->texture, NULL, &destRect);
 
-                    int editorAreaX = 330;
-                    int editorAreaY = 120;
-                    int editorAreaW = 600;
-                    int editorAreaH = 380;
-
-                    int centerX = editorAreaX + (editorAreaW / 2);
-                    int centerY = editorAreaY + (editorAreaH / 2);
-
-                    SDL_Rect destRect = {
-                            centerX - (texW / 2),
-                            centerY - (texH / 2),
-                            texW,
-                            texH
-                    };
-                    SDL_RenderCopy(renderer, baseTex, NULL, &destRect);
+                        SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+                        int curX, curY;
+                        SDL_GetMouseState(&curX, &curY);
+                        if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
+                            int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
+                            for (int a = 0; a < 360; a++) {
+                                float r1 = a * M_PI / 180.0f; float r2 = (a + 1) * M_PI / 180.0f;
+                                SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)),
+                                                   circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
+                            }
+                        }
+                        else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
+                        else if (isDrawingRect && globalEditor.activeTool == TOOL_RECT) {
+                            SDL_Rect r = { min(lineStartX, curX), min(lineStartY, curY), abs(curX - lineStartX), abs(curY - lineStartY) };
+                            SDL_RenderDrawRect(renderer, &r);
+                        }
+                    }
                 }
             }
             else if (currentTab == BACKDROPS && !projectBackdrops.empty() && selectedBackdropIndex >= 0) {
@@ -1381,11 +1491,10 @@ void Update() {
         if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Character_Floating_Buttons(renderer);
     }
-
     if (isSaveModalOpen) DrawSaveModal(renderer, main_font);
-
     SDL_RenderPresent(renderer);
 }
+
 
 void Render(){
         SDL_RenderPresent(renderer);
