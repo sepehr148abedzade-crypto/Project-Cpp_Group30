@@ -825,7 +825,12 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character* sprite) {
         }
     }
 }
-
+void Handle_event_for_Character_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h))
+            currentTab = CHARACTER;
+    }
+}
 void Handle_event_for_sound_button(SDL_Event &e,Button* button){
     if(e.type == SDL_MOUSEBUTTONDOWN){
         if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h))
@@ -968,7 +973,30 @@ void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
-
+void Draw_Character_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
+    if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    } else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(currentTab == CHARACTER) {
+        SDL_SetRenderDrawColor(renderer, button.third_color.r, button.third_color.g,
+                               button.third_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button.rect);
+}
 void Draw_sound_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
     if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
         SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
@@ -1294,6 +1322,13 @@ void Draw_direction(SDL_Renderer* renderer,InformationOfCharacter &information,S
 }
 
 void Draw_sound_panel(SDL_Renderer* renderer){
+    SDL_Rect rect = {0,95,1030,Get_height()};
+    SDL_SetRenderDrawColor(renderer,white.r,white.g,white.b,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}
+void Draw_Character_panel(SDL_Renderer* renderer){
     SDL_Rect rect = {0,95,1030,Get_height()};
     SDL_SetRenderDrawColor(renderer,white.r,white.g,white.b,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);

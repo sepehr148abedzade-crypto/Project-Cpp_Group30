@@ -96,6 +96,17 @@ struct Costume{
 
 extern Costume cat1;
 extern Costume cat2;
+extern Costume fish1;
+extern Costume fish2;
+extern Costume fish3;
+extern Costume bear1;
+extern Costume bear2;
+extern Costume dog1;
+extern Costume dog2;
+extern Costume apple;
+extern Costume balloon1;
+extern Costume balloon2;
+extern Costume balloon3;
 
 struct Character{
     std::string name;
@@ -115,7 +126,11 @@ struct Character{
 };
 
 extern Character cat;
-extern Character cat_running;
+extern Character bear;
+extern Character fish;
+extern Character balloon;
+extern Character red_apple;
+extern Character dog;
 extern Character* now_sprite;
 
 struct Blocks{
@@ -177,6 +192,7 @@ extern Button Top_button;
 extern Button categories[9];
 extern Button flag_button;
 extern Button stop_button;
+extern Button Character_button;
 extern Button Sounds_button;
 extern Button Backdrop_button;
 extern Button Back_button;
@@ -207,11 +223,12 @@ extern Blocks* draggedBlock;
 extern int offsetX, offsetY;
 extern std::map<std::string, BlockTemplate> blockMap;
 extern std::map<std::string, SDL_Texture*> blockLibrary;
-
+extern std::vector<Character> active_character;
 
 void Init_Button();
 void Init_flag_button();
 void Init_stop_button();
+void Init_Character_button();
 void Init_sound_button();
 void Init_Backdrop_button();
 void Init_Back_button();

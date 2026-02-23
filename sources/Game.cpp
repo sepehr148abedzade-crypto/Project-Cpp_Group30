@@ -25,6 +25,7 @@ SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
 SDL_Texture* Sound_text = nullptr;
+SDL_Texture* Character_text = nullptr;
 SDL_Texture* Backdrop_text = nullptr;
 SDL_Texture* Back_text = nullptr;
 SDL_Texture* code_text = nullptr;
@@ -363,6 +364,7 @@ bool Init_Game(){
         return false;
     }
     File_Text = LoadText(renderer,main_font,"File",white);
+    Character_text = LoadText(renderer,main_font,"Character",{120,147,149});
     Sound_text = LoadText(renderer,main_font,"Sounds",{120,147,149});
     Backdrop_text = LoadText(renderer,main_font,"Backdrop",{120,147,149});
     Back_text = LoadText(renderer,main_font,"Back",{120,147,149});
@@ -409,6 +411,7 @@ bool Init_Game(){
     Init_Menu_Blocks();
     Init_flag_button();
     Init_stop_button();
+    Init_Character_button();
     Init_sound_button();
     Init_Back_button();
     Init_Backdrop_button();
@@ -433,6 +436,17 @@ bool Init_Game(){
     Init_costume_number_button();
     Load_Character(renderer,&cat,&cat1);
     Load_Character(renderer,&cat,&cat2);
+    Load_Character(renderer,&dog,&dog1);
+    Load_Character(renderer,&dog,&dog2);
+    Load_Character(renderer,&bear,&bear1);
+    Load_Character(renderer,&bear,&bear2);
+    Load_Character(renderer,&red_apple,&apple);
+    Load_Character(renderer,&fish,&fish1);
+    Load_Character(renderer,&fish,&fish2);
+    Load_Character(renderer,&fish,&fish3);
+    Load_Character(renderer,&balloon,&balloon1);
+    Load_Character(renderer,&balloon,&balloon2);
+    Load_Character(renderer,&balloon,&balloon3);
     LoadBackdropLibraryManual(renderer);
     SDL_StartTextInput();
     return true;
@@ -1112,6 +1126,7 @@ void Get_event() {
         Handle_event_for_Back_button(e,&Back_button);
         Handle_event_for_Backdrop_button(e,&Backdrop_button);
         Handle_event_for_sound_button(e,&Sounds_button);
+        Handle_event_for_Character_button(e,&Character_button);
         Handle_event_for_Code_button(e,&code_button);
         if(currentTab == SOUNDS) {
             Handle_event_for_run_button(e, &run_sound_button);
@@ -1264,6 +1279,9 @@ void Update() {
             Draw_report_button(renderer,&frequency_button,frequency_value);
             Draw_frequency_text(renderer,frequency_text);
         }
+        if(currentTab == CHARACTER){
+            Draw_Character_panel(renderer);
+        }
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
@@ -1312,6 +1330,7 @@ void Update() {
         }
         Draw_Information_of_Character(renderer);
         Draw_Code_button(renderer, code_button, code_text);
+        Draw_Character_button(renderer,Character_button,Character_text);
         Draw_sound_button(renderer, Sounds_button, Sound_text);
         Draw_Backdrop_button(renderer, Backdrop_button, Backdrop_text);
         Draw_Back_button(renderer, Back_button, Back_text);
@@ -1360,6 +1379,13 @@ void Clean(){
         TTF_CloseFont(main_font);
         TTF_Quit();
         Mix_CloseAudio();
+        SDL_DestroyTexture(volume_value);
+        SDL_DestroyTexture(frequency_value);
+        SDL_DestroyTexture(name_of_sprite_text);
+        SDL_DestroyTexture(positionY_text);
+        SDL_DestroyTexture(positionX_text);
+        SDL_DestroyTexture(size_of_sprite_text);
+        SDL_DestroyTexture(direction_of_sprite_text);
         SDL_DestroyWindow(main_window);
         SDL_DestroyRenderer(renderer);
         SDL_Quit();

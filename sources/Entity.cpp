@@ -62,7 +62,14 @@ void Init_stop_button(){
     stop_button.second_color = {179, 210, 253};
     stop_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
 };
-
+Button Character_button{};
+void Init_Character_button(){
+    Character_button.rect = {390, 55, 80, 40};
+    Character_button.first_color = {217,227,242};
+    Character_button.second_color = white;
+    Character_button.third_color = {122,177,255};
+    Character_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+}
 Button Sounds_button{};
 void Init_sound_button(){
     Sounds_button.rect = {310, 55, 80, 40};
@@ -215,15 +222,59 @@ void Init_size_box(Character &sprite){
 }
 
 Character cat;
-Character* now_sprite = &cat;
+Character bear;
+Character fish;
+Character balloon;
+Character red_apple;
+Character dog;
+Character* now_sprite = &fish;
 void Init_structOfCharacter(){
     cat.name = "cat";
+    dog.name = "Dog";
+    bear.name = "Bear";
+    fish.name = "Fish";
+    balloon.name = "Balloon";
+    red_apple.name = "Apple";
 }
 Costume cat1;
 Costume cat2;
+Costume fish1;
+Costume fish2;
+Costume fish3;
+Costume bear1;
+Costume bear2;
+Costume dog1;
+Costume dog2;
+Costume apple;
+Costume balloon1;
+Costume balloon2;
+Costume balloon3;
+
 void Init_costume(){
     cat1.name = "costume1";
     cat1.path = "asset/images/sprite/cat.png";
     cat2.name = "costume2";
     cat2.path = "asset/images/sprite/cat_running.png";
+    balloon1.name = "balloon_a";
+    balloon1.path = "asset/images/sprite/balloon1.png";
+    balloon2.name = "balloon_b";
+    balloon2.path = "asset/images/sprite/balloon2.png";
+    balloon3.name = "balloon_c";
+    balloon3.path = "asset/images/sprite/balloon3.png";
+    fish1.name = "fish_a";
+    fish1.path = "asset/images/sprite/fish1.png";
+    fish2.name = "fish_b";
+    fish2.path = "asset/images/sprite/fish2.png";
+    fish3.name = "fish_c";
+    fish3.path = "asset/images/sprite/fish3.png";
+    bear1.name = "bear_a";
+    bear1.path = "asset/images/sprite/bear1.png";
+    bear2.name = "bear_b";
+    bear2.path = "asset/images/sprite/bear2.png";
+    dog1.name = "dog_a";
+    dog1.path = "asset/images/sprite/dog1.png";
+    dog2.name = "dog_b";
+    dog2.path = "asset/images/sprite/dog2.png";
+    apple.name = "apple";
+    apple.path = "asset/images/sprite/apple.png";
 }

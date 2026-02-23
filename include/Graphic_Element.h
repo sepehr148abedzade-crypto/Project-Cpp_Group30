@@ -19,7 +19,7 @@ extern bool isStageSelected;
 extern int backdropScrollY;
 extern SDL_Color white;
 
-enum Tab { CODE, BACKDROPS, SOUNDS , COSTUMES};
+enum Tab { CODE, BACKDROPS, SOUNDS , COSTUMES ,CHARACTER};
 extern Tab currentTab;
 extern std::vector<Backdrop> projectBackdrops;
 extern int selectedBackdropIndex;
@@ -86,6 +86,8 @@ void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();
 void DrawBackdropLibrary(SDL_Renderer* renderer, TTF_Font* font);
 void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font,Blocks* block);
+void Draw_Character_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
+void Handle_event_for_Character_button(SDL_Event &e,Button* button);
 void Draw_sound_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
 void Draw_Backdrop_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
 void Draw_Back_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
@@ -113,6 +115,7 @@ void Draw_positionY(SDL_Renderer* renderer,InformationOfCharacter &information,S
 void Draw_size(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture);
 void Draw_direction(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture);
 void Draw_report_button(SDL_Renderer* renderer,Button* button,SDL_Texture* texture);
+void Draw_Character_panel(SDL_Renderer* renderer);
 void Draw_sound_panel(SDL_Renderer* renderer);
 void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
 void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
