@@ -1177,8 +1177,8 @@ void Get_event() {
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
 
-        Handle_event_for_code_button(e);
         Handle_event_for_motion_sprite(e, now_sprite);
+        Handle_event_for_code_button(e);
         Handle_event_for_flag_button(e, flag_button);
         Handle_event_for_stop_button(e, stop_button);
         Handle_event_for_show_button(e, show_button, now_sprite);
@@ -1229,29 +1229,33 @@ void Get_event() {
                         }
                     }
                 }
-
                 Handle_Tab_Switch(mx, my);
                 Handle_Backdrop_Selection(mx, my);
                 Handle_Backdrop_Menu_Clicks(mx, my);
                 HandleToolSelection(mx, my);
                 HandleColorSelection(mx, my);
                 HandleBrushSizeSelection(mx, my);
-                HandleCanvasMouseDown(mx, my);
+
+                if (currentTab == COSTUMES || currentTab == BACKDROPS) {
+                    HandleCanvasMouseDown(mx, my);
+                }
             }
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseDown(mx, my);
+            if (currentTab == COSTUMES || currentTab == BACKDROPS) {
+                HandleCanvasMouseDown(mx, my);
+            }
         }
 
-        if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
+        if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen && (currentTab == COSTUMES || currentTab == BACKDROPS)) {
             HandleContinuousDrawing(mx, my);
         }
+
         HandleBlockEvent(e);
         HandleKeyboardInput(e);
     }
 }
-
 
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     int sw = Get_width();
@@ -1269,21 +1273,28 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderDrawRect(renderer, &stageArea);
 
+    int centerX = stageArea.x + (stageArea.w / 2);
+    int centerY = stageArea.y + (stageArea.h / 2);
+
     for (auto& ch : allCharacters) {
-        if (ch.isvisible) { //!ch.costumes.empty()
-            int centerX = stageArea.x + (stageArea.w / 2);
-            int centerY = stageArea.y + (stageArea.h / 2);
-            int rSize = (ch.size > 0) ? ch.size : 100;
-            int  Xpos = centerX + ch.x - (rSize / 2);
-            int YPos = centerY + ch.y - (rSize / 2);
-            SDL_Rect charPos =
-                {
-                    Xpos,
-                    YPos,
+        if (ch.isvisible && !ch.costumes.empty()) {
+            int rSize = (int)(ch.size * 500);
+            if (rSize <= 0) rSize = 1;
+
+            SDL_Rect charPos = {
+                    centerX + (int)ch.x - (rSize / 2),
+                    centerY + (int)ch.y - (rSize / 2),
                     rSize,
                     rSize
             };
-           // SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
+
+            SDL_RenderCopyEx(renderer,
+                             ch.costumes[ch.currentCostumeIndex]->texture,
+                             NULL,
+                             &charPos,
+                             (double)ch.degree,
+                             NULL,
+                             SDL_FLIP_NONE);
         }
     }
 }
@@ -1352,6 +1363,7 @@ void Update() {
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
+
         Draw_Information_of_Character(renderer);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
@@ -1372,6 +1384,7 @@ void Update() {
 
         volume_value = LoadText(renderer, main_font, to_string(volume), { 100,100,100 });
         frequency_value = LoadText(renderer, main_font, to_string(frequency), { 100,100,100 });
+
         Draw_show_and_hide_button(renderer, show_button, hide_button, S_text, H_text, now_sprite);
 
         name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, { 100, 100, 100 });
@@ -1458,9 +1471,9 @@ void Update() {
                     if (currentCostume && currentCostume->texture) {
                         int texW, texH;
                         SDL_QueryTexture(currentCostume->texture, NULL, NULL, &texW, &texH);
-                        float scale = 0.5f;
-                        int finalW = (int)(texW * scale);
-                        int finalH = (int)(texH * scale);
+                        float editorScale = 0.5f;
+                        int finalW = (int)(texW * editorScale);
+                        int finalH = (int)(texH * editorScale);
                         SDL_Rect destRect = { 330 + (600 / 2) - (finalW / 2), 420 - (finalH / 2), finalW, finalH };
                         SDL_RenderCopy(renderer, currentCostume->texture, NULL, &destRect);
 
@@ -1468,11 +1481,11 @@ void Update() {
                         int curX, curY;
                         SDL_GetMouseState(&curX, &curY);
                         if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
-                            int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
+                            int rVal = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
                             for (int a = 0; a < 360; a++) {
                                 float r1 = a * M_PI / 180.0f; float r2 = (a + 1) * M_PI / 180.0f;
-                                SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)),
-                                                   circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
+                                SDL_RenderDrawLine(renderer, circleStartX + (int)(rVal * cos(r1)), circleStartY + (int)(rVal * sin(r1)),
+                                                   circleStartX + (int)(rVal * cos(r2)), circleStartY + (int)(rVal * sin(r2)));
                             }
                         }
                         else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);

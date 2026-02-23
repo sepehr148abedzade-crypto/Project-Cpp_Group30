@@ -843,37 +843,36 @@ void Handle_event_for_stop_button(SDL_Event &e , Button &button){
     }
 }
 void Handle_event_for_motion_sprite(SDL_Event &e, Character* sprite) {
-    if (draggable) {
-        static int mouse_firstX, mouse_firstY;
-        if (e.type == SDL_MOUSEBUTTONDOWN) {
-            mouse_firstX = e.button.x;
-            mouse_firstY = e.button.y;
-            double stage_centerX = stage.x + (stage.w / 2);
-            double stage_centerY = stage.y + (stage.h / 2);
-            if (Is_mouse_on((int) (sprite->x + stage_centerX - (sprite->width / 2)),
-                            (int) (sprite->y + stage_centerY - (sprite->height / 2)),
-                            (int) sprite->width, (int) sprite->height))
-                sprite->is_mouse_on = true;
+    if (!sprite || !draggable) return;
+
+    int sw = Get_width();
+    int centerX = (sw - 486 - 10) + (486 / 2);
+    int centerY = 95 + (352 / 2);
+
+    double realSize = sprite->size * 500.0;
+
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        int left = centerX + (int)sprite->x - (int)(realSize / 2);
+        int top = centerY + (int)sprite->y - (int)(realSize / 2);
+
+        if (e.button.x >= left && e.button.x <= left + (int)realSize &&
+            e.button.y >= top && e.button.y <= top + (int)realSize) {
+            sprite->is_mouse_on = true;
         }
-        if (e.type == SDL_MOUSEBUTTONUP) {
-            if (e.button.button == SDL_BUTTON_LEFT) {
-                if (!Limit_CharacterY(*sprite) || !Limit_CharacterX(*sprite)) {
-                    double stage_centerX = stage.x + (stage.w / 2);
-                    double stage_centerY = stage.y + (stage.h / 2);
-                    sprite->x = mouse_firstX - stage_centerX;
-                    sprite->y = mouse_firstY - stage_centerY;
-                }
-                sprite->is_mouse_on = false;
-            }
-        }
-        if (e.type == SDL_MOUSEMOTION && sprite->is_mouse_on) {
-            int mouseX = e.motion.x;
-            int mouseY = e.motion.y;
-            double stage_centerX = stage.x + (stage.w / 2);
-            double stage_centerY = stage.y + (stage.h / 2);
-            sprite->x = mouseX - stage_centerX;
-            sprite->y = mouseY - stage_centerY;
-        }
+    }
+
+    if (e.type == SDL_MOUSEBUTTONUP) {
+        sprite->is_mouse_on = false;
+        Limit_CharacterX(*sprite);
+        Limit_CharacterY(*sprite);
+    }
+
+    if (e.type == SDL_MOUSEMOTION && sprite->is_mouse_on) {
+        sprite->x = (double)(e.motion.x - centerX);
+        sprite->y = (double)(e.motion.y - centerY);
+
+        Limit_CharacterX(*sprite);
+        Limit_CharacterY(*sprite);
     }
 }
 

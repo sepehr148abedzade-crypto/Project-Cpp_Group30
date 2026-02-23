@@ -12,7 +12,7 @@ int Get_height();
 extern SDL_Rect stage;
 extern std::vector<Character> allCharacters;
 extern bool isFileMenuOpen;
-
+void Update_Sprite_Dimensions(Character &sprite);
 bool Limit_CharacterX(Character &sprite);
 bool Limit_CharacterY(Character &sprite);
 #endif //CONSTANTS_H

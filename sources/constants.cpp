@@ -15,12 +15,32 @@ int Get_height(){
 }
 
 SDL_Rect stage = {1040,95,485,350};
-bool Limit_CharacterX (Character &sprite){
-    if(sprite.x <= (double)stage.w / 2 - sprite.width / 2 && sprite.x >= -(double)stage.w / 2 + sprite.width / 2) return true;
+
+void Update_Sprite_Dimensions(Character &sprite) {
+    sprite.width = sprite.size * 500;
+    sprite.height = sprite.size * 500;
+}
+
+bool Limit_CharacterX(Character &sprite) {
+    double realWidth = sprite.size * 500.0;
+    double halfW = realWidth / 2.0;
+    double limit = (double)stage.w / 2.0;
+
+    if (sprite.x <= limit - halfW && sprite.x >= -limit + halfW) return true;
+
+    if (sprite.x > limit - halfW) sprite.x = limit - halfW;
+    if (sprite.x < -limit + halfW) sprite.x = -limit + halfW;
     return false;
 }
 
-bool Limit_CharacterY(Character &sprite){
-    if(sprite.y <= (double)stage.h / 2 - sprite.height / 2 && sprite.y >= -(double)stage.h / 2 + sprite.height / 2) return true;
+bool Limit_CharacterY(Character &sprite) {
+    double realHeight = sprite.size * 500.0;
+    double halfH = realHeight / 2.0;
+    double limit = (double)stage.h / 2.0;
+
+    if (sprite.y <= limit - halfH && sprite.y >= -limit + halfH) return true;
+
+    if (sprite.y > limit - halfH) sprite.y = limit - halfH;
+    if (sprite.y < -limit + halfH) sprite.y = -limit + halfH;
     return false;
 }
