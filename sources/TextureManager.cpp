@@ -28,17 +28,17 @@ void SetWindowIcon(SDL_Window* window,const char* path){
     SDL_FreeSurface(icon_surface);
 }
 
-void Load_Character(SDL_Renderer* renderer,std::string name,Character &sprite,const char* path){
-    SDL_Surface* surface= IMG_Load(path);
+void Load_Character(SDL_Renderer* renderer,Character* sprite,Costume* costume){
+    SDL_Surface* surface= IMG_Load(costume->path);
     if(surface == nullptr){
         std::cout << "texture of sprite could not be load! SDL_Error: " << IMG_GetError() << std::endl;
     }
-    sprite.costumes.push_back(SDL_CreateTextureFromSurface(renderer,surface));
-    sprite.texture = sprite.costumes.back();
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,surface);
+    SDL_FreeSurface(surface);
+    costume->texture = texture;
+    sprite->costumes.push_back(costume);
     int width,height;
-    SDL_QueryTexture(sprite.texture, nullptr, nullptr, &width, &height);
-    sprite.width = (double)(width * sprite.size);
-    sprite.height = (double)(height * sprite.size);
-    sprite.path = path;
-    sprite.name = name;
+    SDL_QueryTexture(sprite->costumes[sprite->currentCostumeIndex]->texture, nullptr, nullptr, &width, &height);
+    sprite->width = (double)(width * sprite->size);
+    sprite->height = (double)(height * sprite->size);
 }
