@@ -1273,51 +1273,7 @@ void Update() {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
 
-        if (currentTab == SOUNDS) {
-            Draw_sound_panel(renderer);
-            Draw_sounds_functions_button(renderer, run_sound_button, Run_text);
-            Draw_sounds_functions_button(renderer, volumeUp_button, volumeUp_text);
-            Draw_sounds_functions_button(renderer, volumeDown_button, volumeDown_text);
-            Draw_sounds_functions_button(renderer, increase_frequency_button, increase_frequency_text);
-            Draw_sounds_functions_button(renderer, decrease_frequency_button, decrease_frequency_text);
-            Draw_report_button(renderer, &volume_button, volume_value);
-            Draw_volume_text(renderer, volume_text);
-            Draw_report_button(renderer, &frequency_button, frequency_value);
-            Draw_frequency_text(renderer, frequency_text);
-        }
-
-        if (currentTab == CODE) {
-            Draw_RunningBar(renderer);
-            Draw_CodeBar(renderer);
-            Draw_CodeBar_Item(renderer, categories);
-            Draw_Menu_Blocks(renderer, code_bar_font);
-            DrawALLBlocks(renderer, code_bar_font);
-            Draw_report_button(renderer, &Timer_button, Timer_text);
-            Draw_report_button(renderer, &size_button, size_button_text);
-            Draw_report_button(renderer, &next_costume_button, next_costume_text);
-            Draw_report_button(renderer, &costume_number_button, costume_number_text);
-        } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
-            Draw_Backdrop_List_Sidebar(renderer, main_font);
-            SDL_Texture* baseTex = nullptr;
-            string bName = "";
-
-            if (currentTab == COSTUMES && now_sprite != nullptr) {
-                if (!now_sprite->costumes.empty()) {
-                    baseTex = reinterpret_cast<SDL_Texture *>(now_sprite->costumes[now_sprite->currentCostumeIndex]);
-                    bName = now_sprite->name;
-                }
-            } else if (!projectBackdrops.empty() && selectedBackdropIndex >= 0) {
-                baseTex = projectBackdrops[selectedBackdropIndex].texture;
-                bName = projectBackdrops[selectedBackdropIndex].name;
-            }
-            Draw_Image_Editor(renderer, main_font, baseTex, bName);
-        }
-
         Draw_Information_of_Character(renderer);
-        Draw_Code_button(renderer, code_button, code_text);
-        Draw_sound_button(renderer, Sounds_button, Sound_text);
-        Draw_Backdrop_button(renderer, Backdrop_button, Backdrop_text);
-        Draw_Back_button(renderer, Back_button, Back_text);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
         Draw_Stage_Content(renderer);
@@ -1335,16 +1291,23 @@ void Update() {
         Draw_sprite_text(renderer, sprite_text);
         Draw_show_text(renderer, show_text);
 
+        volume_value = LoadText(renderer, main_font, to_string(volume), { 100,100,100 });
+        frequency_value = LoadText(renderer, main_font, to_string(frequency), { 100,100,100 });
+
         Draw_show_and_hide_button(renderer, show_button, hide_button, S_text, H_text, now_sprite);
 
         name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, { 100, 100, 100 });
         Draw_name_of_character(renderer, name_of_sprite, name_of_sprite_text);
+
         positionX_text = LoadText(renderer, report_font, to_string((int)now_sprite->x), { 100, 100, 100 });
         Draw_positionX(renderer, positionX, positionX_text);
+
         positionY_text = LoadText(renderer, report_font, to_string(-(int)now_sprite->y), { 100, 100, 100 });
         Draw_positionX(renderer, positionY, positionY_text);
+
         size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size * 500)), { 100, 100, 100 });
         Draw_size(renderer, size, size_of_sprite_text);
+
         direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), { 100, 100, 100 });
         Draw_direction(renderer, direction, direction_of_sprite_text);
 
@@ -1354,8 +1317,68 @@ void Update() {
         if (is_size_on) Draw_size_report(renderer, report_font, now_sprite);
         if (is_costume_number_on) Draw_costume_report(renderer, report_font, now_sprite);
 
-        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
+        Draw_Code_button(renderer, code_button, code_text);
+        Draw_sound_button(renderer, Sounds_button, Sound_text);
+        Draw_Backdrop_button(renderer, Backdrop_button, Backdrop_text);
+        Draw_Back_button(renderer, Back_button, Back_text);
 
+        if (currentTab == SOUNDS) {
+            Draw_sound_panel(renderer);
+            Draw_sounds_functions_button(renderer, run_sound_button, Run_text);
+            Draw_sounds_functions_button(renderer, volumeUp_button, volumeUp_text);
+            Draw_sounds_functions_button(renderer, volumeDown_button, volumeDown_text);
+            Draw_sounds_functions_button(renderer, increase_frequency_button, increase_frequency_text);
+            Draw_sounds_functions_button(renderer, decrease_frequency_button, decrease_frequency_text);
+            Draw_report_button(renderer, &volume_button, volume_value);
+            Draw_volume_text(renderer, volume_text);
+            Draw_report_button(renderer, &frequency_button, frequency_value);
+            Draw_frequency_text(renderer, frequency_text);
+        }
+        else if (currentTab == CODE) {
+            Draw_RunningBar(renderer);
+            Draw_CodeBar(renderer);
+            Draw_CodeBar_Item(renderer, categories);
+            Draw_Menu_Blocks(renderer, code_bar_font);
+            DrawALLBlocks(renderer, code_bar_font);
+            Draw_report_button(renderer, &Timer_button, Timer_text);
+            Draw_report_button(renderer, &size_button, size_button_text);
+            Draw_report_button(renderer, &next_costume_button, next_costume_text);
+            Draw_report_button(renderer, &costume_number_button, costume_number_text);
+        }
+        else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
+            Draw_Backdrop_List_Sidebar(renderer, main_font);
+
+            if (currentTab == COSTUMES && now_sprite != nullptr) {
+                Draw_Image_Editor(renderer, main_font, nullptr, now_sprite->name);
+
+                if (!now_sprite->costumes.empty()) {
+                    SDL_Texture* baseTex = (SDL_Texture*)now_sprite->costumes[now_sprite->currentCostumeIndex];
+                    int texW, texH;
+                    SDL_QueryTexture(baseTex, NULL, NULL, &texW, &texH);
+
+                    int editorAreaX = 330;
+                    int editorAreaY = 120;
+                    int editorAreaW = 600;
+                    int editorAreaH = 380;
+
+                    int centerX = editorAreaX + (editorAreaW / 2);
+                    int centerY = editorAreaY + (editorAreaH / 2);
+
+                    SDL_Rect destRect = {
+                            centerX - (texW / 2),
+                            centerY - (texH / 2),
+                            texW,
+                            texH
+                    };
+                    SDL_RenderCopy(renderer, baseTex, NULL, &destRect);
+                }
+            }
+            else if (currentTab == BACKDROPS && !projectBackdrops.empty() && selectedBackdropIndex >= 0) {
+                Draw_Image_Editor(renderer, main_font, projectBackdrops[selectedBackdropIndex].texture, projectBackdrops[selectedBackdropIndex].name);
+            }
+        }
+
+        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
         Draw_Character_Floating_Buttons(renderer);
     }
 
