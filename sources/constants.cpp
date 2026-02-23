@@ -22,25 +22,27 @@ void Update_Sprite_Dimensions(Character &sprite) {
 }
 
 bool Limit_CharacterX(Character &sprite) {
-    double realWidth = sprite.size * 500.0;
-    double halfW = realWidth / 2.0;
-    double limit = (double)stage.w / 2.0;
-
-    if (sprite.x <= limit - halfW && sprite.x >= -limit + halfW) return true;
-
-    if (sprite.x > limit - halfW) sprite.x = limit - halfW;
-    if (sprite.x < -limit + halfW) sprite.x = -limit + halfW;
-    return false;
+    double limit = (double)stage.w / 2 - (sprite.size * 500) / 2;
+    if (sprite.x > limit) {
+        sprite.x = limit;
+        return false;
+    }
+    if (sprite.x < -limit) {
+        sprite.x = -limit;
+        return false;
+    }
+    return true;
 }
 
 bool Limit_CharacterY(Character &sprite) {
-    double realHeight = sprite.size * 500.0;
-    double halfH = realHeight / 2.0;
-    double limit = (double)stage.h / 2.0;
-
-    if (sprite.y <= limit - halfH && sprite.y >= -limit + halfH) return true;
-
-    if (sprite.y > limit - halfH) sprite.y = limit - halfH;
-    if (sprite.y < -limit + halfH) sprite.y = -limit + halfH;
-    return false;
+    double limit = (double)stage.h / 2 - (sprite.size * 500) / 2;
+    if (sprite.y > limit) {
+        sprite.y = limit;
+        return false;
+    }
+    if (sprite.y < -limit) {
+        sprite.y = -limit;
+        return false;
+    }
+    return true;
 }

@@ -1142,30 +1142,46 @@ void FlipCostumeVertical(Costume* costume) {
 
 void FlipHorizontal(Costume* costume) {
     if (!costume || !costume->texture) return;
+
     int w, h;
     SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
     SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!target) return;
+
     SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(renderer, target);
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
+
     SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_HORIZONTAL);
+
     SDL_SetRenderTarget(renderer, NULL);
+
     SDL_DestroyTexture(costume->texture);
     costume->texture = target;
 }
 
 void FlipVertical(Costume* costume) {
     if (!costume || !costume->texture) return;
+
     int w, h;
     SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
     SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!target) return;
+
     SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(renderer, target);
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
+
     SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
+
     SDL_SetRenderTarget(renderer, NULL);
+
     SDL_DestroyTexture(costume->texture);
     costume->texture = target;
 }
@@ -1258,28 +1274,24 @@ void Get_event() {
 }
 
 void Draw_Stage_Content(SDL_Renderer* renderer) {
-    int sw = Get_width();
-    int stageW = 486;
-    int stageH = 352;
-    int stageX = sw - stageW - 10;
-    int stageY = 95;
-    SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
+    SDL_Rect stageArea = stage;
 
     if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
         SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].texture, NULL, &stageArea);
         SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &stageArea);
     }
 
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderDrawRect(renderer, &stageArea);
-
     int centerX = stageArea.x + (stageArea.w / 2);
     int centerY = stageArea.y + (stageArea.h / 2);
 
     for (auto& ch : allCharacters) {
         if (ch.isvisible && !ch.costumes.empty()) {
+
             int rSize = (int)(ch.size * 500);
             if (rSize <= 0) rSize = 1;
+
+            ch.width = (double)rSize;
+            ch.height = (double)rSize;
 
             SDL_Rect charPos = {
                     centerX + (int)ch.x - (rSize / 2),
@@ -1298,7 +1310,6 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
         }
     }
 }
-
 void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
     int mW = 400, mH = 200;
     int mX = (Get_width() - mW) / 2;

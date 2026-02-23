@@ -45,9 +45,9 @@ void LoadProjectFromFile(string filename) {
         stringstream ss(spriteLine);
         string nameStr, xStr, yStr;
         if (getline(ss, nameStr, '|') && getline(ss, xStr, '|') && getline(ss, yStr, '|')) {
-            now_sprite.name = nameStr;
-            now_sprite.x = stoi(xStr);
-            now_sprite.y = stoi(yStr);
+            now_sprite->name = nameStr;
+            now_sprite->x = stoi(xStr);
+            now_sprite->y = stoi(yStr);
         }
     }
 

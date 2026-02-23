@@ -791,23 +791,25 @@ void Draw_Character(SDL_Renderer* renderer, Character* sprite) {
     if (sprite == nullptr || sprite->costumes.empty() || !sprite->isvisible) return;
 
     Costume* curr = sprite->costumes[sprite->currentCostumeIndex];
-    int w, h;
-    SDL_QueryTexture(curr->texture, NULL, NULL, &w, &h);
 
-    // اعمال ضریب سایز روی ابعاد اصلی تصویر
-    int finalW = (int)(w * sprite->size);
-    int finalH = (int)(h * sprite->size);
+    int centerX = stage.x + (stage.w / 2);
+    int centerY = stage.y + (stage.h / 2);
 
-    // مرکز تصویر را بر اساس x و y کاراکتر محاسبه می‌کنیم
+    int rSize = (int)(sprite->size * 500);
+
+    sprite->width = (double)rSize;
+    sprite->height = (double)rSize;
+
     SDL_Rect dest = {
-            (int)(sprite->x + 1070 - (finalW / 2)),
-            (int)(sprite->y + 245 - (finalH / 2)),
-            finalW,
-            finalH
+            centerX + (int)sprite->x - (rSize / 2),
+            centerY + (int)sprite->y - (rSize / 2),
+            rSize,
+            rSize
     };
 
     SDL_RenderCopyEx(renderer, curr->texture, NULL, &dest, sprite->degree, NULL, SDL_FLIP_NONE);
 }
+
 
 void Handle_event_for_code_button(SDL_Event &e) {
     if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -845,18 +847,17 @@ void Handle_event_for_stop_button(SDL_Event &e , Button &button){
 void Handle_event_for_motion_sprite(SDL_Event &e, Character* sprite) {
     if (!sprite || !draggable) return;
 
-    int sw = Get_width();
-    int centerX = (sw - 486 - 10) + (486 / 2);
-    int centerY = 95 + (352 / 2);
+    int centerX = stage.x + (stage.w / 2);
+    int centerY = stage.y + (stage.h / 2);
 
-    double realSize = sprite->size * 500.0;
+    int rSize = (int)(sprite->size * 500);
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-        int left = centerX + (int)sprite->x - (int)(realSize / 2);
-        int top = centerY + (int)sprite->y - (int)(realSize / 2);
+        int left = centerX + (int)sprite->x - (rSize / 2);
+        int top = centerY + (int)sprite->y - (rSize / 2);
 
-        if (e.button.x >= left && e.button.x <= left + (int)realSize &&
-            e.button.y >= top && e.button.y <= top + (int)realSize) {
+        if (e.button.x >= left && e.button.x <= left + rSize &&
+            e.button.y >= top && e.button.y <= top + rSize) {
             sprite->is_mouse_on = true;
         }
     }
@@ -875,6 +876,7 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character* sprite) {
         Limit_CharacterY(*sprite);
     }
 }
+
 
 void Handle_event_for_sound_button(SDL_Event &e,Button* button){
     if(e.type == SDL_MOUSEBUTTONDOWN){
