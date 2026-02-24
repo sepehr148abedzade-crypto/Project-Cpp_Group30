@@ -107,6 +107,10 @@ extern Costume apple;
 extern Costume balloon1;
 extern Costume balloon2;
 extern Costume balloon3;
+extern Costume emoji1;
+extern Costume emoji2;
+extern Costume emoji3;
+extern Costume emoji4;
 
 struct Character{
     std::string name;
@@ -118,6 +122,7 @@ struct Character{
     double height=0;
     bool isvisible = true;
     bool is_mouse_on = false;
+    bool is_draw_button = false;
     std::string monologue;
     std::string think;
     const char* path;
@@ -131,7 +136,23 @@ extern Character fish;
 extern Character balloon;
 extern Character red_apple;
 extern Character dog;
+extern Character emoji;
 extern Character* now_sprite;
+
+struct sprite_button{
+    SDL_Rect rect = {0,0,0,0};
+    Character* sprite;
+    bool active;
+    bool is_now_sprite;
+};
+
+extern sprite_button cat_buttonUnderstage;
+extern sprite_button dog_buttonUnderstage;
+extern sprite_button apple_buttonUnderstage;
+extern sprite_button balloon_buttonUnderstage;
+extern sprite_button bear_buttonUnderstage;
+extern sprite_button fish_buttonUnderstage;
+extern sprite_button emoji_buttonUnderstage;
 
 struct Blocks{
     string id;
@@ -207,9 +228,18 @@ extern Button Timer_button;
 extern Button next_costume_button;
 extern Button size_button;
 extern Button costume_number_button;
+extern Button drag_button;
+extern Button go_to_front_layer_button;
 extern Button volume_button;
 extern Button frequency_button;
 extern Button decrease_frequency_button;
+extern Button cat_button;
+extern Button bear_button;
+extern Button apple_button;
+extern Button fish_button;
+extern Button dog_button;
+extern Button balloon_button;
+extern Button emoji_button;
 //extern std::vector<Blocks> active_blocks;
 extern vector<vector<Blocks>> blockChains;
 extern int draggedChainIndex ;
@@ -223,7 +253,7 @@ extern Blocks* draggedBlock;
 extern int offsetX, offsetY;
 extern std::map<std::string, BlockTemplate> blockMap;
 extern std::map<std::string, SDL_Texture*> blockLibrary;
-extern std::vector<Character> active_character;
+extern std::vector<sprite_button*> active_character;
 
 void Init_Button();
 void Init_flag_button();
@@ -251,8 +281,19 @@ void Init_increase_frequency_button();
 void Init_decrease_frequency_button();
 void Init_timer_button();
 void Init_next_costume_button();
+void Init_drag_button();
+void Init_go_to_front_layer_button();
 void Init_size_button();
 void Init_costume_number_button();
 void Init_volume_button();
 void Init_frequency_button();
+void Init_cat_button();
+void Init_bear_button();
+void Init_fish_button();
+void Init_balloon_button();
+void Init_apple_button();
+void Init_dog_button();
+void Init_emoji_button();
+void Init_sprite_buttonUnderStage();
+void choose_now_sprite();
 #endif //ENTITY_H

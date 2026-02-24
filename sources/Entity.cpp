@@ -8,6 +8,7 @@ vector<Blocks> active_blocks;
 std::vector<Blocks> menu_blocks;
 std::map<std::string, BlockTemplate> blockMap;
 std::map<std::string, SDL_Texture*> blockLibrary;
+std::vector<sprite_button*> active_character;
 vector<categoryInfo> categoryOrder {
         {CAT_MOTION,true,100},
         {CAT_LOOK,true,0},
@@ -53,14 +54,14 @@ void Init_flag_button(){
     flag_button.first_color = {229,240,249};
     flag_button.second_color = {179, 210, 253};
     flag_button.third_color = {160,180,255};
-    flag_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    flag_button.is_mouse_on = Is_mouse_on(flag_button.rect.x,flag_button.rect.y,flag_button.rect.w,flag_button.rect.h);
 }
 Button stop_button{};
 void Init_stop_button(){
     stop_button.rect = {stage.x+flag_button.rect.w + 10, stage.y-45, 40, 40};
     stop_button.first_color = {229,240,249};
     stop_button.second_color = {179, 210, 253};
-    stop_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    stop_button.is_mouse_on = Is_mouse_on(stop_button.rect.x,stop_button.rect.y,stop_button.rect.w,stop_button.rect.h);
 };
 Button Character_button{};
 void Init_Character_button(){
@@ -68,7 +69,7 @@ void Init_Character_button(){
     Character_button.first_color = {217,227,242};
     Character_button.second_color = white;
     Character_button.third_color = {122,177,255};
-    Character_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Character_button.is_mouse_on = Is_mouse_on(Character_button.rect.x,Character_button.rect.y,Character_button.rect.w,Character_button.rect.h);
 }
 Button Sounds_button{};
 void Init_sound_button(){
@@ -76,7 +77,7 @@ void Init_sound_button(){
     Sounds_button.first_color = {217,227,242};
     Sounds_button.second_color = white;
     Sounds_button.third_color = {122,177,255};
-    Sounds_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Sounds_button.is_mouse_on = Is_mouse_on(Sounds_button.rect.x,Sounds_button.rect.y,Sounds_button.rect.w,Sounds_button.rect.h);
 }
 Button Backdrop_button{};
 void Init_Backdrop_button(){
@@ -84,7 +85,7 @@ void Init_Backdrop_button(){
     Backdrop_button.first_color = {217,227,242};
     Backdrop_button.second_color = white;
     Backdrop_button.third_color = {122,177,255};
-    Backdrop_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Backdrop_button.is_mouse_on = Is_mouse_on(Backdrop_button.rect.x,Backdrop_button.rect.y,Backdrop_button.rect.w,Backdrop_button.rect.h);
 }
 Button Back_button{};
 void Init_Back_button(){
@@ -92,7 +93,7 @@ void Init_Back_button(){
     Back_button.first_color = {217,227,242};
     Back_button.second_color = white;
     Back_button.third_color = {122,177,255};
-    Back_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Back_button.is_mouse_on = Is_mouse_on(Back_button.rect.x,Back_button.rect.y,Back_button.rect.w,Back_button.rect.h);
 }
 Button code_button{};
 void Init_code_button(){
@@ -100,51 +101,53 @@ void Init_code_button(){
     code_button.first_color = {217,227,242};
     code_button.second_color = white;
     code_button.third_color = {122,177,255};
-    code_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    code_button.is_mouse_on = Is_mouse_on(code_button.rect.x,code_button.rect.y,code_button.rect.w,code_button.rect.h);
 }
 Button show_button{};
 void Init_show_button(){
     show_button.rect = {stage.x+50,stage.y+stage.h+80,20,20};
     show_button.first_color = white;
     show_button.second_color = {122, 175, 255};
-    show_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    show_button.is_mouse_on = Is_mouse_on(show_button.rect.x,show_button.rect.y,show_button.rect.w,show_button.rect.h);
 };
 Button hide_button{};
 void Init_hide_button(){
     hide_button.rect = {stage.x+70,stage.y+stage.h+80,20,20};
     hide_button.first_color = white;
     hide_button.second_color = {122, 175, 255};
-    hide_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    hide_button.is_mouse_on = Is_mouse_on(hide_button.rect.x,hide_button.rect.y,hide_button.rect.w,hide_button.rect.h);
 };
 Button run_sound_button{};
 void Init_run_sound_button(){
     run_sound_button.rect = {380,Get_height()/2-200,200,50};
     run_sound_button.first_color = {222,145,222};
-    run_sound_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    run_sound_button.is_mouse_on = Is_mouse_on(run_sound_button.rect.x,run_sound_button.rect.y,run_sound_button.rect.w,run_sound_button.rect.h);
 };
 Button volumeUp_button{};
 void Init_volumeUp_button(){
     volumeUp_button.rect = {380,Get_height()/2-140,200,50};
     volumeUp_button.first_color = {222,145,222};
-    volumeUp_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    volumeUp_button.is_mouse_on = Is_mouse_on(volumeUp_button.rect.x,volumeUp_button.rect.y,volumeUp_button.rect.w,volumeUp_button.rect.h);
 };
 Button volumeDown_button{};
 void Init_volumeDown_button(){
     volumeDown_button.rect = {380,Get_height()/2-80,200,50};
     volumeDown_button.first_color = {222,145,222};
-    volumeDown_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    volumeDown_button.is_mouse_on = Is_mouse_on(volumeDown_button.rect.x,volumeDown_button.rect.y,volumeDown_button.rect.w,volumeDown_button.rect.h);
 };
 Button increase_frequency_button{};
 void Init_increase_frequency_button(){
     increase_frequency_button.rect = {380,Get_height()/2-20,200,50};
     increase_frequency_button.first_color = {222,145,222};
-    increase_frequency_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    increase_frequency_button.is_mouse_on = Is_mouse_on(increase_frequency_button.rect.x,increase_frequency_button.rect.y,
+                                                        increase_frequency_button.rect.w,increase_frequency_button.rect.h);
 };
 Button decrease_frequency_button{};
 void Init_decrease_frequency_button(){
     decrease_frequency_button.rect = {380,Get_height()/2 + 40,200,50};
     decrease_frequency_button.first_color = {222,145,222};
-    decrease_frequency_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    decrease_frequency_button.is_mouse_on = Is_mouse_on(decrease_frequency_button.rect.x,decrease_frequency_button.rect.y,
+                                                        decrease_frequency_button.rect.w,decrease_frequency_button.rect.h);
 };
 Button Timer_button{};
 void Init_timer_button(){
@@ -152,7 +155,7 @@ void Init_timer_button(){
     Timer_button.first_color = {249,249,249};
     Timer_button.second_color = {122,175,255};
     Timer_button.third_color = {122,175,255};
-    Timer_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    Timer_button.is_mouse_on = Is_mouse_on(Timer_button.rect.x,Timer_button.rect.y,Timer_button.rect.w,Timer_button.rect.h);
 };
 Button next_costume_button{};
 void Init_next_costume_button(){
@@ -160,7 +163,7 @@ void Init_next_costume_button(){
     next_costume_button.first_color = {249,249,249};
     next_costume_button.second_color = {122,175,255};
     next_costume_button.third_color = {122,175,255};
-    next_costume_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    next_costume_button.is_mouse_on = Is_mouse_on(next_costume_button.rect.x,next_costume_button.rect.y,next_costume_button.rect.w,next_costume_button.rect.h);
 };
 Button size_button{};
 void Init_size_button(){
@@ -168,7 +171,7 @@ void Init_size_button(){
     size_button.first_color = {249,249,249};
     size_button.second_color = {122,175,255};
     size_button.third_color = {122,175,255};
-    size_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    size_button.is_mouse_on = Is_mouse_on(size_button.rect.x,size_button.rect.y,size_button.rect.w,size_button.rect.h);
 };
 Button costume_number_button{};
 void Init_costume_number_button(){
@@ -176,7 +179,23 @@ void Init_costume_number_button(){
     costume_number_button.first_color = {249,249,249};
     costume_number_button.second_color = {122,175,255};
     costume_number_button.third_color = {122,175,255};
-    costume_number_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    costume_number_button.is_mouse_on = Is_mouse_on(costume_number_button.rect.x,costume_number_button.rect.y,costume_number_button.rect.w,costume_number_button.rect.h);
+};
+Button drag_button{};
+void Init_drag_button(){
+    drag_button.rect = {780,Get_height() - 120,60,30};
+    drag_button.first_color = {249,249,249};
+    drag_button.second_color = {122,175,255};
+    drag_button.third_color = {122,175,255};
+    drag_button.is_mouse_on = Is_mouse_on(costume_number_button.rect.x,costume_number_button.rect.y,costume_number_button.rect.w,costume_number_button.rect.h);
+};
+Button go_to_front_layer_button{};
+void Init_go_to_front_layer_button(){
+    go_to_front_layer_button.rect = {840,Get_height() - 120,170,30};
+    go_to_front_layer_button.first_color = {249,249,249};
+    go_to_front_layer_button.second_color = {122,175,255};
+    go_to_front_layer_button.third_color = {122,175,255};
+    go_to_front_layer_button.is_mouse_on = Is_mouse_on(costume_number_button.rect.x,costume_number_button.rect.y,costume_number_button.rect.w,costume_number_button.rect.h);
 };
 Button volume_button{};
 void Init_volume_button(){
@@ -184,7 +203,7 @@ void Init_volume_button(){
     volume_button.first_color = {249,249,249};
     volume_button.second_color = {122,175,255};
     volume_button.third_color = {122,175,255};
-    volume_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    volume_button.is_mouse_on = Is_mouse_on(volume_button.rect.x,volume_button.rect.y,volume_button.rect.w,volume_button.rect.h);
 };
 Button frequency_button{};
 void Init_frequency_button(){
@@ -192,7 +211,7 @@ void Init_frequency_button(){
     frequency_button.first_color = {249,249,249};
     frequency_button.second_color = {122,175,255};
     frequency_button.third_color = {122,175,255};
-    frequency_button.is_mouse_on = Is_mouse_on(Top_button.rect.x,Top_button.rect.y,Top_button.rect.w,Top_button.rect.h);
+    frequency_button.is_mouse_on = Is_mouse_on(frequency_button.rect.x,frequency_button.rect.y,frequency_button.rect.w,frequency_button.rect.h);
 };
 InformationOfCharacter name_of_sprite;
 void Init_sprite_box(Character &sprite){
@@ -220,14 +239,67 @@ void Init_size_box(Character &sprite){
     size.rect ={stage.x+160,stage.y+stage.h+75,70,30};
     size.linkedValue = &sprite.size;
 }
+Button cat_button{};
+void Init_cat_button(){
+    cat_button.rect = {60,120,150,150};
+    cat_button.first_color = {249,249,249};
+    cat_button.is_mouse_on = Is_mouse_on(cat_button.rect.x,cat_button.rect.y,cat_button.rect.w,cat_button.rect.h);
+};
+Button bear_button{};
+void Init_bear_button(){
+    bear_button.rect = {220,120,150,150};
+    bear_button.first_color = {249,249,249};
+    bear_button.is_mouse_on = Is_mouse_on(bear_button.rect.x,bear_button.rect.y,bear_button.rect.w,bear_button.rect.h);
+};
+Button fish_button{};
+void Init_fish_button(){
+    fish_button.rect = {390,120,150,150};
+    fish_button.first_color = {249,249,249};
+    fish_button.is_mouse_on = Is_mouse_on(fish_button.rect.x,fish_button.rect.y,fish_button.rect.w,fish_button.rect.h);
+};
+Button balloon_button{};
+void Init_balloon_button(){
+    balloon_button.rect = {560,120,150,150};
+    balloon_button.first_color = {249,249,249};
+    balloon_button.is_mouse_on = Is_mouse_on(balloon_button.rect.x,balloon_button.rect.y,balloon_button.rect.w,balloon_button.rect.h);
+};
+Button apple_button{};
+void Init_apple_button(){
+    apple_button.rect = {730,120,150,150};
+    apple_button.first_color = {249,249,249};
+    apple_button.is_mouse_on = Is_mouse_on(apple_button.rect.x,apple_button.rect.y,apple_button.rect.w,apple_button.rect.h);
+};
+Button dog_button{};
+void Init_dog_button(){
+    dog_button.rect = {60,320,150,150};
+    dog_button.first_color = {249,249,249};
+    dog_button.is_mouse_on = Is_mouse_on(dog_button.rect.x,dog_button.rect.y,dog_button.rect.w,dog_button.rect.h);
+};
 
+Button emoji_button{};
+void Init_emoji_button(){
+    emoji_button.rect = {220,320,150,150};
+    emoji_button.first_color = {249,249,249};
+    emoji_button.is_mouse_on = Is_mouse_on(cat_button.rect.x,cat_button.rect.y,cat_button.rect.w,cat_button.rect.h);
+};
 Character cat;
 Character bear;
 Character fish;
 Character balloon;
 Character red_apple;
 Character dog;
-Character* now_sprite = &fish;
+Character emoji;
+Character* now_sprite = &cat;
+
+void choose_now_sprite(){
+    if(active_character.size() ==1 ) now_sprite = active_character.front()->sprite;
+    else{
+        for(int i=0;i<active_character.size();i++){
+            if(active_character[i]->is_now_sprite) now_sprite = active_character[i]->sprite;
+            return;
+        }
+    }
+}
 void Init_structOfCharacter(){
     cat.name = "cat";
     dog.name = "Dog";
@@ -235,6 +307,7 @@ void Init_structOfCharacter(){
     fish.name = "Fish";
     balloon.name = "Balloon";
     red_apple.name = "Apple";
+    emoji.name = "Emoji";
 }
 Costume cat1;
 Costume cat2;
@@ -249,6 +322,10 @@ Costume apple;
 Costume balloon1;
 Costume balloon2;
 Costume balloon3;
+Costume emoji1;
+Costume emoji2;
+Costume emoji3;
+Costume emoji4;
 
 void Init_costume(){
     cat1.name = "costume1";
@@ -277,4 +354,28 @@ void Init_costume(){
     dog2.path = "asset/images/sprite/dog2.png";
     apple.name = "apple";
     apple.path = "asset/images/sprite/apple.png";
+    emoji1.name = "Emoji1";
+    emoji1.path = "asset/images/sprite/emoji1.png";
+    emoji2.name = "Emoji2";
+    emoji2.path = "asset/images/sprite/emoji2.png";
+    emoji3.name = "Emoji3";
+    emoji3.path = "asset/images/sprite/emoji3.png";
+    emoji4.name = "Emoji4";
+    emoji4.path = "asset/images/sprite/emoji4.png";
+}
+sprite_button cat_buttonUnderstage;
+sprite_button dog_buttonUnderstage;
+sprite_button apple_buttonUnderstage;
+sprite_button balloon_buttonUnderstage;
+sprite_button bear_buttonUnderstage;
+sprite_button fish_buttonUnderstage;
+sprite_button emoji_buttonUnderstage;
+void Init_sprite_buttonUnderStage(){
+    cat_buttonUnderstage.sprite = &cat;
+    balloon_buttonUnderstage.sprite = &balloon;
+    dog_buttonUnderstage.sprite = &dog;
+    bear_buttonUnderstage.sprite = &bear;
+    fish_buttonUnderstage.sprite = &fish;
+    apple_buttonUnderstage.sprite = &red_apple;
+    emoji_buttonUnderstage.sprite = &emoji;
 }
