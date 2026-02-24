@@ -63,7 +63,7 @@ void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,Bloc
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font);
-void Draw_Character(SDL_Renderer* renderer,Character* sprite);
+void Draw_Character(SDL_Renderer* renderer);
 void Handle_event_for_code_button(SDL_Event &e);
 void Handle_event_for_flag_button(SDL_Event &e,Button &button);
 void Handle_event_for_stop_button(SDL_Event &e,Button &button);
@@ -120,4 +120,10 @@ void Draw_sound_panel(SDL_Renderer* renderer);
 void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
 void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
                    BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
+void Draw_sprite_button(SDL_Renderer* renderer,Button* button,SDL_Texture* picture,SDL_Texture* text);
+void Handle_event_for_choose_sprite_in_Character_panel(SDL_Event &e,Button* button,sprite_button* sprite);
+void Draw_sprite_button_under_stage(SDL_Renderer* renderer,sprite_button* button ,SDL_Texture* text);
+void Handle_event_for_choose_now_sprite(SDL_Event &e,sprite_button* button);
+void Handle_event_for_go_to_front_layer_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite);
+void Handle_event_for_drag_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite);
 #endif //GRAPHIC_ELEMENT_H

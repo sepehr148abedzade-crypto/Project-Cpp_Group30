@@ -9,6 +9,7 @@
 #include <vector>
 #include <ctime>
 #include <cstdlib>
+#include "algorithm"
 
 EditorSettings globalEditor;
 Blocks* draggedBlock = nullptr;
@@ -744,18 +745,24 @@ void Draw_Stage_Bar(SDL_Renderer* renderer){
     SDL_RenderDrawRect(renderer,&rect);
 }
 
-void Draw_Character(SDL_Renderer* renderer,Character* sprite){
-    double centerX = stage.x + ((double )stage.w/2);
-    double centerY = stage.y + ((double)stage.h/2);
+void Draw_Character(SDL_Renderer* renderer) {
+    for (int i = 0; i < active_character.size(); i++) {
+        if(active_character[i]->sprite == nullptr) return;
+        double centerX = stage.x + ((double) stage.w / 2);
+        double centerY = stage.y + ((double) stage.h / 2);
 
-    SDL_Rect dest;
-    dest.w = (int)(sprite->width);
-    dest.h = (int)(sprite->height);
-    dest.x = (int)(centerX + sprite->x - ((double)dest.w/2));
-    dest.y = (int)(centerY + sprite->y - ((double)dest.h/2));
+        SDL_Rect dest;
+        dest.w = (int) (active_character[i]->sprite->width);
+        dest.h = (int) (active_character[i]->sprite->height);
+        dest.x = (int) (centerX + active_character[i]->sprite->x - ((double) dest.w / 2));
+        dest.y = (int) (centerY + active_character[i]->sprite->y - ((double) dest.h / 2));
 
-    if(sprite->isvisible)
-        SDL_RenderCopyEx(renderer,sprite->costumes[sprite->currentCostumeIndex]->texture, nullptr,&dest,0, nullptr,SDL_FLIP_NONE);
+        if (active_character[i]->sprite->isvisible)
+            SDL_RenderCopyEx(renderer,
+                             active_character[i]->sprite->costumes[active_character[i]->sprite->currentCostumeIndex]->texture,
+                             nullptr, &dest, 0,
+                             nullptr, SDL_FLIP_NONE);
+    }
 }
 
 void Handle_event_for_code_button(SDL_Event &e) {
@@ -877,6 +884,22 @@ void Handle_event_for_costume_number_button(SDL_Event &e,Button* button){
     if(e.type == SDL_MOUSEBUTTONDOWN){
         if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)) {
             is_costume_number_on = !is_costume_number_on;
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+        }
+    }
+}
+void Handle_event_for_drag_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)) {
+            draggable = !draggable;
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+        }
+    }
+}
+void Handle_event_for_go_to_front_layer_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)) {
+            move_to_front(sprite);
             button->is_mouse_click_on = !button->is_mouse_click_on;
         }
     }
@@ -1363,4 +1386,132 @@ void Draw_report_button(SDL_Renderer* renderer,Button* button,SDL_Texture* textu
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&button->rect);
+}
+
+void Draw_sprite_button(SDL_Renderer* renderer,Button* button,SDL_Texture* picture,SDL_Texture* text){
+    SDL_Rect rect =button->rect;
+    SDL_Rect text_rect = {button->rect.x,button->rect.y,button->rect.w,button->rect.h+40};
+    int texture_w, texture_h;
+    SDL_QueryTexture(picture, nullptr, nullptr, &texture_w, &texture_h);
+    double scale = std::min(
+            (double)button->rect.w / texture_w,
+            (double)button->rect.h / texture_h
+    );
+    int new_w = texture_w * scale;
+    int new_h = texture_h * scale;
+    SDL_Rect textPosition1 = {
+            rect.x + (rect.w - new_w) / 2,
+            rect.y + (rect.h - new_h) / 2,
+            new_w, new_h
+    };
+    SDL_RenderCopy(renderer, picture, nullptr, &textPosition1);
+    int text_w, text_h;
+    SDL_QueryTexture(text, nullptr, nullptr, &text_w, &text_h);
+    SDL_Rect textPosition2 = {
+            rect.x + (rect.w - text_w) / 2,
+            rect.y + (rect.h - text_h) / 2 + 100,
+            text_w, text_h
+    };
+    SDL_RenderCopy(renderer, text, nullptr, &textPosition2);
+
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&text_rect);
+    if(button->is_mouse_click_on) {
+        SDL_SetRenderDrawColor(renderer,76,151,255,SDL_ALPHA_OPAQUE);
+        SDL_RenderDrawRect(renderer,&text_rect);
+    }
+}
+void Draw_sprite_button_under_stage(SDL_Renderer* renderer,sprite_button* button ,SDL_Texture* text) {
+    SDL_Rect rect = button->rect;
+        if (button->active) {
+            SDL_Rect text_rect = {rect.x, rect.y, rect.w, rect.h + 20};
+            int texture_w, texture_h;
+                SDL_QueryTexture(button->sprite->costumes[0]->texture, nullptr, nullptr, &texture_w,
+                                 &texture_h);
+            double scale = std::min(
+                    (double) rect.w / texture_w,
+                    (double) rect.h / texture_h
+            );
+            int new_w = texture_w * scale;
+            int new_h = texture_h * scale;
+            SDL_Rect textPosition1 = {
+                    rect.x + (rect.w - new_w) / 2,
+                    rect.y + (rect.h - new_h) / 2,
+                    new_w, new_h
+            };
+            SDL_RenderCopy(renderer, button->sprite->costumes[0]->texture, nullptr, &textPosition1);
+            int text_w, text_h;
+            SDL_QueryTexture(text, nullptr, nullptr, &text_w, &text_h);
+            SDL_Rect textPosition2 = {
+                    rect.x + (rect.w - text_w) / 2,
+                    rect.y + (rect.h - text_h) / 2 + 45,
+                    text_w, text_h
+            };
+            SDL_RenderCopy(renderer, text, nullptr, &textPosition2);
+
+            SDL_SetRenderDrawColor(renderer, 200, 200, 200, SDL_ALPHA_OPAQUE);
+            SDL_RenderDrawRect(renderer, &text_rect);
+            if (button->is_now_sprite) {
+                SDL_SetRenderDrawColor(renderer, 76, 151, 255, SDL_ALPHA_OPAQUE);
+                SDL_RenderDrawRect(renderer, &text_rect);
+            }
+        }
+    }
+
+void Handle_event_for_choose_sprite_in_Character_panel(SDL_Event &e,Button* button,sprite_button* sprite){
+    if(e.type == SDL_MOUSEBUTTONDOWN)
+    {
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)){
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+            sprite->active = !sprite->active;
+
+            if(sprite->active){
+                if(std::find(active_character.begin(),
+                             active_character.end(),
+                             sprite) == active_character.end())
+                {
+                    active_character.push_back(sprite);
+                }
+            }
+            else
+            {
+                active_character.erase(
+                        std::remove(active_character.begin(),
+                                    active_character.end(),
+                                    sprite),
+                        active_character.end()
+                );
+            }
+            int index = 0;
+            for(auto& sprite : active_character)
+            {
+                if(index >= 8) break;
+
+                sprite->rect = {
+                        stage.x + 5 + (index % 4) * 100,
+                        Get_height() - 290 + (index / 4) * 100,
+                        75, 75
+                };
+
+                index++;
+            }
+        }
+    }
+}
+
+void Handle_event_for_choose_now_sprite(SDL_Event &e,sprite_button* button) {
+    if (e.type == SDL_MOUSEBUTTONDOWN) {
+        if (e.button.button == SDL_BUTTON_LEFT) {
+            for (int i = 0; i < active_character.size(); i++) {
+                if (Is_mouse_on(active_character[i]->rect.x, active_character[i]->rect.y, active_character[i]->rect.w,
+                                active_character[i]->rect.h)) {
+                    for (int j = 0; j < active_character.size(); j++) {
+                        active_character[j]->is_now_sprite = false;
+                    }
+                    active_character[i]->is_now_sprite = true;
+                    now_sprite = active_character[i]->sprite;
+                }
+            }
+        }
+    }
 }

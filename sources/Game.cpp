@@ -40,7 +40,7 @@ SDL_Texture* positionX_text = nullptr;
 SDL_Texture* positionY_text = nullptr;
 SDL_Texture* size_of_sprite_text = nullptr;
 SDL_Texture* name_of_sprite_text = nullptr;
-SDL_Texture* direction_of_sprite_text = nullptr;;
+SDL_Texture* direction_of_sprite_text = nullptr;
 SDL_Texture* show_text = nullptr;
 SDL_Texture* S_text = nullptr;
 SDL_Texture* H_text = nullptr;
@@ -53,10 +53,19 @@ SDL_Texture* Timer_text = nullptr;
 SDL_Texture* size_button_text = nullptr;
 SDL_Texture* next_costume_text = nullptr;
 SDL_Texture* costume_number_text = nullptr;
+SDL_Texture* drag_text = nullptr;
+SDL_Texture* go_to_front_layer_text = nullptr;
 SDL_Texture* volume_text = nullptr;
 SDL_Texture* volume_value = nullptr;
 SDL_Texture* frequency_text = nullptr;
 SDL_Texture* frequency_value = nullptr;
+SDL_Texture* cat_text = nullptr;
+SDL_Texture* dog_text = nullptr;
+SDL_Texture* fish_text = nullptr;
+SDL_Texture* bear_text = nullptr;
+SDL_Texture* balloon_text = nullptr;
+SDL_Texture* apple_text = nullptr;
+SDL_Texture* emoji_text = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
@@ -377,6 +386,8 @@ bool Init_Game(){
     frequency_text = LoadText(renderer,main_font,"Frequency : ",{100,100,100});
     next_costume_text = LoadText(renderer,main_font,"next costume",{100,100,100});
     costume_number_text = LoadText(renderer,main_font,"costume number",{100,100,100});
+    drag_text = LoadText(renderer,main_font,"Drag",{100,100,100});
+    go_to_front_layer_text = LoadText(renderer,main_font,"Go_to_front_layer",{100,100,100});
     Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
     SetWindowIcon(main_window,"asset/images/logo/icon.png");
     green_flag = LoadTexture(renderer,"asset/images/logo/flag.png");
@@ -394,6 +405,13 @@ bool Init_Game(){
     name_of_sprite_text = LoadText(renderer,report_font,now_sprite->name,{100,100,100});
     S_text = LoadText(renderer,report_font,"S",{100,100,100});
     H_text = LoadText(renderer,report_font,"H",{100,100,100});
+    cat_text = LoadText(renderer,main_font,"Cat",{100,100,100});
+    dog_text = LoadText(renderer,main_font,"Dog",{100,100,100});
+    bear_text = LoadText(renderer,main_font,"Bear",{100,100,100});
+    balloon_text = LoadText(renderer,main_font,"Balloon",{100,100,100});
+    apple_text = LoadText(renderer,main_font,"Apple",{100,100,100});
+    fish_text = LoadText(renderer,main_font,"Fish",{100,100,100});
+    emoji_text = LoadText(renderer,main_font,"Emoji",{100,100,100});
     Run_text = LoadText(renderer,main_font,"Run",white);
     volumeUp_text = LoadText(renderer,main_font,"Volume Up",white);
     volumeDown_text = LoadText(renderer,main_font,"Volume Down",white);
@@ -431,9 +449,19 @@ bool Init_Game(){
     Init_timer_button();
     Init_size_button();
     Init_next_costume_button();
+    Init_go_to_front_layer_button();
+    Init_drag_button();
     Init_volume_button();
     Init_frequency_button();
     Init_costume_number_button();
+    Init_cat_button();
+    Init_bear_button();
+    Init_fish_button();
+    Init_dog_button();
+    Init_emoji_button();
+    Init_apple_button();
+    Init_balloon_button();
+    Init_sprite_buttonUnderStage();
     Load_Character(renderer,&cat,&cat1);
     Load_Character(renderer,&cat,&cat2);
     Load_Character(renderer,&dog,&dog1);
@@ -447,6 +475,10 @@ bool Init_Game(){
     Load_Character(renderer,&balloon,&balloon1);
     Load_Character(renderer,&balloon,&balloon2);
     Load_Character(renderer,&balloon,&balloon3);
+    Load_Character(renderer,&emoji,&emoji1);
+    Load_Character(renderer,&emoji,&emoji2);
+    Load_Character(renderer,&emoji,&emoji3);
+    Load_Character(renderer,&emoji,&emoji4);
     LoadBackdropLibraryManual(renderer);
     SDL_StartTextInput();
     return true;
@@ -1128,6 +1160,21 @@ void Get_event() {
         Handle_event_for_sound_button(e,&Sounds_button);
         Handle_event_for_Character_button(e,&Character_button);
         Handle_event_for_Code_button(e,&code_button);
+        Handle_event_for_choose_now_sprite(e,&cat_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e,&dog_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e,&fish_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e,&balloon_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e,&bear_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e,&apple_buttonUnderstage);
+        if(currentTab == CHARACTER){
+            Handle_event_for_choose_sprite_in_Character_panel(e,&cat_button,&cat_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e,&dog_button,&dog_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e,&fish_button,&fish_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e,&balloon_button,&balloon_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e,&bear_button,&bear_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e,&apple_button,&apple_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e,&emoji_button,&emoji_buttonUnderstage);
+        }
         if(currentTab == SOUNDS) {
             Handle_event_for_run_button(e, &run_sound_button);
             Handle_event_for_volumeUp_button(e, &volumeUp_button);
@@ -1140,6 +1187,8 @@ void Get_event() {
             Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
             Handle_event_for_costume_number_button(e, &costume_number_button);
             Handle_event_for_size_button(e, &size_button);
+            Handle_event_for_drag_button(e,renderer,&drag_button,now_sprite);
+            Handle_event_for_go_to_front_layer_button(e,renderer,&go_to_front_layer_button,now_sprite);
         }
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
@@ -1281,6 +1330,13 @@ void Update() {
         }
         if(currentTab == CHARACTER){
             Draw_Character_panel(renderer);
+            Draw_sprite_button(renderer,&cat_button,cat.costumes[0]->texture,cat_text);
+            Draw_sprite_button(renderer,&dog_button,dog.costumes[0]->texture,dog_text);
+            Draw_sprite_button(renderer,&bear_button,bear.costumes[0]->texture,bear_text);
+            Draw_sprite_button(renderer,&fish_button,fish.costumes[0]->texture,fish_text);
+            Draw_sprite_button(renderer,&balloon_button,balloon.costumes[0]->texture,balloon_text);
+            Draw_sprite_button(renderer,&apple_button,red_apple.costumes[0]->texture,apple_text);
+            Draw_sprite_button(renderer,&emoji_button,emoji.costumes[0]->texture,emoji_text);
         }
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
@@ -1292,6 +1348,8 @@ void Update() {
             Draw_report_button(renderer, &size_button, size_button_text);
             Draw_report_button(renderer, &next_costume_button, next_costume_text);
             Draw_report_button(renderer, &costume_number_button, costume_number_text);
+            Draw_report_button(renderer, &drag_button, drag_text);
+            Draw_report_button(renderer, &go_to_front_layer_button, go_to_front_layer_text);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
@@ -1361,7 +1419,15 @@ void Update() {
         Draw_size(renderer, size, size_of_sprite_text);
         direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), {100, 100, 100});
         Draw_direction(renderer, direction, direction_of_sprite_text);
-        Draw_Character(renderer, now_sprite);
+        Draw_sprite_button_under_stage(renderer,&cat_buttonUnderstage,cat_text);
+        Draw_sprite_button_under_stage(renderer,&dog_buttonUnderstage,dog_text);
+        Draw_sprite_button_under_stage(renderer,&balloon_buttonUnderstage,balloon_text);
+        Draw_sprite_button_under_stage(renderer,&fish_buttonUnderstage,fish_text);
+        Draw_sprite_button_under_stage(renderer,&apple_buttonUnderstage,apple_text);
+        Draw_sprite_button_under_stage(renderer,&bear_buttonUnderstage,bear_text);
+        Draw_sprite_button_under_stage(renderer,&emoji_buttonUnderstage,emoji_text);
+        choose_now_sprite();
+        Draw_Character(renderer);
         if (is_timer) timer(renderer, report_font);
         if (is_size_on) Draw_size_report(renderer, report_font, now_sprite);
         if (is_costume_number_on) Draw_costume_report(renderer, report_font, now_sprite);
