@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "iomanip"
+#include <windows.h>
 #include "TextureManager.h"
 #include "iostream"
 #include "SDL2/SDL_ttf.h"
@@ -578,6 +579,7 @@ void CheckInputClick(int mx, int my) {
     }
 
 }
+
 bool IsValidChar(char c, InputType type) {
     if (type == INPUT_NUMBER) {
         return (c >= '0' && c <= '9') || c == '-';
@@ -1202,7 +1204,83 @@ void FlipVertical(Costume* costume) {
     costume->texture = target;
 }
 
+void AddNewCharacterFromFile(SDL_Renderer* renderer, const std::string& filePath) {
+    SDL_Surface* surface = IMG_Load(filePath.c_str());
+    if (!surface) return;
+    Character newChar;
+    newChar.name = "Sprite " + std::to_string(allCharacters.size() + 1);
+    Costume* newCostume = new Costume();
+    newCostume->name = "costume1";
+    newCostume->texture = SDL_CreateTextureFromSurface(renderer, surface);
+    int w, h;
+    SDL_QueryTexture(newCostume->texture, NULL, NULL, &w, &h);
+    newChar.width = w;
+    newChar.height = h;
+    newCostume->drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 600, 380);
+    SDL_SetTextureBlendMode(newCostume->drawingLayer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, newCostume->drawingLayer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer, NULL);
+    newChar.costumes.push_back(newCostume);
+    allCharacters.push_back(newChar);
+    now_sprite = &allCharacters.back();
+    SDL_FreeSurface(surface);
+}
 
+
+void ImportCharacterImage(SDL_Renderer* renderer) {
+    OPENFILENAMEA ofn;
+    char szFile[260] = { 0 };
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL; // یا GetActiveWindow()
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = "Images\0*.png;*.jpg;*.jpeg;*.bmp\0All\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+    if (GetOpenFileNameA(&ofn)) {
+        SDL_Surface* surface = IMG_Load(ofn.lpstrFile);
+        if (surface) {
+            Character newChar;
+            newChar.name = "Sprite " + to_string(allCharacters.size() + 1);
+            newChar.x = 640;
+            newChar.y = 360;
+            newChar.size = 0.5;
+            newChar.isvisible = true;
+
+            Costume* newCostume = new Costume();
+            newCostume->name = "costume1";
+            newCostume->texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+            int w, h;
+            SDL_QueryTexture(newCostume->texture, NULL, NULL, &w, &h);
+            newChar.width = w;
+            newChar.height = h;
+
+            newCostume->drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 600, 380);
+            SDL_SetTextureBlendMode(newCostume->drawingLayer, SDL_BLENDMODE_BLEND);
+
+            SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+            SDL_SetRenderTarget(renderer, newCostume->drawingLayer);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderTarget(renderer, oldTarget);
+
+            newChar.costumes.push_back(newCostume);
+            newChar.currentCostumeIndex = 0;
+
+            allCharacters.push_back(newChar);
+            now_sprite = &allCharacters.back();
+            SDL_FreeSurface(surface);
+        }
+    }
+}
 
 void Get_event() {
     SDL_Event e;
@@ -1217,8 +1295,8 @@ void Get_event() {
             HandleKeyboardInput(e);
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
                 int mW = 400, mH = 200;
-                int mX = (1200 - mW) / 2;
-                int mY = (800 - mH) / 2;
+                int mX = (Get_width() - mW) / 2;
+                int mY = (Get_height() - mH) / 2;
 
                 if (mx >= mX + 280 && mx <= mX + 380 && my >= mY + 140 && my <= mY + 180) {
                     SaveToLibrary(saveInputText, renderer);
@@ -1252,6 +1330,7 @@ void Get_event() {
             Handle_event_for_increaseFrequency_button(e, &increase_frequency_button);
             Handle_event_for_decreaseFrequency_button(e, &decrease_frequency_button);
         }
+
         if (currentTab == CODE) {
             Handle_event_for_timer_button(e, &Timer_button);
             Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
@@ -1264,12 +1343,17 @@ void Get_event() {
                 if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) isLibraryOpen = false;
                 else HandleLibraryClick(mx, my);
             } else {
+                double distUpload = sqrt(pow(mx - (Get_width() - 130), 2) + pow(my - (Get_height() - 100 - 42), 2));
+                if (distUpload <= 18) {
+                    ImportCharacterImage(renderer);
+                }
+
                 Handle_Tab_Switch(mx, my);
                 Handle_Backdrop_Selection(mx, my);
                 Handle_Backdrop_Menu_Clicks(mx, my);
 
-                double distPaint = sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2));
-                if (distPaint <= radius) currentTab = COSTUMES;
+                double distPaint = sqrt(pow(mx - (Get_width() - 130), 2) + pow(my - (Get_height() - 100), 2));
+                if (distPaint <= 18) currentTab = COSTUMES;
 
                 if (currentTab == COSTUMES || currentTab == BACKDROPS) {
                     if (my >= 95 && my <= 205) {
@@ -1326,6 +1410,7 @@ void Get_event() {
         HandleKeyboardInput(e);
     }
 }
+
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_Rect stageArea = stage;
 

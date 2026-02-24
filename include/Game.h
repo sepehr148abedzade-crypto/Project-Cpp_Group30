@@ -53,6 +53,8 @@ void Draw_Stage_Content(SDL_Renderer* renderer);
 void Update();
 void Render();
 void Clean();
+void ImportCharacterImage(SDL_Renderer* renderer);
+void AddNewCharacterFromFile(SDL_Renderer* renderer, const std::string& filePath);
 void SDL_wait_key();
 void Executing_Motion_Blocks(Blocks& block,Character& sprite );
 

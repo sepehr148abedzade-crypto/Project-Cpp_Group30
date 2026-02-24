@@ -113,6 +113,13 @@ struct Character{
     const char* path;
     std::vector<Costume*> costumes;
     int currentCostumeIndex = 0;
+
+    Costume* getCurrentCostume() {
+        if (!costumes.empty() && currentCostumeIndex >= 0 && currentCostumeIndex < costumes.size()) {
+            return costumes[currentCostumeIndex];
+        }
+        return nullptr;
+    }
 };
 
 extern Character cat;
