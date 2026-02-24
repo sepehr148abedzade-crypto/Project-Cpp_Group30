@@ -79,20 +79,6 @@ Uint32 clickStartTime = 0;
 bool isClickAndHold = false;
 const Uint32 CLICK_THRESHOLD = 200;
 
-int lastMouseX = -1;
-int lastMouseY = -1;
-int lineStartX = -1, lineStartY = -1;
-int textClickX = -1, textClickY = -1;
-int textX = 0, textY = 0;
-int circleStartX = -1, circleStartY = -1;
-
-bool isTypingText = false;
-bool isDrawingLine = false;
-bool isDrawingCircle = false;
-bool isSaveModalOpen = false;
-bool isTyping = false;
-bool stop = false;
-bool isDrawingRect = false;
 
 string saveInputText;
 string textToDraw;
@@ -942,6 +928,7 @@ void Handle_Backdrop_Menu_Clicks(int mx, int my) {
         }
     }
 }
+
 void HandleToolSelection(int mx, int my) {
     int toolX = 115, toolY = 220, btnS = 45;
     for (int i = 0; i < 9; i++) {
@@ -1034,22 +1021,51 @@ void HandleCanvasMouseUp(int mx, int my) {
 }
 
 void HandleContinuousDrawing(int mx, int my) {
-    if (currentTab != BACKDROPS || selectedBackdropIndex < 0 || isDrawingLine || isDrawingCircle || isTyping) return;
-
-    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
-    int lx = mx - 330, ly = my - 280;
-    if (lx < 0 || lx > 600 || ly < 0 || ly > 380) {
-        lastMouseX = lastMouseY = -1;
+    if (mx < 330 || mx > 930 || my < 280 || my > 660) {
+        lastMouseX = -1;
+        lastMouseY = -1;
         return;
     }
 
-    int fx, fy;
-    MapMouseToCanvas(mx, my, &fx, &fy, target);
-    bool isEraser = (globalEditor.activeTool == TOOL_ERASER);
-    if (globalEditor.activeTool == TOOL_PEN || isEraser) {
-        if (lastMouseX != -1) DrawLineOnTexture(target, lastMouseX, lastMouseY, fx, fy, renderer, isEraser);
-        else isEraser ? ApplyEraser(target, fx, fy, renderer) : ApplyPen(target, fx, fy, renderer);
-        lastMouseX = fx; lastMouseY = fy;
+    SDL_Texture* target = nullptr;
+    if (currentTab == COSTUMES && now_sprite && !now_sprite->costumes.empty()) {
+        target = now_sprite->costumes[now_sprite->currentCostumeIndex]->drawingLayer;
+    } else if (currentTab == BACKDROPS && !projectBackdrops.empty()) {
+        target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    }
+
+    if (!target) return;
+
+    int relX = mx - 330;
+    int relY = my - 280;
+
+    if (globalEditor.activeTool == TOOL_PEN || globalEditor.activeTool == TOOL_ERASER) {
+        SDL_SetRenderTarget(renderer, target);
+
+        if (globalEditor.activeTool == TOOL_ERASER) {
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        } else {
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+        }
+
+        if (lastMouseX != -1 && lastMouseY != -1) {
+            int prevRelX = lastMouseX - 330;
+            int prevRelY = lastMouseY - 280;
+
+            for (int i = -globalEditor.brushSize; i <= globalEditor.brushSize; i++) {
+                SDL_RenderDrawLine(renderer, prevRelX + i, prevRelY, relX + i, relY);
+                SDL_RenderDrawLine(renderer, prevRelX, prevRelY + i, relX, relY + i);
+            }
+        } else {
+            SDL_Rect r = { relX - globalEditor.brushSize, relY - globalEditor.brushSize, globalEditor.brushSize * 2, globalEditor.brushSize * 2 };
+            SDL_RenderFillRect(renderer, &r);
+        }
+
+        SDL_SetRenderTarget(renderer, NULL);
+        lastMouseX = mx;
+        lastMouseY = my;
     }
 }
 
@@ -1193,6 +1209,31 @@ void Get_event() {
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
 
+        int mx, my;
+        Uint32 mouseState = SDL_GetMouseState(&mx, &my);
+        bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
+
+        if (isSaveModalOpen) {
+            HandleKeyboardInput(e);
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+                int mW = 400, mH = 200;
+                int mX = (1200 - mW) / 2;
+                int mY = (800 - mH) / 2;
+
+                if (mx >= mX + 280 && mx <= mX + 380 && my >= mY + 140 && my <= mY + 180) {
+                    SaveToLibrary(saveInputText, renderer);
+                    isSaveModalOpen = false;
+                    saveInputText = "";
+                    SDL_StopTextInput();
+                } else if (mx >= mX + 170 && mx <= mX + 270 && my >= mY + 140 && my <= mY + 180) {
+                    isSaveModalOpen = false;
+                    saveInputText = "";
+                    SDL_StopTextInput();
+                }
+            }
+            continue;
+        }
+
         Handle_event_for_motion_sprite(e, now_sprite);
         Handle_event_for_code_button(e);
         Handle_event_for_flag_button(e, flag_button);
@@ -1218,61 +1259,73 @@ void Get_event() {
             Handle_event_for_size_button(e, &size_button);
         }
 
-        int mx, my;
-        Uint32 mouseState = SDL_GetMouseState(&mx, &my);
-        bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
-
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (isLibraryOpen) {
                 if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) isLibraryOpen = false;
                 else HandleLibraryClick(mx, my);
             } else {
-                double distPaint = sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2));
-                if (distPaint <= radius) currentTab = COSTUMES;
-
-                if (currentTab == COSTUMES && now_sprite != nullptr && !now_sprite->costumes.empty()) {
-                    Costume* curr = now_sprite->costumes[now_sprite->currentCostumeIndex];
-                    if (my >= 160 && my <= 190) {
-                        if (mx >= 350 && mx <= 450) FlipHorizontal(curr);
-                        else if (mx >= 460 && mx <= 560) FlipVertical(curr);
-                        else if (mx >= 570 && mx <= 620) {
-                            now_sprite->size += 0.05;
-                            if (now_sprite->size > 3.0) now_sprite->size = 3.0;
-                        }
-                        else if (mx >= 630 && mx <= 680) {
-                            now_sprite->size -= 0.05;
-                            if (now_sprite->size < 0.05) now_sprite->size = 0.05;
-                        }
-                    }
-                }
                 Handle_Tab_Switch(mx, my);
                 Handle_Backdrop_Selection(mx, my);
                 Handle_Backdrop_Menu_Clicks(mx, my);
-                HandleToolSelection(mx, my);
-                HandleColorSelection(mx, my);
-                HandleBrushSizeSelection(mx, my);
+
+                double distPaint = sqrt(pow(mx - btn_cx, 2) + pow(my - btn_cy, 2));
+                if (distPaint <= radius) currentTab = COSTUMES;
 
                 if (currentTab == COSTUMES || currentTab == BACKDROPS) {
-                    HandleCanvasMouseDown(mx, my);
+                    if (my >= 95 && my <= 205) {
+                        HandleColorSelection(mx, my);
+                        HandleBrushSizeSelection(mx, my);
+
+                        if (currentTab == COSTUMES && now_sprite != nullptr && !now_sprite->costumes.empty()) {
+                            Costume* curr = now_sprite->costumes[now_sprite->currentCostumeIndex];
+                            if (my >= 160 && my <= 190) {
+                                if (mx >= 350 && mx <= 450) FlipHorizontal(curr);
+                                else if (mx >= 460 && mx <= 560) FlipVertical(curr);
+                                else if (mx >= 570 && mx <= 620) {
+                                    now_sprite->size += 0.05;
+                                    if (now_sprite->size > 3.0) now_sprite->size = 3.0;
+                                }
+                                else if (mx >= 630 && mx <= 680) {
+                                    now_sprite->size -= 0.05;
+                                    if (now_sprite->size < 0.05) now_sprite->size = 0.05;
+                                }
+                            }
+                        }
+                    }
+                    else if (mx >= 115 && mx <= 225 && my >= 220) {
+                        HandleToolSelection(mx, my);
+                    }
+                    else if (mx >= 330 && mx <= 930 && my >= 280 && my <= 660) {
+                        HandleCanvasMouseDown(mx, my);
+                    }
                 }
             }
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
             if (currentTab == COSTUMES || currentTab == BACKDROPS) {
-                HandleCanvasMouseDown(mx, my);
+                HandleCanvasMouseUp(mx, my);
             }
         }
 
-        if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen && (currentTab == COSTUMES || currentTab == BACKDROPS)) {
-            HandleContinuousDrawing(mx, my);
+        if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
+            if (currentTab == COSTUMES || currentTab == BACKDROPS) {
+                if (mx >= 330 && mx <= 930 && my >= 280 && my <= 660) {
+                    HandleContinuousDrawing(mx, my);
+                } else {
+                    lastMouseX = -1;
+                    lastMouseY = -1;
+                }
+            }
         }
 
-        HandleBlockEvent(e);
+        if (currentTab == CODE && !isLibraryOpen && !isSaveModalOpen) {
+            HandleBlockEvent(e);
+        }
+
         HandleKeyboardInput(e);
     }
 }
-
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     SDL_Rect stageArea = stage;
 
@@ -1310,6 +1363,7 @@ void Draw_Stage_Content(SDL_Renderer* renderer) {
         }
     }
 }
+
 void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
     int mW = 400, mH = 200;
     int mX = (Get_width() - mW) / 2;
@@ -1379,7 +1433,6 @@ void Update() {
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
         Draw_Stage_Content(renderer);
-
         Draw_report_informationOfCharacter_box(renderer, name_of_sprite);
         Draw_report_informationOfCharacter_box(renderer, direction);
         Draw_report_informationOfCharacter_box(renderer, size);

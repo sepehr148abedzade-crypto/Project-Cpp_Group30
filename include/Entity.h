@@ -92,6 +92,7 @@ struct Costume{
     std::string name;
     SDL_Texture* texture;
     const char* path;
+    SDL_Texture* drawingLayer;
 };
 
 extern Costume cat1;

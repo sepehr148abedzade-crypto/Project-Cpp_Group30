@@ -1,5 +1,22 @@
 #include "Paint_Editor.h"
 
+int lastMouseX = -1;
+int lastMouseY = -1;
+int lineStartX = -1, lineStartY = -1;
+int textClickX = -1, textClickY = -1;
+int textX = 0, textY = 0;
+int circleStartX = -1, circleStartY = -1;
+
+bool isTypingText = false;
+bool isDrawingLine = false;
+bool isDrawingCircle = false;
+bool isSaveModalOpen = false;
+bool isTyping = false;
+bool stop = false;
+bool isDrawingRect = false;
+
+
+
 void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer) {
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
     SDL_SetRenderTarget(renderer, target);
@@ -123,9 +140,14 @@ void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radi
 }
 
 void ClearCurrentDrawingLayer(SDL_Renderer* renderer) {
-    if (selectedBackdropIndex < 0 || selectedBackdropIndex >= (int)projectBackdrops.size()) return;
+    SDL_Texture* target = nullptr;
 
-    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    if (currentTab == COSTUMES && now_sprite && !now_sprite->costumes.empty()) {
+        target = now_sprite->costumes[now_sprite->currentCostumeIndex]->drawingLayer;
+    } else if (currentTab == BACKDROPS && !projectBackdrops.empty()) {
+        target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    }
+
     if (!target) return;
 
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
@@ -136,6 +158,7 @@ void ClearCurrentDrawingLayer(SDL_Renderer* renderer) {
     SDL_RenderClear(renderer);
 
     SDL_SetRenderTarget(renderer, oldTarget);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 }
 
 void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName) {
@@ -236,4 +259,3 @@ void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* curr
         SDL_RenderDrawRect(renderer, &imgPos);
     }
 }
-

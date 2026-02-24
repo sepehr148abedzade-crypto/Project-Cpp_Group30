@@ -30,8 +30,7 @@ extern int backdropScrollY;
 
 void Update_Character_Menu_State();
 void Draw_Character_Floating_Buttons(SDL_Renderer* renderer);
-void ApplyPen(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
-void ApplyEraser(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
+
 void ApplyFill(SDL_Texture* target,SDL_Renderer* renderer);
 void ApplyTextToTexture(SDL_Texture* target, string text, int x, int y, SDL_Renderer* renderer, TTF_Font* font);
 SDL_Texture* GetCurrentLayer();
@@ -57,10 +56,10 @@ void Draw_flag_and_stop_button(SDL_Renderer* renderer,Button &button1,Button &bu
 void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]);
 void Draw_CodeBar(SDL_Renderer* renderer);
 void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_Renderer* renderer, bool isEraser);
-void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill);
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer);
-void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
+
+[[maybe_unused]] void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
