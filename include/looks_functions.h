@@ -3,6 +3,7 @@
 #include "SDL2/SDL.h"
 #include "string"
 struct Character;
+struct sprite_button;
 struct _TTF_Font;
 typedef struct _TTF_Font TTF_Font;
 extern bool is_costume_number_on;
@@ -16,4 +17,5 @@ void say_a(std::string message,Character* sprite);
 void think_a_for_t_second(std::string message, Character* sprite);
 void think_a(std::string message,Character* sprite);
 void switch_costume_to(SDL_Renderer* renderer,Character* sprite);
+void move_to_front(Character* sprite);
 #endif //LOOKS_FUNCTIONS_H

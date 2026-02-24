@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "TextureManager.h"
 #include "Graphic_Element.h"
+#include "algorithm"
 #include "Entity.h"
 
 bool is_costume_number_on = false;
@@ -53,4 +54,20 @@ void switch_costume_to(SDL_Renderer* renderer,Character* sprite){
     sprite->currentCostumeIndex++;
     if(sprite->currentCostumeIndex>=sprite->costumes.size())
         sprite->currentCostumeIndex = 0;
+}
+
+void move_to_front(Character* sprite) {
+    auto it = std::find_if(
+            active_character.begin(),
+            active_character.end(),
+            [sprite](sprite_button *btn) {
+                return btn->sprite == sprite;
+            }
+    );
+
+    if (it == active_character.end())
+        return;
+    sprite_button* temp = *it;
+    active_character.erase(it);
+    active_character.push_back(temp);
 }
