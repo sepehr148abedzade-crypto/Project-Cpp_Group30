@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "iomanip"
 #include "TextureManager.h"
 #include "iostream"
 #include "SDL2/SDL_ttf.h"
@@ -14,6 +15,8 @@
 #include <map>
 #include <cmath>
 #include "Paint_Editor.h"
+#include "SDL2/SDL_mixer.h"
+#include "Paint_Editor.h"
 #include <algorithm>
 using namespace std;
 
@@ -21,9 +24,38 @@ SDL_Window* main_window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* Scratch_logo = nullptr;
 SDL_Texture* File_Text = nullptr;
+SDL_Texture* Sound_text = nullptr;
+SDL_Texture* Backdrop_text = nullptr;
+SDL_Texture* Back_text = nullptr;
+SDL_Texture* code_text = nullptr;
 SDL_Texture* green_flag = nullptr;
 SDL_Texture* stop_sign = nullptr;
-SDL_Texture* cat_texture = nullptr;
+SDL_Texture* X_text = nullptr;
+SDL_Texture* Y_text = nullptr;
+SDL_Texture* size_text = nullptr;
+SDL_Texture* sprite_text = nullptr;
+SDL_Texture* direction_text = nullptr;
+SDL_Texture* positionX_text = nullptr;
+SDL_Texture* positionY_text = nullptr;
+SDL_Texture* size_of_sprite_text = nullptr;
+SDL_Texture* name_of_sprite_text = nullptr;
+SDL_Texture* direction_of_sprite_text = nullptr;;
+SDL_Texture* show_text = nullptr;
+SDL_Texture* S_text = nullptr;
+SDL_Texture* H_text = nullptr;
+SDL_Texture* Run_text = nullptr;
+SDL_Texture* volumeUp_text = nullptr;
+SDL_Texture* volumeDown_text = nullptr;
+SDL_Texture* increase_frequency_text = nullptr;
+SDL_Texture* decrease_frequency_text = nullptr;
+SDL_Texture* Timer_text = nullptr;
+SDL_Texture* size_button_text = nullptr;
+SDL_Texture* next_costume_text = nullptr;
+SDL_Texture* costume_number_text = nullptr;
+SDL_Texture* volume_text = nullptr;
+SDL_Texture* volume_value = nullptr;
+SDL_Texture* frequency_text = nullptr;
+SDL_Texture* frequency_value = nullptr;
 TTF_Font* loading_font = nullptr;
 TTF_Font* main_font = nullptr;
 TTF_Font* report_font = nullptr;
@@ -85,6 +117,535 @@ std::string GetUniqueBackdropName(std::string baseName) {
     return finalName;
 }
 
+HitResult CheckBlockHit(int mx, int my, int chainIdx, int blockIdx) {
+    HitResult result = {-1, -1, false, -1, false, -1};
+    Blocks& block = blockChains[chainIdx][blockIdx];
+
+    for (size_t i = 0; i < block.childBlocks.size(); i++) {
+        Blocks* child = block.childBlocks[i];
+        if (mx >= child->rect.x && mx <= child->rect.x + child->rect.w &&
+            my >= child->rect.y && my <= child->rect.y + child->rect.h) {
+
+            for (int c = 0; c < blockChains.size(); c++) {
+                for (int b = 0; b < blockChains[c].size(); b++) {
+                    if (&blockChains[c][b] == child) {
+                        result.chainIndex = c;
+                        result.blockIndex = b;
+                        result.isOnChildBlock = true;
+                        return result;
+                    }
+                }
+            }
+            }
+    }
+
+    int current_x = block.rect.x + 5;
+    current_x += Get_text_width(code_bar_font, blockMap[block.id].Back_label) + 5;
+
+    for (size_t i = 0; i < block.inputs.size(); i++) {
+        int input_width = 40;
+
+        SDL_Rect input_rect = {
+            current_x,
+            block.rect.y + 9,
+            input_width - 3,
+            20
+        };
+
+        if (mx >= input_rect.x && mx <= input_rect.x + input_rect.w &&
+            my >= input_rect.y && my <= input_rect.y + input_rect.h) {
+            result.chainIndex = chainIdx;
+            result.blockIndex = blockIdx;
+            result.isOnInput = true;
+            result.inputIndex = i;
+            return result;
+            }
+
+        current_x += input_width + 5;
+        if (i < blockMap[block.id].labels.size()) {
+            current_x += Get_text_width(code_bar_font, blockMap[block.id].labels[i]) + 5;
+        }
+    }
+
+    return result;
+}
+void UpdateParentWidth(int chainIndex, int blockIndex) {
+    if (chainIndex == -1 || blockIndex == -1) return;
+
+    Blocks& block = blockChains[chainIndex][blockIndex];
+    BlockTemplate& bt = blockMap[block.id];
+
+    int newWidth = calculatingWidthBlock(bt, block.inputs, code_bar_font, chainIndex, blockIndex);
+    block.rect.w = newWidth;
+
+    if (block.parentChainIndex != -1 && block.parentBlockIndex != -1) {
+        UpdateParentWidth(block.parentChainIndex, block.parentBlockIndex);
+    }
+}
+void PlaceBlockInInput(int targetChain, int targetBlock, int targetInput,
+                        int sourceChain, int sourceBlock) {
+    Blocks& target = blockChains[targetChain][targetBlock];
+    Blocks& source = blockChains[sourceChain][sourceBlock];
+
+    int oldParentChain = source.parentChainIndex;
+    int oldParentBlock = source.parentBlockIndex;
+    int oldParentInput = source.parentInputIndex;
+
+    if (oldParentChain != -1) {
+        Blocks& oldParent = blockChains[oldParentChain][oldParentBlock];
+
+        auto it = find(oldParent.childBlocks.begin(), oldParent.childBlocks.end(), &source);
+        if (it != oldParent.childBlocks.end()) {
+            oldParent.childBlocks.erase(it);
+        }
+
+        if (oldParentInput >= 0 && oldParentInput < oldParent.inputs.size()) {
+            oldParent.inputs[oldParentInput].type = InputValue::DIRECT_VALUE;
+            oldParent.inputs[oldParentInput].directValue = "";
+        }
+
+        UpdateParentWidth(oldParentChain, oldParentBlock);
+    }
+
+    source.parentChainIndex = targetChain;
+    source.parentBlockIndex = targetBlock;
+    source.parentInputIndex = targetInput;
+
+    target.childBlocks.push_back(&source);
+    target.inputs[targetInput].type = InputValue::BLOCK_REFERENCE;
+    target.inputs[targetInput].refChainIndex = sourceChain;
+    target.inputs[targetInput].refBlockIndex = sourceBlock;
+
+    source.needsEvaluation = true;
+    EvaluateBlock(source);
+
+    UpdateAllChildPositions(targetChain, targetBlock);
+    UpdateParentWidth(targetChain, targetBlock);
+}
+
+void UpdateAllChildPositions(int parentChain, int parentBlock) {
+    Blocks& parent = blockChains[parentChain][parentBlock];
+
+    int current_x = parent.rect.x + 5;
+    current_x += Get_text_width(code_bar_font, blockMap[parent.id].Back_label) + 5;
+
+    for (size_t i = 0; i < parent.inputs.size(); i++) {
+
+        if (parent.inputs[i].type == InputValue::BLOCK_REFERENCE) {
+            if (parent.inputs[i].refChainIndex >= 0) {
+                Blocks& childBlock = blockChains[parent.inputs[i].refChainIndex][parent.inputs[i].refBlockIndex];
+
+                childBlock.rect.x = current_x;
+                childBlock.rect.y = parent.rect.y + 3;
+
+                if (!childBlock.childBlocks.empty()) {
+                    UpdateAllChildPositions(parent.inputs[i].refChainIndex, parent.inputs[i].refBlockIndex);
+                }
+
+                current_x += childBlock.rect.w + 5;
+            }
+        } else {
+            int inputWidth = max(40, Get_text_width(code_bar_font, parent.inputs[i].directValue) + 10);
+            current_x += inputWidth + 5;
+        }
+
+        if (i < blockMap[parent.id].labels.size()) {
+            current_x += Get_text_width(code_bar_font, blockMap[parent.id].labels[i]) + 5;
+        }
+    }
+}
+void DrawBlockOutput(SDL_Renderer* renderer, TTF_Font* font, Blocks& block) {
+    if (!block.isDisplayingOutput || block.output.empty()) return;
+
+    string displayText = block.output;
+    if (displayText.length() > 10) {
+        displayText = displayText.substr(0, 8) + "...";
+    }
+    int textW, textH;
+    TTF_SizeText(font, displayText.c_str(), &textW, &textH);
+    int padding = 8;
+    int boxW = textW + padding * 2;
+    int boxH = textH + padding * 2;
+
+    SDL_Rect box = {
+        block.rect.x + (block.rect.w - boxW) / 2,
+        block.rect.y + block.rect.h + 5,
+        boxW,
+        boxH
+    };
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &box);
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(renderer, &box);
+
+    int triangleX = block.rect.x + block.rect.w / 2;
+    int triangleY = block.rect.y + block.rect.h;
+
+    SDL_Texture* textTex = LoadText(renderer, font, displayText, {0, 0, 0, 255});
+    if (textTex) {
+        SDL_Rect textRect = {
+            box.x + padding,
+            box.y + padding,
+            textW,
+            textH
+        };
+        SDL_RenderCopy(renderer, textTex, nullptr, &textRect);
+        SDL_DestroyTexture(textTex);
+    }
+}
+void Executing_Motion_Blocks(Blocks& block, Character* sprite) {
+    string ID = block.id;
+
+    if (ID == "move") {
+        if (block.inputs.size() > 0) {
+            double steps = GetInputAsNumber(block.inputs[0],blockChains);
+            move_steps_character(steps, sprite);
+        }
+    }
+    else if (ID == "turn_left") {
+        if (block.inputs.size() > 0) {
+            double angel = GetInputAsNumber(block.inputs[0],blockChains);
+            turn_clockwise_character(angel, sprite);
+        }
+    }
+    else if (ID == "turn_right") {
+        if (block.inputs.size() > 0) {
+            double angel = GetInputAsNumber(block.inputs[0],blockChains);
+            turn_clockwise_character(angel, sprite);
+        }
+    }
+    else if (ID == "change_x") {
+        if (block.inputs.size() > 0) {
+            double new_x = GetInputAsNumber(block.inputs[0],blockChains);
+            change_x_by(new_x, sprite);
+        }
+    }
+    else if (ID == "change_y") {
+        if (block.inputs.size() > 0) {
+            double new_y = GetInputAsNumber(block.inputs[0],blockChains);
+            change_y_by(new_y, sprite);
+        }
+    }
+    else if (ID == "go_to_x_y") {
+        if (block.inputs.size() > 1) {
+            double new_x = GetInputAsNumber(block.inputs[0],blockChains);
+            double new_y = GetInputAsNumber(block.inputs[1],blockChains);
+            go_to_x_y(new_x, new_y, sprite);
+        }
+    }
+    else if (ID == "set_x") {
+        if (block.inputs.size() > 0) {
+            double new_x = GetInputAsNumber(block.inputs[0],blockChains);
+            set_x_to(new_x, sprite);
+        }
+    }
+    else if (ID == "set_y") {
+        if (block.inputs.size() > 0) {
+            double new_y = GetInputAsNumber(block.inputs[0],blockChains);
+            set_y_to(new_y, sprite);
+        }
+    }
+}
+
+void ExecuteLooksBlock(Blocks& block, Character* sprite) {
+    string id = block.id;
+
+    if (id == "say") {
+        if (block.inputs.size() > 0) {
+            string msg = GetInputAsString(block.inputs[0],blockChains);
+            say_a(msg, sprite);
+            Draw_talking_box(renderer, report_font, sprite);
+        }
+    }
+    else if (id == "say_seconds") {
+        if (block.inputs.size() > 0) {
+            string msg = GetInputAsString(block.inputs[0],blockChains);
+            say_a_for_t_seconds(msg, sprite);
+        }
+    }
+    else if (id == "think") {
+        if (block.inputs.size() > 0) {
+            string msg = GetInputAsString(block.inputs[0],blockChains);
+            think_a_for_t_second(msg, sprite);
+        }
+    }
+    else if (id == "show") {
+        show_character(sprite);
+    }
+    else if (id == "hide") {
+        hide_character(sprite);
+    }
+    else if (id == "change_size") {
+        if (block.inputs.size() > 0) {
+            double size = GetInputAsNumber(block.inputs[0],blockChains);
+            change_size_by(renderer, size, sprite);
+        }
+    }
+    else if (id == "set_size") {
+        if (block.inputs.size() > 0) {
+            double size = GetInputAsNumber(block.inputs[0],blockChains);
+            set_size_to(renderer, size, sprite);
+        }
+    }
+    else if (id == "next_costume") {
+        switch_costume_to(renderer, sprite);
+    }
+}
+void ExecuteSoundBlock(Blocks& block, Character* sprite) {
+    string id = block.id;
+
+    if (id == "play_sound") {
+        if (block.inputs.size() > 0) {
+            string soundName = GetInputAsString(block.inputs[0], blockChains);
+            play_sound();
+        }
+    }
+    else if (id == "start_sound") {
+        if (block.inputs.size() > 0) {
+            string soundName = GetInputAsString(block.inputs[0], blockChains);
+            play_sound();
+        }
+    }
+    else if (id == "stop_all") {
+        Mix_HaltChannel(-1);
+    }
+    else if (id == "change_volume") {
+        if (block.inputs.size() > 0) {
+            double vol = GetInputAsNumber(block.inputs[0], blockChains);
+            change_volume_by((int)vol);
+        }
+    }
+    else if (id == "set_volume") {
+        if (block.inputs.size() > 0) {
+            double vol = GetInputAsNumber(block.inputs[0], blockChains);
+            set_volume_to((int)vol);
+        }
+    }
+}
+string EvaluateExpression(Blocks& block) {
+    string id = block.id;
+    string result = "";
+
+    if (id == "add") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+        result = to_string(a + b);
+    }
+    else if (id == "subtract") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+        result = to_string(a - b);
+    }
+    else if (id == "multiply") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+        result = to_string(a * b);
+    }
+    else if (id == "divide") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+        if (b != 0) result = to_string(a / b);
+        else result = "Infinity";
+    }
+    else if (id == "pick_random") {
+        int a = (int)GetInputAsNumber(block.inputs[0], blockChains);
+        int b = (int)GetInputAsNumber(block.inputs[1], blockChains);
+        int r = a + rand() % (b - a + 1);
+        result = to_string(r);
+    }
+    else if (id == "round") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        result = to_string((int)round(a));
+    }
+    else if (id == "mod") {
+        int a = (int)GetInputAsNumber(block.inputs[0], blockChains);
+        int b = (int)GetInputAsNumber(block.inputs[1], blockChains);
+        if (b != 0) result = to_string(a % b);
+        else result = "0";
+    }
+    else if (id == "join") {
+        string a = GetInputAsString(block.inputs[0], blockChains);
+        string b = GetInputAsString(block.inputs[1], blockChains);
+        result = a + b;
+    }
+    else if (id == "letter_of") {
+        int n = (int)GetInputAsNumber(block.inputs[0], blockChains) - 1;
+        string str = GetInputAsString(block.inputs[1], blockChains);
+        if (n >= 0 && n < str.length()) {
+            result = string(1, str[n]);
+        } else {
+            result = "";
+        }
+    }
+    else if (id == "length") {
+        string str = GetInputAsString(block.inputs[0], blockChains);
+        result = to_string(str.length());
+    }
+    else if (id == "function") {
+        string func = "abs";
+        if (block.inputs.size() > 0) {
+            vector<string> options = GetDropdownOptions(DROPDOWN_FUNCTION);
+            int idx = block.inputs[0].selectedOptionIndex;
+            if (idx >= 0 && idx < options.size()) {
+                func = options[idx];
+            }
+        }
+
+        double num = 0;
+        if (block.inputs.size() > 1) {
+            num = GetInputAsNumber(block.inputs[1], blockChains);
+        }
+
+        if (func == "abs") result = to_string(abs(num));
+        else if (func == "floor") result = to_string(floor(num));
+        else if (func == "ceil") result = to_string(ceil(num));
+        else if (func == "sqrt") {
+            if (num >= 0) result = to_string(sqrt(num));
+            else result = "NaN";
+        }
+        else if (func == "sin") result = to_string(sin(num * M_PI / 180.0));
+        else if (func == "cos") result = to_string(cos(num * M_PI / 180.0));
+        else if (func == "tan") {
+            double cosVal = cos(num * M_PI / 180.0);
+            if (abs(cosVal) > 0.0001)
+                result = to_string(tan(num * M_PI / 180.0));
+            else result = "Infinity";
+        }
+        else if (func == "log") {
+            if (num > 0) result = to_string(log10(num));
+            else result = "NaN";
+        }
+        else if (func == "ln") {
+            if (num > 0) result = to_string(log(num));
+            else result = "NaN";
+        }
+        else if (func == "e^") result = to_string(exp(num));
+        else if (func == "10^") result = to_string(pow(10, num));
+        else result = to_string(num);
+    }
+
+    if (result.find('.') != string::npos) {
+        result.erase(result.find_last_not_of('0') + 1, string::npos);
+        if (result.back() == '.') result.pop_back();
+    }
+
+    return result;
+}
+bool EvaluateBoolean(Blocks& block) {
+    string id = block.id;
+    bool result = false;
+
+    if (id == "greater_than") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+        result = (a > b);
+    }
+    else if (id == "less_than") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+        result = (a < b);
+    }
+    else if (id == "equal") {
+        double a = GetInputAsNumber(block.inputs[0], blockChains);
+        double b = GetInputAsNumber(block.inputs[1], blockChains);
+
+        result = (abs(a - b) < 0.0001);
+    }
+    else if (id == "and") {
+        bool a = (GetInputAsString(block.inputs[0], blockChains) == "true" ||
+                  GetInputAsNumber(block.inputs[0], blockChains) != 0);
+        bool b = (GetInputAsString(block.inputs[1], blockChains) == "true" ||
+                  GetInputAsNumber(block.inputs[1], blockChains) != 0);
+        result = (a && b);
+    }
+    else if (id == "or") {
+        bool a = (GetInputAsString(block.inputs[0], blockChains) == "true" ||
+                  GetInputAsNumber(block.inputs[0], blockChains) != 0);
+        bool b = (GetInputAsString(block.inputs[1], blockChains) == "true" ||
+                  GetInputAsNumber(block.inputs[1], blockChains) != 0);
+        result = (a || b);
+    }
+    else if (id == "not") {
+        bool a = (GetInputAsString(block.inputs[0], blockChains) == "true" ||
+                  GetInputAsNumber(block.inputs[0], blockChains) != 0);
+        result = !a;
+    }
+    else if (id == "contains") {
+        string str = GetInputAsString(block.inputs[1], blockChains);
+        string sub = GetInputAsString(block.inputs[0], blockChains);
+        result = (str.find(sub) != string::npos);
+    }
+    else if (id == "touching") {
+        result = false;
+    }
+
+    return result;
+}
+void EvaluateBlock(Blocks& block) {
+    Block_category cat = blockMap[block.id].category;
+
+    if (cat == CAT_OPERATORS) {
+        if (block.type == Expression_Block) {
+            block.output = EvaluateExpression(block);
+            block.hasOutput = true;
+            block.needsEvaluation = false;
+        }
+        else if (block.type == Bool_Block) {
+            block.outputBool = EvaluateBoolean(block);
+            block.output = block.outputBool ? "1" : "0";
+            block.hasOutput = true;
+            block.needsEvaluation = false;
+        }
+    }
+    else if (cat == CAT_SENSING) {
+        if (block.id == "touching") {
+            block.outputBool = false;
+            block.output = "0";
+            block.hasOutput = true;
+            block.needsEvaluation = false;
+        }
+    }
+}
+void ExecuteBlock(Blocks& block, Character* sprite) {
+    for (Blocks* child : block.childBlocks) {
+        if (child->needsEvaluation) {
+            EvaluateBlock(*child);
+        }
+    }
+    EvaluateBlock(block);
+    if (block.hasOutput) {
+        block.isDisplayingOutput = true;
+        block.outputDisplayTime = SDL_GetTicks();
+    }
+    Block_category cat = blockMap[block.id].category;
+
+    switch (cat) {
+        case CAT_MOTION:
+            Executing_Motion_Blocks(block, sprite);
+            break;
+        case CAT_LOOK:
+            ExecuteLooksBlock(block, sprite);
+            break;
+        case CAT_SOUND:
+            ExecuteSoundBlock(block, sprite);
+            break;
+        default:
+            break;
+    }
+}
+void UpdateOutputDisplay() {
+    Uint32 currentTime = SDL_GetTicks();
+
+    for (auto& chain : blockChains) {
+        for (auto& block : chain) {
+            if (block.isDisplayingOutput &&
+                currentTime - block.outputDisplayTime > 3000) {
+                block.isDisplayingOutput = false;
+                }
+        }
+    }
+}
 void UpdateExecution() {
     if (!isExecuting) return;
     if (executingChainIndex < 0 || executingChainIndex >= blockChains.size()) {
@@ -102,7 +663,7 @@ void UpdateExecution() {
             executingBlockIndex = -1;
         } else {
             Blocks& block = blockChains[executingChainIndex][executingBlockIndex];
-            Executing_Motion_Blocks(block, now_sprite);
+            ExecuteBlock(block,now_sprite);
             executionStartTime = currentTime;
         }
     }
@@ -197,7 +758,7 @@ void ExecuteChain(int chainIndex) {
     isExecuting = true;
     if (!blockChains[executingChainIndex].empty()) {
         Blocks& block = blockChains[executingChainIndex][0];
-        Executing_Motion_Blocks(block, now_sprite);
+        ExecuteBlock(block,now_sprite);
     }
 }
 
@@ -264,6 +825,7 @@ bool Loading(){
 }
 
 bool Init_Game(){
+    IMG_Init(IMG_INIT_PNG);
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
 
@@ -288,68 +850,105 @@ bool Init_Game(){
         std::cout << "Talking Font could not be found! Error: " << TTF_GetError() << std::endl;
         return false;
     }
+    thinking_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf",20);
+    if(thinking_font== nullptr){
+        std::cout << "Thinking Font could not be found! Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
     File_Text = LoadText(renderer,main_font,"File",white);
+    Sound_text = LoadText(renderer,main_font,"Sounds",{120,147,149});
+    Backdrop_text = LoadText(renderer,main_font,"Backdrop",{120,147,149});
+    Back_text = LoadText(renderer,main_font,"Back",{120,147,149});
+    code_text = LoadText(renderer,main_font,"Code",{120,147,149});
+    Timer_text = LoadText(renderer,main_font,"Timer",{100,100,100});
+    size_button_text = LoadText(renderer,main_font,"Size",{100,100,100});
+    volume_value = LoadText(renderer,main_font,to_string(volume),{100,100,100});
+    volume_text = LoadText(renderer,main_font,"Volume : ",{100,100,100});
+    frequency_value = LoadText(renderer,main_font,to_string(frequency),{100,100,100});
+    frequency_text = LoadText(renderer,main_font,"Frequency : ",{100,100,100});
+    next_costume_text = LoadText(renderer,main_font,"next costume",{100,100,100});
+    costume_number_text = LoadText(renderer,main_font,"costume number",{100,100,100});
     Scratch_logo = LoadTexture(renderer,"asset/images/logo/scratch.png");
     SetWindowIcon(main_window,"asset/images/logo/icon.png");
-
+    green_flag = LoadTexture(renderer,"asset/images/logo/flag.png");
+    stop_sign = LoadTexture(renderer,"asset/images/logo/stop.png");
+    X_text = LoadText(renderer,report_font,"X",{100,100,100});
+    Y_text = LoadText(renderer,report_font,"Y",{100,100,100});
+    size_text = LoadText(renderer,report_font,"Size",{100,100,100});
+    direction_text = LoadText(renderer,report_font,"Direction",{100,100,100});
+    show_text = LoadText(renderer,report_font,"Show",{100,100,100});
+    sprite_text = LoadText(renderer,report_font,"Sprite",{100,100,100});
+    positionX_text = LoadText(renderer,report_font,to_string(now_sprite->x),{100,100,100});
+    positionY_text = LoadText(renderer,report_font, to_string(now_sprite->y),{100,100,100});
+    size_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->size),{100,100,100});
+    direction_of_sprite_text = LoadText(renderer,report_font, to_string(now_sprite->degree),{100,100,100});
+    name_of_sprite_text = LoadText(renderer,report_font,now_sprite->name,{100,100,100});
+    S_text = LoadText(renderer,report_font,"S",{100,100,100});
+    H_text = LoadText(renderer,report_font,"H",{100,100,100});
+    Run_text = LoadText(renderer,main_font,"Run",white);
+    volumeUp_text = LoadText(renderer,main_font,"Volume Up",white);
+    volumeDown_text = LoadText(renderer,main_font,"Volume Down",white);
+    increase_frequency_text = LoadText(renderer,main_font,"Increase Frequency",white);
+    decrease_frequency_text = LoadText(renderer,main_font,"Decrease Frequency",white);
     code_bar_font = TTF_OpenFont("asset/fonts/Montserrat-Bold.ttf", 10);
     if(code_bar_font == nullptr){
         std::cout << "Code_bar Font could not be found! Error: " << TTF_GetError() << std::endl;
         return false;
     }
+    Init_structOfCharacter();
+    Init_costume();
     Init_code_button(renderer,code_bar_font);
     LoadAllAssets(renderer);
     Init_Menu_Blocks();
+    Init_flag_button();
+    Init_stop_button();
+    Init_sound_button();
+    Init_Back_button();
+    Init_Backdrop_button();
+    Init_code_button();
+    Init_sprite_box(*now_sprite);
+    Init_positionX_box(*now_sprite);
+    Init_positionY_box(*now_sprite);
+    Init_size_box(*now_sprite);
+    Init_direction_box(*now_sprite);
+    Init_show_button();
+    Init_hide_button();
+    Init_run_sound_button();
+    Init_volumeUp_button();
+    Init_volumeDown_button();
+    Init_increase_frequency_button();
+    Init_decrease_frequency_button();
+    Init_timer_button();
+    Init_size_button();
+    Init_next_costume_button();
+    Init_volume_button();
+    Init_frequency_button();
+    Init_costume_number_button();
+    Load_Character(renderer,&cat,&cat1);
+    Load_Character(renderer,&cat,&cat2);
     LoadBackdropLibraryManual(renderer);
     SDL_StartTextInput();
-    Load_Character(renderer,"cat",cat,"asset/images/sprite/cat.png");
-    Load_Character(renderer,"cat_running",cat_running,"asset/images/sprite/cat_running.png");
-    now_sprite = cat_running;
     return true;
 }
 
 void UpdateBlockWidth(Blocks& block , TTF_Font* font) {
     if (blockMap.count(block.id)) {
-        int new_width = calculatingWidthBlock(blockMap[block.id],block.values,font);
-        block.rect.w=new_width;
-    }
-}
-void Executing_Motion_Blocks(Blocks& block,Character& sprite ) {
-    string ID = block.id;
-        if (ID=="move") {
-            double steps=stod(block.values[0]);
-            move_steps_character(steps,sprite);
-        }
-        else if (ID=="tern_left") {
-            double angel = stod(block.values[0]);
-            turn_clockwise_character(angel,sprite);
-        }
-        else if (ID=="tern_right") {
-            double angel = stod(block.values[0]);
-            turn_clockwise_character(angel,sprite);
-        }
-        else if (ID=="change_x") {
-            double new_x = stod(block.values[0]);
-            change_x_by(new_x,sprite);
-        }
-        else if (ID=="change_y") {
-            double new_y = stod(block.values[0]);
-            change_y_by(new_y,sprite);
-        }
-        else if (ID=="go_to_x_y") {
-            double new_x = stod(block.values[0]);
-            double new_y = stod(block.values[1]);
-            go_to_x_y(new_x,new_y,sprite);
-        }
-        else if (ID=="set_x") {
-            double new_x = stod(block.values[0]);
-            set_x_to(new_x,sprite);
-        }
-        else if (ID=="set_y") {
-            double new_y = stod(block.values[0]);
-            set_y_to(new_y,sprite);
+        // پیدا کردن ایندکس بلاک
+        int chainIdx = -1, blockIdx = -1;
+        for (int c = 0; c < blockChains.size(); c++) {
+            for (int b = 0; b < blockChains[c].size(); b++) {
+                if (&blockChains[c][b] == &block) {
+                    chainIdx = c;
+                    blockIdx = b;
+                    break;
+                }
+            }
+            if (chainIdx != -1) break;
         }
 
+        int new_width = calculatingWidthBlock(blockMap[block.id], block.inputs, font, chainIdx, blockIdx);
+        block.rect.w = new_width;
+    }
 }
 
 void AddBackdropToProject(SDL_Texture *tex, string name, bool forceSwitch, bool b) {
@@ -457,47 +1056,6 @@ bool IsCircleClicked(int mx, int my, int cx, int cy, int r) {
     return ((mx - cx) * (mx - cx) + (my - cy) * (my - cy)) <= (r * r);
 }
 
-void CheckInputClick(int mx, int my) {
-    SDL_Point mPos = {mx, my};
-    bool foundFocus = false;
-
-    for (auto& chain : blockChains) {
-        for (auto& block : chain) {
-            block.is_editing = false;
-            block.active_value_index = -1;
-        }
-    }
-    for (int c = blockChains.size() - 1; c >= 0; c--) {
-        for (int b = blockChains[c].size() - 1; b >= 0; b--) {
-            Blocks& block = blockChains[c][b];
-
-            if (SDL_PointInRect(&mPos, &block.rect)) {
-                for (size_t j = 0; j < block.values.size(); j++) {
-                    int px = blockMap[block.id].inputs[j].posX;
-                    int centerY = block.rect.h / 2;
-                    SDL_Rect inputArea = {
-                        block.rect.x + px - 20,
-                        block.rect.y + centerY - 10,
-                        40, 20
-                    };
-
-                    if (SDL_PointInRect(&mPos, &inputArea)) {
-                        block.is_editing = true;
-                        block.active_value_index = (int)j;
-                        block.values[j] = "";
-                        SDL_StartTextInput();
-                        foundFocus = true;
-                        break;
-                    }
-                }
-                if (foundFocus) break;
-            }
-            if (foundFocus) break;
-        }
-        if (foundFocus) break;
-    }
-
-}
 
 bool IsValidChar(char c, InputType type) {
     if (type == INPUT_NUMBER) {
@@ -577,9 +1135,13 @@ void HandleKeyboardInput(SDL_Event& e) {
     for (auto& chain : blockChains) {
         for (auto& block : chain) {
             if (block.is_editing && block.active_value_index != -1 &&
-                block.active_value_index < (int)block.values.size()) {
+                block.active_value_index < (int)block.inputs.size()) {
 
-                string& str = block.values[block.active_value_index];
+                InputValue& input = block.inputs[block.active_value_index];
+
+                if (input.type != InputValue::DIRECT_VALUE) continue;
+
+                string& str = input.directValue;
                 InputType currentType = blockMap[block.id].inputs[block.active_value_index].type;
 
                 if (e.type == SDL_KEYDOWN) {
@@ -601,7 +1163,7 @@ void HandleKeyboardInput(SDL_Event& e) {
                     bool valid_char = false;
                     if (currentType == INPUT_NUMBER) {
                         valid_char = (e.text.text[0] >= '0' && e.text.text[0] <= '9') ||
-                                      e.text.text[0] == '-' || e.text.text[0] == '.';
+                                     e.text.text[0] == '-' || e.text.text[0] == '.';
                     } else if (currentType == INPUT_TEXT) {
                         valid_char = (e.text.text[0] >= 32 && e.text.text[0] <= 126);
                     } else {
@@ -635,13 +1197,16 @@ void HandleLibraryClick(int mx, int my) {
     }
 }
 
-void HandleBlockEvent(SDL_Event& e){
+void HandleBlockEvent(SDL_Event& e) {
     int mx, my;
     SDL_GetMouseState(&mx, &my);
     SDL_Point mPos = {mx, my};
 
     static int draggedChainIndex = -1;
+    static int draggedBlockIndex = -1;
     static int offsetX = 0, offsetY = 0;
+    static bool isDraggingToInput = false;
+
     if (e.type == SDL_MOUSEWHEEL) {
         if (mx > 60 && mx < 310) {
             sidebar_scroll_y += e.wheel.y * 25;
@@ -652,9 +1217,77 @@ void HandleBlockEvent(SDL_Event& e){
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
         clickStartTime = SDL_GetTicks();
-        isClickAndHold = false;
+    isClickAndHold = false;
+    isDraggingToInput = false;
+
+    bool dropdownClicked = false;
+
+    for (int c = 0; c < blockChains.size(); c++) {
+        for (int b = 0; b < blockChains[c].size(); b++) {
+            Blocks& block = blockChains[c][b];
+            for (size_t i = 0; i < block.inputs.size(); i++) {
+                if (block.inputs[i].isOpen) {
+                    int current_x = block.rect.x + 5;
+                    current_x += Get_text_width(code_bar_font, blockMap[block.id].Back_label) + 5;
+
+                    for (size_t k = 0; k < i; k++) {
+                        if (blockMap[block.id].inputs[k].type == INPUT_DROPDOWN) {
+                            current_x += 80 + 5;
+                        } else {
+                            string val = InputValueToString(block.inputs[k]);
+                            int w = max(40, Get_text_width(code_bar_font, val) + 10);
+                            current_x += w + 5;
+                        }
+                        if (k < blockMap[block.id].labels.size()) {
+                            current_x += Get_text_width(code_bar_font, blockMap[block.id].labels[k]) + 5;
+                        }
+                    }
+
+                    int dropdownX = current_x;
+                    int dropdownY = block.rect.y + 29;
+
+                    vector<string> options = GetDropdownOptions(blockMap[block.id].inputs[i].dropdownType);
+
+                    for (size_t optIdx = 0; optIdx < options.size(); optIdx++) {
+                        SDL_Rect optRect = {dropdownX, dropdownY + (int)optIdx * 20, 80, 20};
+
+                        if (mx >= optRect.x && mx <= optRect.x + optRect.w &&
+                            my >= optRect.y && my <= optRect.y + optRect.h) {
+
+
+                            block.inputs[i].selectedOptionIndex = optIdx;
+                            block.inputs[i].directValue = options[optIdx];
+                            block.inputs[i].isOpen = false;  // بستن dropdown
+
+                            UpdateBlockWidth(block, code_bar_font);
+
+                            dropdownClicked = true;
+                            break;
+                        }
+                    }
+
+                    if (dropdownClicked) break;
+                }
+                if (dropdownClicked) break;
+            }
+            if (dropdownClicked) break;
+        }
+        if (dropdownClicked) break;
+    }
+
+    if (!dropdownClicked) {
+        for (auto& chain : blockChains) {
+            for (auto& block : chain) {
+                for (auto& input : block.inputs) {
+                    input.isOpen = false;
+                }
+            }
+        }
+    }
+
         bool clickedOnInput = false;
         bool clickedOnMenu = false;
+
         CheckInputClick(mx, my);
         for (auto& chain : blockChains) {
             for (auto& block : chain) {
@@ -673,13 +1306,20 @@ void HandleBlockEvent(SDL_Event& e){
                 actual_pos.y += sidebar_scroll_y;
                 if (SDL_PointInRect(&mPos, &actual_pos)) {
                     Blocks new_block = mb;
-                    new_block.values.clear();
+                    new_block.inputs.clear();
+                    new_block.needsEvaluation = true;
+
                     if (blockMap.count(mb.id)) {
                         for (auto& Input : blockMap[mb.id].inputs) {
-                            new_block.values.push_back(Input.defaultValue);
+                            InputValue val;
+                            val.type = InputValue::DIRECT_VALUE;
+                            val.directValue = Input.defaultValue;
+                            val.selectedOptionIndex = 0;
+                            new_block.inputs.push_back(val);
                         }
                     }
-                    int correct_width = calculatingWidthBlock(blockMap[mb.id], new_block.values, code_bar_font);
+
+                    int correct_width = calculatingWidthBlock(blockMap[mb.id], new_block.inputs, code_bar_font, -1, -1);
                     new_block.rect.w = correct_width;
                     new_block.rect.h = blockMap[mb.id].height;
                     new_block.rect.x = mx - new_block.rect.w/2;
@@ -687,6 +1327,7 @@ void HandleBlockEvent(SDL_Event& e){
 
                     blockChains.push_back({new_block});
                     draggedChainIndex = blockChains.size() - 1;
+                    draggedBlockIndex = 0;
                     offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
                     offsetY = my - blockChains[draggedChainIndex][0].rect.y;
                     clickedOnMenu = true;
@@ -696,99 +1337,224 @@ void HandleBlockEvent(SDL_Event& e){
         }
 
         if (!clickedOnMenu) {
-            int chainIdx, blockIdx;
-            if (FindClickedBlock(mx, my, chainIdx, blockIdx)) {
-                if (blockIdx > 0) {
-                    SplitChain(chainIdx, blockIdx);
-                    FindClickedBlock(mx, my, chainIdx, blockIdx);
-                }
+            bool found = false;
 
-                draggedChainIndex = chainIdx;
-                offsetX = mx - blockChains[draggedChainIndex][0].rect.x;
-                offsetY = my - blockChains[draggedChainIndex][0].rect.y;
-               // isClickAndHold = true;
+            for (int c = blockChains.size() - 1; c >= 0; c--) {
+                for (int b = blockChains[c].size() - 1; b >= 0; b--) {
+                    HitResult hit = CheckBlockHit(mx, my, c, b);
+
+                    if (hit.isOnChildBlock) {
+                        draggedChainIndex = hit.chainIndex;
+                        draggedBlockIndex = hit.blockIndex;
+                        offsetX = mx - blockChains[draggedChainIndex][draggedBlockIndex].rect.x;
+                        offsetY = my - blockChains[draggedChainIndex][draggedBlockIndex].rect.y;
+
+                        Blocks& child = blockChains[draggedChainIndex][draggedBlockIndex];
+                        if (child.parentChainIndex != -1) {
+                            Blocks& parent = blockChains[child.parentChainIndex][child.parentBlockIndex];
+
+                            for (auto it = parent.childBlocks.begin(); it != parent.childBlocks.end(); ++it) {
+                                if (*it == &child) {
+                                    parent.childBlocks.erase(it);
+                                    break;
+                                }
+                            }
+
+                            if (child.parentInputIndex >= 0 && child.parentInputIndex < parent.inputs.size()) {
+                                parent.inputs[child.parentInputIndex].type = InputValue::DIRECT_VALUE;
+                                parent.inputs[child.parentInputIndex].directValue = "";
+                            }
+
+                            child.needsEvaluation = true;
+
+                            child.parentChainIndex = -1;
+                            child.parentBlockIndex = -1;
+                            child.parentInputIndex = -1;
+                        }
+
+                        if (draggedBlockIndex > 0) {
+                            SplitChain(draggedChainIndex, draggedBlockIndex);
+                            for (int nc = 0; nc < blockChains.size(); nc++) {
+                                for (int nb = 0; nb < blockChains[nc].size(); nb++) {
+                                    if (&blockChains[nc][nb] == &child) {
+                                        draggedChainIndex = nc;
+                                        draggedBlockIndex = nb;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+
+            if (!found) {
+                int chainIdx, blockIdx;
+                if (FindClickedBlock(mx, my, chainIdx, blockIdx)) {
+                    if (blockIdx > 0) {
+                        SplitChain(chainIdx, blockIdx);
+                        FindClickedBlock(mx, my, chainIdx, blockIdx);
+                    }
+
+                    draggedChainIndex = chainIdx;
+                    draggedBlockIndex = blockIdx;
+                    offsetX = mx - blockChains[draggedChainIndex][draggedBlockIndex].rect.x;
+                    offsetY = my - blockChains[draggedChainIndex][draggedBlockIndex].rect.y;
+                }
             }
         }
     }
 
     if (e.type == SDL_MOUSEMOTION && draggedChainIndex != -1) {
         if (SDL_GetTicks() - clickStartTime > CLICK_THRESHOLD ||
-           abs(mx - offsetX - blockChains[draggedChainIndex][0].rect.x) > 5) {
-            int deltaX = mx - offsetX - blockChains[draggedChainIndex][0].rect.x;
-            int deltaY = my - offsetY - blockChains[draggedChainIndex][0].rect.y;
+            abs(mx - offsetX - blockChains[draggedChainIndex][draggedBlockIndex].rect.x) > 5) {
 
-            for (auto& block : blockChains[draggedChainIndex]) {
-                block.rect.x += deltaX;
-                block.rect.y += deltaY;
+            isDraggingToInput = true;
+
+            int deltaX = mx - offsetX - blockChains[draggedChainIndex][draggedBlockIndex].rect.x;
+            int deltaY = my - offsetY - blockChains[draggedChainIndex][draggedBlockIndex].rect.y;
+
+            Blocks& currentBlock = blockChains[draggedChainIndex][draggedBlockIndex];
+
+            if (currentBlock.parentChainIndex == -1) {
+                for (auto& block : blockChains[draggedChainIndex]) {
+                    block.rect.x += deltaX;
+                    block.rect.y += deltaY;
+                }
+
+                for (auto& block : blockChains[draggedChainIndex]) {
+                    if (!block.childBlocks.empty()) {
+                        UpdateAllChildPositions(draggedChainIndex, &block - &blockChains[draggedChainIndex][0]);
+                    }
+                }
+            } else {
+                currentBlock.rect.x += deltaX;
+                currentBlock.rect.y += deltaY;
+
+                if (!currentBlock.childBlocks.empty()) {
+                    UpdateAllChildPositions(draggedChainIndex, draggedBlockIndex);
+                }
+
+                if (currentBlock.parentChainIndex != -1) {
+                    UpdateAllChildPositions(currentBlock.parentChainIndex, currentBlock.parentBlockIndex);
+                }
             }
-           }
+        }
     }
 
     if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-        if (draggedChainIndex != -1 && SDL_GetTicks() - clickStartTime < CLICK_THRESHOLD && !isClickAndHold) {
+        if (draggedChainIndex != -1 && SDL_GetTicks() - clickStartTime < CLICK_THRESHOLD && !isDraggingToInput) {
             ExecuteChain(draggedChainIndex);
         }
-        else if (draggedChainIndex != -1) {
-            int safeZoneX_Start = 310;
-            int safeZoneY_Start = 95;
+        else if (draggedChainIndex != -1 && isDraggingToInput) {
+            bool placedInInput = false;
 
-            bool shouldDelete = false;
-            for (auto& block : blockChains[draggedChainIndex]) {
-                if (block.rect.x < safeZoneX_Start || block.rect.y < safeZoneY_Start || block.rect.x > 900) {
-                    shouldDelete = true;
-                    break;
-                }
-            }
+            for (int c = 0; c < blockChains.size(); c++) {
+                for (int b = 0; b < blockChains[c].size(); b++) {
+                    if (c == draggedChainIndex && b == draggedBlockIndex) continue;
 
-            if (shouldDelete) {
-                blockChains.erase(blockChains.begin() + draggedChainIndex);
-            }
-            else {
-                bool snapped = false;
+                    Blocks& targetBlock = blockChains[c][b];
 
-                for (int i = 0; i < blockChains.size(); i++) {
-                    if (i == draggedChainIndex) continue;
-                    if (blockChains[i].empty()) continue;
+                    int current_x = targetBlock.rect.x + 5;
+                    current_x += Get_text_width(code_bar_font, blockMap[targetBlock.id].Back_label) + 5;
 
-                    Blocks& firstBlock = blockChains[i].front();
-                    Blocks& lastBlock = blockChains[i].back();
-                    Blocks& draggedFirst = blockChains[draggedChainIndex].front();
-                    Blocks& draggedLast = blockChains[draggedChainIndex].back();
+                    for (size_t i = 0; i < targetBlock.inputs.size(); i++) {
+                        int input_width = 40;
 
-                    if (IsNearForSnap(lastBlock, draggedFirst)) {
-                        int deltaY = (lastBlock.rect.y + lastBlock.rect.h - 5) - draggedFirst.rect.y;
-                        for (auto& block : blockChains[draggedChainIndex]) {
-                            block.rect.y += deltaY;
-                            block.rect.x = lastBlock.rect.x;
+                        SDL_Rect input_rect = {
+                            current_x,
+                            targetBlock.rect.y + 9,
+                            input_width - 3,
+                            20
+                        };
+
+                        if (mx >= input_rect.x && mx <= input_rect.x + input_rect.w &&
+                            my >= input_rect.y && my <= input_rect.y + input_rect.h) {
+
+                            Blocks& sourceBlock = blockChains[draggedChainIndex][draggedBlockIndex];
+                            Block_category sourceCat = blockMap[sourceBlock.id].category;
+
+                            if (sourceCat == CAT_OPERATORS || sourceCat == CAT_SENSING) {
+                                PlaceBlockInInput(c, b, i, draggedChainIndex, draggedBlockIndex);
+                                placedInInput = true;
+                            }
+                            break;
                         }
 
-                        MergeChains(i, draggedChainIndex, false);
-                        snapped = true;
-                        break;
-                    }
-
-                    if (IsNearForSnap(draggedLast, firstBlock)) {
-                        int deltaY = (firstBlock.rect.y - draggedLast.rect.h + 5) - draggedFirst.rect.y;
-                        for (auto& block : blockChains[draggedChainIndex]) {
-                            block.rect.y += deltaY;
-                            block.rect.x = firstBlock.rect.x;
+                        current_x += input_width + 5;
+                        if (i < blockMap[targetBlock.id].labels.size()) {
+                            current_x += Get_text_width(code_bar_font, blockMap[targetBlock.id].labels[i]) + 5;
                         }
+                    }
+                    if (placedInInput) break;
+                }
+                if (placedInInput) break;
+            }
 
-                        MergeChains(i, draggedChainIndex, true);
-                        snapped = true;
+            if (!placedInInput) {
+                int safeZoneX_Start = 310;
+                int safeZoneY_Start = 95;
+
+                bool shouldDelete = false;
+                for (auto& block : blockChains[draggedChainIndex]) {
+                    if (block.rect.x < safeZoneX_Start || block.rect.y < safeZoneY_Start || block.rect.x > 900) {
+                        shouldDelete = true;
                         break;
                     }
                 }
 
+                if (shouldDelete) {
+                    blockChains.erase(blockChains.begin() + draggedChainIndex);
+                } else {
+                    bool snapped = false;
+
+                    for (int i = 0; i < blockChains.size(); i++) {
+                        if (i == draggedChainIndex) continue;
+                        if (blockChains[i].empty()) continue;
+
+                        Blocks& firstBlock = blockChains[i].front();
+                        Blocks& lastBlock = blockChains[i].back();
+                        Blocks& draggedFirst = blockChains[draggedChainIndex].front();
+                        Blocks& draggedLast = blockChains[draggedChainIndex].back();
+
+                        if (IsNearForSnap(lastBlock, draggedFirst)) {
+                            int deltaY = (lastBlock.rect.y + lastBlock.rect.h - 5) - draggedFirst.rect.y;
+                            for (auto& block : blockChains[draggedChainIndex]) {
+                                block.rect.y += deltaY;
+                                block.rect.x = lastBlock.rect.x;
+                            }
+
+                            MergeChains(i, draggedChainIndex, false);
+                            snapped = true;
+                            break;
+                        }
+
+                        if (IsNearForSnap(draggedLast, firstBlock)) {
+                            int deltaY = (firstBlock.rect.y - draggedLast.rect.h + 5) - draggedFirst.rect.y;
+                            for (auto& block : blockChains[draggedChainIndex]) {
+                                block.rect.y += deltaY;
+                                block.rect.x = firstBlock.rect.x;
+                            }
+
+                            MergeChains(i, draggedChainIndex, true);
+                            snapped = true;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
         draggedChainIndex = -1;
+        draggedBlockIndex = -1;
         isClickAndHold = false;
+        isDraggingToInput = false;
     }
 }
-
-
 
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
     if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
@@ -851,14 +1617,6 @@ void Handle_Backdrop_Menu_Clicks(int mx, int my) {
         }
     }
 }
-
-void MapMouseToCanvas(int mx, int my, int* outX, int* outY, SDL_Texture* target) {
-    int tw, th;
-    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
-    *outX = (mx - 330) * tw / 600;
-    *outY = (my - 280) * th / 380;
-}
-
 void HandleToolSelection(int mx, int my) {
     int toolX = 115, toolY = 220, btnS = 45;
     for (int i = 0; i < 9; i++) {
@@ -888,7 +1646,6 @@ void HandleToolSelection(int mx, int my) {
         }
     }
 }
-
 void HandleCanvasMouseDown(int mx, int my) {
     if (currentTab != BACKDROPS || selectedBackdropIndex < 0) return;
     if (mx < 330 || mx > 930 || my < 280 || my > 660) return;
@@ -925,7 +1682,12 @@ void HandleColorSelection(int mx, int my) {
         }
     }
 }
-
+void MapMouseToCanvas(int mx, int my, int* outX, int* outY, SDL_Texture* target) {
+    int tw, th;
+    SDL_QueryTexture(target, NULL, NULL, &tw, &th);
+    *outX = (mx - 330) * tw / 600;
+    *outY = (my - 280) * th / 380;
+}
 void HandleCanvasMouseUp(int mx, int my) {
     if (selectedBackdropIndex < 0) return;
     SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
@@ -1021,6 +1783,25 @@ void Get_event() {
         Handle_event_for_motion_sprite(e,now_sprite);
         Handle_event_for_flag_button(e,flag_button);
         Handle_event_for_stop_button(e,stop_button);
+        Handle_event_for_show_button(e,show_button,now_sprite);
+        Handle_event_for_hide_button(e,hide_button,now_sprite);
+        Handle_event_for_Back_button(e,&Back_button);
+        Handle_event_for_Backdrop_button(e,&Backdrop_button);
+        Handle_event_for_sound_button(e,&Sounds_button);
+        Handle_event_for_Code_button(e,&code_button);
+        if(currentTab == SOUNDS) {
+            Handle_event_for_run_button(e, &run_sound_button);
+            Handle_event_for_volumeUp_button(e, &volumeUp_button);
+            Handle_event_for_volumeDown_button(e, &volumeDown_button);
+            Handle_event_for_increaseFrequency_button(e, &increase_frequency_button);
+            Handle_event_for_decreaseFrequency_button(e, &decrease_frequency_button);
+        }
+        if(currentTab == CODE) {
+            Handle_event_for_timer_button(e, &Timer_button);
+            Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
+            Handle_event_for_costume_number_button(e, &costume_number_button);
+            Handle_event_for_size_button(e, &size_button);
+        }
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
@@ -1041,7 +1822,7 @@ void Get_event() {
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseUp(mx,my);
+            HandleCanvasMouseDown(mx,my);
         }
 
         if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
@@ -1051,7 +1832,6 @@ void Get_event() {
         HandleKeyboardInput(e);
     }
 }
-
 void Draw_Stage_Content(SDL_Renderer* renderer) {
     int sw = Get_width();
     int stageW = 486;
@@ -1139,25 +1919,39 @@ void DrawSaveModal(SDL_Renderer* renderer, TTF_Font* font) {
 void Update() {
     UpdateMenuState();
     UpdateExecution();
+    UpdateOutputDisplay();
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
-
+    Draw_flag_and_stop_button(renderer, flag_button, stop_button, green_flag, stop_sign);
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
         Draw_BlueBar_Top(renderer, Get_width(), Scratch_logo);
         Draw_Top_Button(renderer, Top_button, File_Text);
-        Draw_flag_and_stop_button(renderer,flag_button,stop_button,green_flag,stop_sign);
-
+        if (currentTab == SOUNDS) {
+            Draw_sound_panel(renderer);
+            Draw_sounds_functions_button(renderer, run_sound_button, Run_text);
+            Draw_sounds_functions_button(renderer, volumeUp_button, volumeUp_text);
+            Draw_sounds_functions_button(renderer, volumeDown_button, volumeDown_text);
+            Draw_sounds_functions_button(renderer, increase_frequency_button, increase_frequency_text);
+            Draw_sounds_functions_button(renderer, decrease_frequency_button, decrease_frequency_text);
+            Draw_report_button(renderer,&volume_button,volume_value);
+            Draw_volume_text(renderer,volume_text);
+            Draw_report_button(renderer,&frequency_button,frequency_value);
+            Draw_frequency_text(renderer,frequency_text);
+        }
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
             Draw_CodeBar_Item(renderer, categories);
             Draw_Menu_Blocks(renderer, code_bar_font);
             DrawALLBlocks(renderer, code_bar_font);
-        }
-        else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
+            Draw_report_button(renderer, &Timer_button, Timer_text);
+            Draw_report_button(renderer, &size_button, size_button_text);
+            Draw_report_button(renderer, &next_costume_button, next_costume_text);
+            Draw_report_button(renderer, &costume_number_button, costume_number_text);
+        } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
             SDL_Texture* baseTex = nullptr;
@@ -1169,37 +1963,69 @@ void Update() {
 
             Draw_Image_Editor(renderer, main_font, baseTex, bName);
 
-            if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
+            if (selectedBackdropIndex >= 0 && selectedBackdropIndex < (int) projectBackdrops.size()) {
                 if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
                     int curX, curY;
                     SDL_GetMouseState(&curX, &curY);
-                    int radius = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+                    int radius = (int) sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
+                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g,
+                                           globalEditor.currentColor.b, 255);
                     for (int a = 0; a < 360; a++) {
                         float r1 = a * M_PI / 180.0f;
                         float r2 = (a + 1) * M_PI / 180.0f;
-                        SDL_RenderDrawLine(renderer, circleStartX + (int)(radius * cos(r1)), circleStartY + (int)(radius * sin(r1)), circleStartX + (int)(radius * cos(r2)), circleStartY + (int)(radius * sin(r2)));
+                        SDL_RenderDrawLine(renderer, circleStartX + (int) (radius * cos(r1)),
+                                           circleStartY + (int) (radius * sin(r1)),
+                                           circleStartX + (int) (radius * cos(r2)),
+                                           circleStartY + (int) (radius * sin(r2)));
                     }
-                }
-                else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) {
-                    int curX, curY; SDL_GetMouseState(&curX, &curY);
-                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+                } else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) {
+                    int curX, curY;
+                    SDL_GetMouseState(&curX, &curY);
+                    SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g,
+                                           globalEditor.currentColor.b, 255);
                     SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
                 }
             }
         }
-
         Draw_Information_of_Character(renderer);
+        Draw_Code_button(renderer, code_button, code_text);
+        Draw_sound_button(renderer, Sounds_button, Sound_text);
+        Draw_Backdrop_button(renderer, Backdrop_button, Backdrop_text);
+        Draw_Back_button(renderer, Back_button, Back_text);
         Draw_Character_Show_Bar(renderer);
         Draw_Stage_Bar(renderer, main_font);
-
-        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
-
         Draw_Stage_Content(renderer);
+        Draw_report_informationOfCharacter_box(renderer, name_of_sprite);
+        Draw_report_informationOfCharacter_box(renderer, direction);
+        Draw_report_informationOfCharacter_box(renderer, size);
+        Draw_report_informationOfCharacter_box(renderer, positionX);
+        Draw_report_informationOfCharacter_box(renderer, positionY);
+        Draw_X_text(renderer, X_text);
+        Draw_Y_text(renderer, Y_text);
+        Draw_size_text(renderer, size_text);
+        Draw_direction_text(renderer, direction_text);
+        Draw_sprite_text(renderer, sprite_text);
+        Draw_show_text(renderer, show_text);
+        //volume_value = LoadText(renderer,main_font,to_string(volume),{100,100,100});
+        //frequency_value = LoadText(renderer,main_font,to_string(frequency),{100,100,100});
+        Draw_show_and_hide_button(renderer, show_button, hide_button, S_text, H_text, now_sprite);
+       // name_of_sprite_text = LoadText(renderer, report_font, now_sprite->name, {100, 100, 100});
+        Draw_name_of_character(renderer, name_of_sprite, name_of_sprite_text);
+       // positionX_text = LoadText(renderer, report_font, to_string((int)now_sprite->x), {100, 100, 100});
+        Draw_positionX(renderer, positionX, positionX_text);
+       // positionY_text = LoadText(renderer, report_font, to_string(-(int)now_sprite->y), {100, 100, 100});
+        Draw_positionX(renderer, positionY, positionY_text);
+        //size_of_sprite_text = LoadText(renderer, report_font, to_string((int)(now_sprite->size *500)), {100, 100, 100});
+        Draw_size(renderer, size, size_of_sprite_text);
+        //direction_of_sprite_text = LoadText(renderer, report_font, to_string((int)now_sprite->degree), {100, 100, 100});
+        Draw_direction(renderer, direction, direction_of_sprite_text);
         Draw_Character(renderer, now_sprite);
-        if (isSaveModalOpen) {
-            DrawSaveModal(renderer, main_font);
-        }
+        if (is_timer) timer(renderer, report_font);
+        if (is_size_on) Draw_size_report(renderer, report_font, now_sprite);
+        if (is_costume_number_on) Draw_costume_report(renderer, report_font, now_sprite);
+    }
+    if (isSaveModalOpen) {
+        DrawSaveModal(renderer, main_font);
     }
     SDL_RenderPresent(renderer);
 }
@@ -1210,6 +2036,7 @@ void Render(){
 void Clean(){
         TTF_CloseFont(main_font);
         TTF_Quit();
+        Mix_CloseAudio();
         SDL_DestroyWindow(main_window);
         SDL_DestroyRenderer(renderer);
         SDL_Quit();

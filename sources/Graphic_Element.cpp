@@ -1,12 +1,15 @@
 #include "Graphic_Element.h"
 #include "Entity.h"
+#include "iostream"
 #include "constants.h"
 #include <SDL2/SDL2_gfx.h>
 #include "sensing_functions.h"
+#include "looks_functions.h"
+#include "event_system.h"
 #include <vector>
 #include <ctime>
 #include <cstdlib>
-bool flag_active = false;
+
 EditorSettings globalEditor;
 Blocks* draggedBlock = nullptr;
 
@@ -18,7 +21,7 @@ int offsetX = 0, offsetY = 0;
 int sidebar_scroll_y = 0;
 int selectedBackdropIndex = 0;
 int backdropScrollY = 0;
-
+extern TTF_Font* code_bar_font;
 extern int draggedChainIndex;
 
 std::vector<BackdropItem> libraryItems;
@@ -43,15 +46,265 @@ SDL_Color Hex_To_rgb(uint32_t hexcolor){
     color.a = SDL_ALPHA_OPAQUE;
     return color;
 }
+vector<string> GetDropdownOptions(DropdownType type) {
+    vector<string> options;
 
-int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font ) {
-    int totalWidth =20;
-    totalWidth += Get_text_width(font,BT.Back_label);
-    for (size_t i = 0 ; i <BT.inputs.size();++i) {
-            totalWidth+=5;
-            string v = i<value.size() ? value[i]:BT.inputs[i].defaultValue;
-        int textWidth = Get_text_width(font, v);
-        int inputWidth = max(40, textWidth + 10);
+    switch (type) {
+        case DROPDOWN_COSTUME:
+            options = {"costume1", "costume2", "costume3"};
+            if (now_sprite) {
+                options.clear();
+                for (auto& costume : now_sprite->costumes) {
+                    options.push_back(costume->name);
+                }
+            }
+            break;
+
+        case DROPDOWN_SOUND:
+            options = {"Meow", "Pop", "Drum", "Cymbal"};
+            break;
+
+        case DROPDOWN_EFFECT:
+            options = {"color", "fisheye", "whirl", "pixelate", "mosaic", "brightness", "ghost"};
+            break;
+
+        case DROPDOWN_TOUCHING:
+            options = {"mouse-pointer", "edge", "Sprite1", "Sprite2"};
+            break;
+
+        case DROPDOWN_FUNCTION:
+            options = {
+            "abs", "floor", "ceil", "sqrt",
+            "sin", "cos", "tan", "log",
+            "ln", "e^", "10^"
+        };
+            break;
+
+        default:
+            options = {"Option1", "Option2"};
+    }
+
+    return options;
+}
+void DrawDropdown(SDL_Renderer* renderer, TTF_Font* font, int x, int y, int width,
+                  InputValue& value, DropdownType type, bool isOpen, int blockChain, int blockIdx, int inputIdx) {
+
+    roundedBoxRGBA(renderer, x, y, x + width, y + 20, 5, 255, 255, 255, 255);
+
+    vector<string> options = GetDropdownOptions(type);
+    string displayText;
+    if (value.selectedOptionIndex >= 0 && value.selectedOptionIndex < options.size()) {
+        displayText = options[value.selectedOptionIndex];
+    } else {
+        displayText = "select";
+        value.selectedOptionIndex = 0;
+        value.directValue = options[0];
+    }
+
+    SDL_Texture* textTex = LoadText(renderer, font, displayText, {0, 0, 0, 255});
+    if (textTex) {
+        int tw, th;
+        SDL_QueryTexture(textTex, NULL, NULL, &tw, &th);
+        SDL_Rect textRect = { x + 5, y + (20 - th)/2, tw, th };
+        SDL_RenderCopy(renderer, textTex, NULL, &textRect);
+        SDL_DestroyTexture(textTex);
+    }
+
+    int arrowX = x + width - 15;
+    int arrowY = y + 7;
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    for (int i = 0; i < 5; i++) {
+        SDL_RenderDrawLine(renderer, arrowX + i, arrowY + i, arrowX + 10 - i, arrowY + i);
+    }
+
+    if (isOpen) {
+        int optionY = y + 20;
+        for (size_t i = 0; i < options.size(); i++) {
+            SDL_Rect optionRect = { x, optionY, width, 20 };
+
+            int mouseX, mouseY;
+            SDL_GetMouseState(&mouseX, &mouseY);
+            if (mouseX >= optionRect.x && mouseX <= optionRect.x + optionRect.w &&
+                mouseY >= optionRect.y && mouseY <= optionRect.y + optionRect.h) {
+                SDL_SetRenderDrawColor(renderer, 200, 200, 255, 255);
+            } else {
+                SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
+            }
+            SDL_RenderFillRect(renderer, &optionRect);
+            SDL_RenderDrawRect(renderer, &optionRect);
+
+            SDL_Texture* optTex = LoadText(renderer, font, options[i], {0, 0, 0, 255});
+            if (optTex) {
+                int tw, th;
+                SDL_QueryTexture(optTex, NULL, NULL, &tw, &th);
+                SDL_Rect optRect = { x + 5, optionY + (20 - th)/2, tw, th };
+                SDL_RenderCopy(renderer, optTex, NULL, &optRect);
+                SDL_DestroyTexture(optTex);
+            }
+
+            optionY += 20;
+        }
+    }
+}
+string InputValueToString(InputValue& val) {
+    if (val.type == InputValue::DIRECT_VALUE) {
+        return val.directValue;
+    } else {
+        return "[" + to_string(val.refChainIndex) + "," + to_string(val.refBlockIndex) + "]";
+    }
+}
+
+double GetInputAsNumber(InputValue& val, vector<vector<Blocks>>& chains) {
+    if (val.type == InputValue::DIRECT_VALUE) {
+        try {
+            return stod(val.directValue);
+        } catch (...) {
+            return 0;
+        }
+    } else {
+        if (val.refChainIndex >= 0 && val.refChainIndex < chains.size() &&
+            val.refBlockIndex >= 0 && val.refBlockIndex < chains[val.refChainIndex].size()) {
+
+            Blocks& refBlock = chains[val.refChainIndex][val.refBlockIndex];
+
+            if (refBlock.needsEvaluation) {
+                EvaluateBlock(refBlock);
+            }
+
+            try {
+                return stod(refBlock.output);
+            } catch (...) {
+                return 0;
+            }
+            }
+    }
+    return 0;
+}
+
+string GetInputAsString(InputValue& val, vector<vector<Blocks>>& chains) {
+    if (val.type == InputValue::DIRECT_VALUE) {
+        return val.directValue;
+    } else {
+        if (val.refChainIndex >= 0 && val.refChainIndex < chains.size() &&
+            val.refBlockIndex >= 0 && val.refBlockIndex < chains[val.refChainIndex].size()) {
+
+            Blocks& refBlock = chains[val.refChainIndex][val.refBlockIndex];
+
+            if (refBlock.needsEvaluation) {
+                EvaluateBlock(refBlock);
+            }
+
+            return refBlock.output;
+            }
+    }
+    return "";
+}
+void CheckInputClick(int mx, int my) {
+    SDL_Point mPos = {mx, my};
+    bool foundFocus = false;
+
+    for (auto& chain : blockChains) {
+        for (auto& block : chain) {
+            block.is_editing = false;
+            block.active_value_index = -1;
+        }
+    }
+
+    for (int c = blockChains.size() - 1; c >= 0; c--) {
+        for (int b = blockChains[c].size() - 1; b >= 0; b--) {
+            Blocks& block = blockChains[c][b];
+
+            if (SDL_PointInRect(&mPos, &block.rect)) {
+                int current_x = block.rect.x + 5;
+                current_x += Get_text_width(code_bar_font, blockMap[block.id].Back_label) + 5;
+
+                for (size_t j = 0; j < block.inputs.size(); j++) {
+                    string displayValue = InputValueToString(block.inputs[j]);
+                    int textWidth = Get_text_width(code_bar_font, displayValue);
+                    int inputWidth;
+
+                    if (blockMap[block.id].inputs[j].type == INPUT_DROPDOWN) {
+                        inputWidth = 80;
+                    } else {
+                        inputWidth = max(40, textWidth + 10);
+                    }
+
+                    SDL_Rect inputArea = {
+                        current_x,
+                        block.rect.y + 9,
+                        inputWidth - 3,
+                        20
+                    };
+
+                    if (SDL_PointInRect(&mPos, &inputArea)) {
+                        if (block.inputs[j].type == InputValue::BLOCK_REFERENCE) {
+                            return;
+                        }
+
+                        if (blockMap[block.id].inputs[j].type == INPUT_DROPDOWN) {
+                            for (auto& ch : blockChains) {
+                                for (auto& bl : ch) {
+                                    for (size_t k = 0; k < blockMap[bl.id].inputs.size(); k++) {
+                                        if (blockMap[bl.id].inputs[k].type == INPUT_DROPDOWN) {
+                                            bl.inputs[k].isOpen = false;
+                                        }
+                                    }
+                                }
+                            }
+                            block.inputs[j].isOpen = true;
+                            return;
+                        }
+
+                        block.is_editing = true;
+                        block.active_value_index = (int)j;
+                        block.inputs[j].type = InputValue::DIRECT_VALUE;
+                        block.inputs[j].directValue = "";
+                        SDL_StartTextInput();
+                        foundFocus = true;
+                        break;
+                    }
+
+                    current_x += inputWidth + 5;
+                    if (j < blockMap[block.id].labels.size()) {
+                        current_x += Get_text_width(code_bar_font, blockMap[block.id].labels[j]) + 5;
+                    }
+                }
+                if (foundFocus) break;
+            }
+            if (foundFocus) break;
+        }
+        if (foundFocus) break;
+    }
+}
+
+
+
+int calculatingWidthBlock(BlockTemplate& BT, vector<InputValue>& inputs, TTF_Font* font ,int parentChainIndex = -1, int parentBlockIndex= -1 ) {
+    int totalWidth = 20;
+    totalWidth += Get_text_width(font, BT.Back_label);
+
+    for (size_t i = 0; i < inputs.size(); ++i) {
+        totalWidth += 5;
+
+
+        int inputWidth;
+        if (inputs[i].type == InputValue::BLOCK_REFERENCE) {
+            int refChain = inputs[i].refChainIndex;
+            int refBlock = inputs[i].refBlockIndex;
+            if (refChain >= 0 && refChain < blockChains.size() &&
+                refBlock >= 0 && refBlock < blockChains[refChain].size()) {
+                BlockTemplate& refBT = blockMap[blockChains[refChain][refBlock].id];
+                inputWidth = calculatingWidthBlock(refBT, blockChains[refChain][refBlock].inputs, font, refChain, refBlock);
+                blockChains[refChain][refBlock].rect.w = inputWidth;
+                } else {
+                    inputWidth = 40;
+                }
+        } else {
+            string displayValue = inputs[i].directValue;
+            int textWidth = Get_text_width(font, displayValue);
+            inputWidth = max(40, textWidth + 10);
+        }
+
         totalWidth += inputWidth;
 
         if (i < BT.labels.size()) {
@@ -152,25 +405,6 @@ void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font) {
     SDL_RenderSetClipRect(renderer, nullptr);
 }
 
-void DrawBlockInputs(SDL_Renderer* renderer, TTF_Font* font, Blocks& block) {
-    if (blockMap.count(block.id)) {
-        for (size_t i = 0; i < block.values.size(); i++) {
-            int px = blockMap[block.id].inputs[i].posX;
-            string text = block.values[i];
-            if (block.is_editing && block.active_value_index == (int)i) {
-                text += "|";
-            }
-            SDL_Texture* t = LoadText(renderer, font, text, {0, 0, 0, 255});
-            if (t) {
-                int tw, th;
-                SDL_QueryTexture(t, nullptr, nullptr, &tw, &th);
-                SDL_Rect textRect = { block.rect.x + px - (tw / 2), block.rect.y + 22 - (th / 2), tw, th };
-                SDL_RenderCopy(renderer, t, nullptr, &textRect);
-                SDL_DestroyTexture(t);
-            }
-        }
-    }
-}
 
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
     for (auto& mb : menu_blocks) {
@@ -181,24 +415,27 @@ void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font) {
         if (renderPos.y > 90 && renderPos.y < Get_height()) {
             switch (mb.type) {
                 case Simple_Block:
-                    DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font,nullptr);
+                    DrawSimpleBlocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.inputs,color,font,nullptr);
                     break;
                 case C_Block:
-                    Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.values,color,font, nullptr);
+                    Draw_C_Blocks(renderer,renderPos.x,renderPos.y,renderPos.w,renderPos.h,blockMap[mb.id],mb.inputs,color,font, nullptr);
                     break;
                 case Expression_Block:
-                    DrawExpressionBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,blockMap[mb.id], mb.values, color, font, nullptr);
+                    DrawExpressionBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,blockMap[mb.id], mb.inputs, color, font, nullptr);
                     break;
                 case Bool_Block:
                     DrawBoolBlock(renderer, renderPos.x, renderPos.y, renderPos.w, renderPos.h,
-                                blockMap[mb.id], mb.values, color, font, nullptr);
+                                blockMap[mb.id], mb.inputs, color, font, nullptr);
                     break;
 
             }
         }
     }
 }
-void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font, Blocks* block ) {
+
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,
+                      BlockTemplate& BT, vector<InputValue>& inputs,
+                      SDL_Color color,TTF_Font*font, Blocks* block ) {
     roundedBoxRGBA(renderer,x,y+10,x+w,y+h-10,0,color.r,color.g,color.b,color.a);
     Imaginary_circle C1 {x+20,y-10,15 };
     SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
@@ -217,101 +454,271 @@ void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,Bloc
             }
         }
     }
-    int current_x = x+5;
-    current_x=Draw_label(current_x,renderer,font,BT.Back_label,y,{255,255,255,255})+5;
-    for (size_t i =0 ; i<values.size(); i++) {
-        string val = (i<values.size()) ? values[i]:BT.inputs[i].defaultValue;
-        if (block && block->is_editing && block->active_value_index == (int)i) {
-            val += "|";
-        }
-        int input_width = max(40,Get_text_width(font,val)+10);
-        roundedBoxRGBA(renderer,current_x,y+9,current_x+input_width-3,y+29,10,255,255,255,255);
-        Draw_label(current_x+(input_width-Get_text_width(font,val))/2,renderer,font,val,y,{100,100,100,255});
-        current_x+=input_width+5;
-        if (i<BT.labels.size()) {
-            current_x=Draw_label(current_x,renderer,font,BT.labels[i],y,{255,255,255,255})+5;
-        }
 
-    }
+    int current_x = x + 5;
+    current_x = Draw_label(current_x, renderer, font, BT.Back_label, y, {255,255,255,255}) + 5;
 
+    for (size_t i = 0; i < inputs.size(); i++) {
+        if (inputs[i].type == InputValue::BLOCK_REFERENCE) {
+            int refChain = inputs[i].refChainIndex;
+            int refBlock = inputs[i].refBlockIndex;
+
+            if (refChain >= 0 && refChain < blockChains.size() &&
+                refBlock >= 0 && refBlock < blockChains[refChain].size()) {
+
+                Blocks& childBlock = blockChains[refChain][refBlock];
+
+                int oldX = childBlock.rect.x;
+                int oldY = childBlock.rect.y;
+
+                childBlock.rect.x = current_x;
+                childBlock.rect.y = y + 3;
+
+                switch (childBlock.type) {
+                    case Expression_Block:
+                        DrawExpressionBlock(renderer, childBlock.rect.x, childBlock.rect.y,
+                                          childBlock.rect.w, childBlock.rect.h,
+                                          blockMap[childBlock.id], childBlock.inputs,
+                                          GetBlockColor(blockMap[childBlock.id].category),
+                                          font, &childBlock);
+                        break;
+                    case Bool_Block:
+                        DrawBoolBlock(renderer, childBlock.rect.x, childBlock.rect.y,
+                                     childBlock.rect.w, childBlock.rect.h,
+                                     blockMap[childBlock.id], childBlock.inputs,
+                                     GetBlockColor(blockMap[childBlock.id].category),
+                                     font, &childBlock);
+                        break;
+                }
+
+                current_x += childBlock.rect.w;
+
+                childBlock.rect.x = oldX;
+                childBlock.rect.y = oldY;
+                }
+        } else {
+            if (BT.inputs[i].type == INPUT_DROPDOWN) {
+                int input_width = 80;
+                DrawDropdown(renderer, font, current_x, y + 9, input_width,
+                            inputs[i], BT.inputs[i].dropdownType,
+                            inputs[i].isOpen, -1, -1, i);
+                current_x += input_width;
+            } else {
+                string displayValue = inputs[i].directValue;
+                if (block && block->is_editing && block->active_value_index == (int)i) {
+                    displayValue += "|";
+                }
+
+                int input_width = max(40, Get_text_width(font, displayValue) + 10);
+                roundedBoxRGBA(renderer, current_x, y + 9, current_x + input_width - 3, y + 29, 10, 255, 255, 255, 255);
+                Draw_label(current_x + (input_width - Get_text_width(font, displayValue)) / 2,
+                          renderer, font, displayValue, y, {100,100,100,255});
+
+                current_x += input_width;
+            }
+        }
+        if (i < BT.labels.size()) {
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y, {255,255,255,255}) + 5;
+        } else if (i < inputs.size() - 1) {
+            current_x += 5;
+        }
     }
-void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font,Blocks* block) {
+}
+
+void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,
+                   BlockTemplate&BT, vector<InputValue>& inputs,
+                   SDL_Color color,TTF_Font*font,Blocks* block) {
     SDL_Rect head{x,y , w,35};
     roundedBoxRGBA(renderer ,head.x,head.y,head.x +head.w,head.y+head.h,5,color.r,color.g,color.b,color.a);
     SDL_Rect left_wall {x,y+30,15,h-35};
     SDL_RenderFillRect(renderer,&left_wall);
     SDL_Rect bottom = {x, y + h - 25, w, 25};
     SDL_RenderFillRect(renderer, &bottom);
+
     int current_x = x+5;
-    current_x=Draw_label(current_x,renderer,font,BT.Back_label,y,{255,255,255,255})+5;
-    for (size_t i =0 ; i<values.size(); i++) {
-        string val = (i<values.size()) ? values[i]:BT.inputs[i].defaultValue;
-        int input_width = max(40,Get_text_width(font,val)+10);
+    current_x = Draw_label(current_x,renderer,font,BT.Back_label,y,{255,255,255,255})+5;
+
+    for (size_t i = 0; i < inputs.size(); i++) {
+        string displayValue = InputValueToString(inputs[i]);
         if (block && block->is_editing && block->active_value_index == (int)i) {
-            val += "|";
+            displayValue += "|";
         }
 
-        roundedBoxRGBA(renderer, current_x - 3, y + 8, current_x + input_width - 3, y + 29, 10, 255, 255, 255, 255);
-        Draw_label(current_x + (input_width - Get_text_width(font, val))/2, renderer, font, val, y , {100,100,100,255});
-        current_x += input_width + 5;
+        int input_width = max(40, Get_text_width(font, displayValue) + 10);
 
+        if (inputs[i].type == InputValue::BLOCK_REFERENCE) {
+            roundedBoxRGBA(renderer, current_x - 3, y + 8, current_x + input_width - 3, y + 29, 10, 200, 200, 255, 255);
+        } else {
+            roundedBoxRGBA(renderer, current_x - 3, y + 8, current_x + input_width - 3, y + 29, 10, 255, 255, 255, 255);
+        }
+
+        Draw_label(current_x + (input_width - Get_text_width(font, displayValue))/2,
+                  renderer, font, displayValue, y , {100,100,100,255});
+        current_x += input_width + 5;
     }
 }
-void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block) {
 
+void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
+                         BlockTemplate& BT, vector<InputValue>& inputs,
+                         SDL_Color color, TTF_Font* font, Blocks* block) {
     roundedBoxRGBA(renderer, x, y, x + w, y + h, 10, color.r, color.g, color.b, color.a);
-
     roundedRectangleRGBA(renderer, x, y, x + w, y + h, 10, 0, 0, 0, 255);
 
-    int current_x = x +5;
+    int current_x = x + 5;
 
     if (!BT.Back_label.empty()) {
-        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y -6,
+        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y - 6,
                                {255,255,255,255}) + 8;
     }
 
-    for (size_t i = 0; i < values.size(); i++) {
-        string val = values[i];
+    for (size_t i = 0; i < inputs.size(); i++) {
+        if (inputs[i].type == InputValue::BLOCK_REFERENCE) {
+            int refChain = inputs[i].refChainIndex;
+            int refBlock = inputs[i].refBlockIndex;
 
-        if (block && block->is_editing && block->active_value_index == (int)i) {
-            val += "|";
+            if (refChain >= 0 && refChain < blockChains.size() &&
+                refBlock >= 0 && refBlock < blockChains[refChain].size()) {
+
+                Blocks& childBlock = blockChains[refChain][refBlock];
+
+                int oldX = childBlock.rect.x;
+                int oldY = childBlock.rect.y;
+
+                childBlock.rect.x = current_x;
+                childBlock.rect.y = y + 3;
+
+                switch (childBlock.type) {
+                    case Expression_Block:
+                        DrawExpressionBlock(renderer, childBlock.rect.x, childBlock.rect.y,
+                                          childBlock.rect.w, childBlock.rect.h,
+                                          blockMap[childBlock.id], childBlock.inputs,
+                                          GetBlockColor(blockMap[childBlock.id].category),
+                                          font, &childBlock);
+                        break;
+                    case Bool_Block:
+                        DrawBoolBlock(renderer, childBlock.rect.x, childBlock.rect.y,
+                                     childBlock.rect.w, childBlock.rect.h,
+                                     blockMap[childBlock.id], childBlock.inputs,
+                                     GetBlockColor(blockMap[childBlock.id].category),
+                                     font, &childBlock);
+                        break;
+                }
+
+                current_x += childBlock.rect.w;
+                childBlock.rect.x = oldX;
+                childBlock.rect.y = oldY;
+            }
+        } else {
+            if (BT.inputs[i].type == INPUT_DROPDOWN) {
+                int input_width = 80;
+                DrawDropdown(renderer, font, current_x, y + 3, input_width,
+                            inputs[i], BT.inputs[i].dropdownType,
+                            inputs[i].isOpen, -1, -1, i);
+                current_x += input_width;
+            } else {
+                string displayValue = inputs[i].directValue;
+                if (block && block->is_editing && block->active_value_index == (int)i) {
+                    displayValue += "|";
+                }
+
+                int text_width = Get_text_width(font, displayValue);
+                int input_width = max(35, text_width + 12);
+
+                roundedBoxRGBA(renderer, current_x, y + 3, current_x + input_width, y + 23, 8, 255, 255, 255, 255);
+
+                int text_x = current_x + (input_width - text_width) / 2;
+                Draw_label(text_x, renderer, font, displayValue, y - 6, {100,100,100,255});
+
+                current_x += input_width;
+            }
         }
 
-        int text_width = Get_text_width(font, val);
-        int input_width = max(35, text_width +12);
+        current_x += 5;
 
-        roundedBoxRGBA(renderer, current_x, y +3, current_x + input_width, y +23,8, 255, 255, 255, 255);
-        int text_x = current_x + (input_width - text_width) / 2;
-        Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
-        current_x += input_width + 5;
         if (i < BT.labels.size()) {
-            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y - 6,
                                   {255,255,255,255}) + 8;
         }
     }
 }
-void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
-                   BlockTemplate& BT, vector<string>& values,
-                   SDL_Color color, TTF_Font* font, Blocks* block) {
-    roundedBoxRGBA(renderer, x, y, x + w, y + h, 5,color.r, color.g, color.b, color.a);
+
+void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<InputValue>& inputs,SDL_Color color, TTF_Font* font, Blocks* block) {
+    roundedBoxRGBA(renderer, x, y, x + w, y + h, 5, color.r, color.g, color.b, color.a);
     roundedRectangleRGBA(renderer, x, y, x + w, y + h, 5, 0, 0, 0, 255);
+
     int current_x = x + 5;
-    if (!BT.Back_label.empty()) {current_x = Draw_label(current_x, renderer, font, BT.Back_label, y-6 ,
-{255,255,255,255}) + 5;
+
+    if (!BT.Back_label.empty()) {
+        current_x = Draw_label(current_x, renderer, font, BT.Back_label, y - 6,
+                               {255,255,255,255}) + 5;
     }
-    for (size_t i = 0; i < values.size(); i++) {
-        string val = values[i];
-        if (block && block->is_editing && block->active_value_index == (int)i) {
-            val += "|";
+
+    for (size_t i = 0; i < inputs.size(); i++) {
+        if (inputs[i].type == InputValue::BLOCK_REFERENCE) {
+            int refChain = inputs[i].refChainIndex;
+            int refBlock = inputs[i].refBlockIndex;
+
+            if (refChain >= 0 && refChain < blockChains.size() &&
+                refBlock >= 0 && refBlock < blockChains[refChain].size()) {
+
+                Blocks& childBlock = blockChains[refChain][refBlock];
+
+                int oldX = childBlock.rect.x;
+                int oldY = childBlock.rect.y;
+
+                childBlock.rect.x = current_x;
+                childBlock.rect.y = y + 3;
+
+                switch (childBlock.type) {
+                    case Expression_Block:
+                        DrawExpressionBlock(renderer, childBlock.rect.x, childBlock.rect.y,
+                                          childBlock.rect.w, childBlock.rect.h,
+                                          blockMap[childBlock.id], childBlock.inputs,
+                                          GetBlockColor(blockMap[childBlock.id].category),
+                                          font, &childBlock);
+                        break;
+                    case Bool_Block:
+                        DrawBoolBlock(renderer, childBlock.rect.x, childBlock.rect.y,
+                                     childBlock.rect.w, childBlock.rect.h,
+                                     blockMap[childBlock.id], childBlock.inputs,
+                                     GetBlockColor(blockMap[childBlock.id].category),
+                                     font, &childBlock);
+                        break;
+                }
+
+                current_x += childBlock.rect.w;
+                childBlock.rect.x = oldX;
+                childBlock.rect.y = oldY;
+            }
+        } else {
+            if (BT.inputs[i].type == INPUT_DROPDOWN) {
+                int input_width = 80;
+                DrawDropdown(renderer, font, current_x, y + 3, input_width,
+                            inputs[i], BT.inputs[i].dropdownType,
+                            inputs[i].isOpen, -1, -1, i);
+                current_x += input_width;
+            } else {
+                string displayValue = inputs[i].directValue;
+                if (block && block->is_editing && block->active_value_index == (int)i) {
+                    displayValue += "|";
+                }
+
+                int text_width = Get_text_width(font, displayValue);
+                int input_width = max(35, text_width + 12);
+
+                roundedBoxRGBA(renderer, current_x, y + 3, current_x + input_width, y + 23, 4, 255, 255, 255, 255);
+
+                int text_x = current_x + (input_width - text_width) / 2;
+                Draw_label(text_x, renderer, font, displayValue, y - 6, {100,100,100,255});
+
+                current_x += input_width;
+            }
         }
-        int text_width = Get_text_width(font, val);
-        int input_width = max(35, text_width +12);
-        roundedBoxRGBA(renderer, current_x, y +3,current_x + input_width, y + 23,4, 255, 255, 255, 255);
-        int text_x = current_x + (input_width - text_width) / 2;
-        Draw_label(text_x, renderer, font, val, y-6 , {100,100,100,255});
-        current_x += input_width + 5;
+
+        current_x += 5;
+
         if (i < BT.labels.size()) {
-            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y-6 ,
+            current_x = Draw_label(current_x, renderer, font, BT.labels[i], y - 6,
                                   {255,255,255,255}) + 5;
         }
     }
@@ -347,25 +754,25 @@ void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
                 case Simple_Block:
                     DrawSimpleBlocks(renderer, block.rect.x, block.rect.y,
                                    block.rect.w, block.rect.h,
-                                   blockMap[block.id], block.values,
+                                   blockMap[block.id], block.inputs,
                                    color, font, &block);
                     break;
                 case C_Block:
                     Draw_C_Blocks(renderer, block.rect.x, block.rect.y,
                                 block.rect.w, block.rect.h,
-                                blockMap[block.id], block.values,
+                                blockMap[block.id], block.inputs,
                                 color, font, &block);
                     break;
                 case Expression_Block:
                     DrawExpressionBlock(renderer, block.rect.x, block.rect.y,
                                       block.rect.w, block.rect.h,
-                                      blockMap[block.id], block.values,
+                                      blockMap[block.id], block.inputs,
                                       color, font, &block);
                     break;
                 case Bool_Block:
                     DrawBoolBlock(renderer, block.rect.x, block.rect.y,
                                 block.rect.w, block.rect.h,
-                                blockMap[block.id], block.values,
+                                blockMap[block.id], block.inputs,
                                 color, font, &block);
                     break;
             }
@@ -379,28 +786,33 @@ void DrawALLBlocks(SDL_Renderer* renderer, TTF_Font* font) {
                 case Simple_Block:
                     DrawSimpleBlocks(renderer, block.rect.x, block.rect.y,
                                    block.rect.w, block.rect.h,
-                                   blockMap[block.id], block.values,
+                                   blockMap[block.id], block.inputs,
                                    color, font, &block);
                     break;
                 case C_Block:
                     Draw_C_Blocks(renderer, block.rect.x, block.rect.y,
                                 block.rect.w, block.rect.h,
-                                blockMap[block.id], block.values,
+                                blockMap[block.id], block.inputs,
                                 color, font, &block);
                     break;
                 case Expression_Block:
                     DrawExpressionBlock(renderer, block.rect.x, block.rect.y,
                                       block.rect.w, block.rect.h,
-                                      blockMap[block.id], block.values,
+                                      blockMap[block.id], block.inputs,
                                       color, font, &block);
                     break;
                 case Bool_Block:
                     DrawBoolBlock(renderer, block.rect.x, block.rect.y,
                                 block.rect.w, block.rect.h,
-                                blockMap[block.id], block.values,
+                                blockMap[block.id], block.inputs,
                                 color, font, &block);
                     break;
             }
+        }
+    }
+    for (int c = 0; c < blockChains.size(); c++) {
+        for (int b = 0; b < blockChains[c].size(); b++) {
+             DrawBlockOutput(renderer, font, blockChains[c][b]);
         }
     }
 }
@@ -517,7 +929,7 @@ void Draw_CodeBar_Item(SDL_Renderer* renderer, Button code_button[]) {
     SDL_RenderFillRect(renderer, &left_bar);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer,&left_bar);
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         filledCircleRGBA(renderer, code_button[i].rect.x + (code_button[i].rect.w/2), code_button[i].rect.y + (code_button[i].rect.h/2) - 10, code_button[i].radius,
                          code_button[i].first_color.r, code_button[i].first_color.g, code_button[i].first_color.b, SDL_ALPHA_OPAQUE);
 
@@ -732,27 +1144,35 @@ void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font) {
     }
 }
 
-void Draw_Character(SDL_Renderer* renderer,Character &sprite){
+void Draw_Stage_Bar(SDL_Renderer* renderer){
+    SDL_Rect rect = {Get_width()-100+5,Get_height()/2+30,85,Get_height()/2-80};
+    SDL_SetRenderDrawColor(renderer,249,249,249,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}
+
+void Draw_Character(SDL_Renderer* renderer,Character* sprite){
     double centerX = stage.x + ((double )stage.w/2);
     double centerY = stage.y + ((double)stage.h/2);
 
     SDL_Rect dest;
-    dest.w = (int)(sprite.width);
-    dest.h = (int)(sprite.height);
-    dest.x = (int)(centerX + sprite.x - ((double)dest.w/2));
-    dest.y = (int)(centerY + sprite.y - ((double)dest.h/2));
+    dest.w = (int)(sprite->width);
+    dest.h = (int)(sprite->height);
+    dest.x = (int)(centerX + sprite->x - ((double)dest.w/2));
+    dest.y = (int)(centerY + sprite->y - ((double)dest.h/2));
 
-    if(sprite.isvisible)
-        SDL_RenderCopyEx(renderer,sprite.texture, nullptr,&dest,-sprite.degree, nullptr,SDL_FLIP_NONE);
+    if(sprite->isvisible)
+        SDL_RenderCopyEx(renderer,sprite->costumes[sprite->currentCostumeIndex]->texture, nullptr,&dest,-sprite->degree, nullptr,SDL_FLIP_NONE);
 }
 
 void Handle_event_for_code_button(SDL_Event &e) {
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (e.button.button == SDL_BUTTON_LEFT) {
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 9; i++) {
                 if (Is_mouse_on(categories[i].rect.x, categories[i].rect.y, categories[i].rect.w,
                                 categories[i].rect.h)) {
-                    for (int j = 0; j < 8; j++) {
+                    for (int j = 0; j < 9; j++) {
                         categories[j].is_mouse_click_on = false;
                     }
                     categories[i].is_mouse_click_on = true;
@@ -765,7 +1185,7 @@ void Handle_event_for_code_button(SDL_Event &e) {
 void Handle_event_for_flag_button(SDL_Event &e , Button &button){
     if(e.type== SDL_MOUSEBUTTONDOWN){
         if(e.button.button == SDL_BUTTON_LEFT){
-            if(Is_mouse_on(button.rect.x,button.rect.h,button.rect.w,button.rect.h))
+            if(Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h))
                 flag_active = true;
         }
     }
@@ -774,12 +1194,12 @@ void Handle_event_for_flag_button(SDL_Event &e , Button &button){
 void Handle_event_for_stop_button(SDL_Event &e , Button &button){
     if(e.type== SDL_MOUSEBUTTONDOWN){
         if(e.button.button == SDL_BUTTON_LEFT){
-            if(Is_mouse_on(button.rect.x,button.rect.h,button.rect.w,button.rect.h))
+            if(Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h))
                 flag_active= false;
         }
     }
 }
-void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
+void Handle_event_for_motion_sprite(SDL_Event &e, Character* sprite) {
     if (draggable) {
         static int mouse_firstX, mouse_firstY;
         if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -787,35 +1207,93 @@ void Handle_event_for_motion_sprite(SDL_Event &e, Character &sprite) {
             mouse_firstY = e.button.y;
             double stage_centerX = stage.x + (stage.w / 2);
             double stage_centerY = stage.y + (stage.h / 2);
-            if (Is_mouse_on((int) (sprite.x + stage_centerX - (sprite.width / 2)),
-                            (int) (sprite.y + stage_centerY - (sprite.height / 2)),
-                            (int) sprite.width, (int) sprite.height))
-                sprite.is_mouse_on = true;
+            if (Is_mouse_on((int) (sprite->x + stage_centerX - (sprite->width / 2)),
+                            (int) (sprite->y + stage_centerY - (sprite->height / 2)),
+                            (int) sprite->width, (int) sprite->height))
+                sprite->is_mouse_on = true;
         }
         if (e.type == SDL_MOUSEBUTTONUP) {
             if (e.button.button == SDL_BUTTON_LEFT) {
-                if (!Limit_CharacterY(sprite) || !Limit_CharacterX(sprite)) {
+                if (!Limit_CharacterY(*sprite) || !Limit_CharacterX(*sprite)) {
                     double stage_centerX = stage.x + (stage.w / 2);
                     double stage_centerY = stage.y + (stage.h / 2);
-                    sprite.x = mouse_firstX - stage_centerX;
-                    sprite.y = mouse_firstY - stage_centerY;
+                    sprite->x = mouse_firstX - stage_centerX;
+                    sprite->y = mouse_firstY - stage_centerY;
                 }
-                sprite.is_mouse_on = false;
+                sprite->is_mouse_on = false;
             }
         }
-        if (e.type == SDL_MOUSEMOTION && sprite.is_mouse_on) {
+        if (e.type == SDL_MOUSEMOTION && sprite->is_mouse_on) {
             int mouseX = e.motion.x;
             int mouseY = e.motion.y;
             double stage_centerX = stage.x + (stage.w / 2);
             double stage_centerY = stage.y + (stage.h / 2);
-            sprite.x = mouseX - stage_centerX;
-            sprite.y = mouseY - stage_centerY;
+            sprite->x = mouseX - stage_centerX;
+            sprite->y = mouseY - stage_centerY;
         }
     }
 }
 
-void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
-    std::string message = sprite.name + " " + "size is : " + to_string(sprite.size*500);
+void Handle_event_for_sound_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h))
+            currentTab = SOUNDS;
+    }
+}
+void Handle_event_for_Backdrop_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h))
+            currentTab = BACKDROPS;
+    }
+}
+void Handle_event_for_Back_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h))
+            currentTab = CODE;
+    }
+}
+
+void Handle_event_for_Code_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h))
+            currentTab = CODE;
+    }
+}
+
+void Handle_event_for_timer_button(SDL_Event &e,Button* button) {
+    if (e.type == SDL_MOUSEBUTTONDOWN) {
+        if (Is_mouse_on(button->rect.x, button->rect.y, button->rect.w, button->rect.h)) {
+            is_timer = !is_timer;
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+        }
+    }
+}
+void Handle_event_for_size_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)) {
+            is_size_on = !is_size_on;
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+        }
+    }
+}
+void Handle_event_for_costume_number_button(SDL_Event &e,Button* button){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)) {
+            is_costume_number_on = !is_costume_number_on;
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+        }
+    }
+}
+void Handle_event_for_next_costume_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite){
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+        if(Is_mouse_on(button->rect.x,button->rect.y,button->rect.w,button->rect.h)) {
+            switch_costume_to(renderer,sprite);
+            button->is_mouse_click_on = !button->is_mouse_click_on;
+        }
+    }
+}
+void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character* sprite){
+    std::string message = sprite->name + " " + "size is : " + to_string((int)(sprite->size*500));
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
@@ -832,7 +1310,7 @@ void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
-    std::string message = "Timer : " + to_string(time/1000);
+    std::string message = "Timer : " + to_string((int)time/1000);
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
@@ -848,12 +1326,12 @@ void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time){
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
-void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
-    std::string message = sprite.name + " " + "costume number is : " + to_string(sprite.costumes.size());
+void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character* sprite){
+    std::string message = sprite->name + " " + "costume number is : " + to_string((int)sprite->currentCostumeIndex);
     SDL_Texture* texture = LoadText(renderer,font,message,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
-    SDL_Rect rect = {stage.x+5,stage.y+25+5,texture_w+10,25};
+    SDL_Rect rect = {stage.x+5,stage.y+25+10,texture_w+10,25};
     SDL_SetRenderDrawColor(renderer,229,240,255,SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer,&rect);
     SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
@@ -865,8 +1343,8 @@ void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character &sprite
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
-void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
-    SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
+void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character *sprite){
+    SDL_Texture* texture = LoadText(renderer,font,sprite->monologue,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
@@ -882,8 +1360,8 @@ void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
 }
 
-void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
-    SDL_Texture* texture = LoadText(renderer,font,sprite.monologue,{50,50,50});
+void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character *sprite){
+    SDL_Texture* texture = LoadText(renderer,font,sprite->monologue,{50,50,50});
     int texture_w,texture_h;
     SDL_QueryTexture(texture, nullptr, nullptr,&texture_w,&texture_h);
     SDL_Rect rect = {stage.x+stage.w/2-texture_w/2,stage.y+stage.h - 35,texture_w+20,30};
@@ -897,4 +1375,365 @@ void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite){
             texture_w, texture_h
     };
     SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+
+void Draw_sound_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
+    if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    } else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(currentTab == SOUNDS) {
+        SDL_SetRenderDrawColor(renderer, button.third_color.r, button.third_color.g,
+                               button.third_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button.rect);
+}
+
+void Draw_Backdrop_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
+    if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    } else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(currentTab == BACKDROPS) {
+        SDL_SetRenderDrawColor(renderer, button.third_color.r, button.third_color.g,
+                               button.third_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button.rect);
+}
+
+void Draw_Back_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
+    if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    } else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button.rect);
+}
+
+void Draw_Code_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
+    if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    } else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(currentTab == CODE) {
+        SDL_SetRenderDrawColor(renderer, button.third_color.r, button.third_color.g,
+                               button.third_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button.rect);
+}
+void Draw_sounds_functions_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture) {
+    if (Is_mouse_on(button.rect.x, button.rect.y, button.rect.w, button.rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button.second_color.r, button.second_color.g,
+                               button.second_color.b, SDL_ALPHA_OPAQUE);
+    } else {
+        SDL_SetRenderDrawColor(renderer, button.first_color.r, button.first_color.g,
+                               button.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button.rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button.rect.x + (button.rect.w - texture_w) / 2,
+            button.rect.y + (button.rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button.rect);
+}
+void Draw_report_informationOfCharacter_box(SDL_Renderer* renderer,InformationOfCharacter &information){
+    SDL_SetRenderDrawColor(renderer,150,150,150,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&information.rect);
+}
+
+void Draw_X_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={stage.x+170,stage.y+stage.h+30,40,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_Y_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={stage.x+270,stage.y+stage.h+30,40,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_sprite_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={stage.x+10,stage.y+stage.h+30,40,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_size_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={stage.x+110,stage.y+stage.h+75,70,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_direction_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={stage.x+235,stage.y+stage.h+75,70,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_show_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={stage.x+15,stage.y+stage.h+75,20,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_volume_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={200,Get_height() - 320,100,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_frequency_text(SDL_Renderer* renderer,SDL_Texture* texture){
+    SDL_Rect rect ={500,Get_height() - 320,100,30};
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_show_and_hide_button(SDL_Renderer* renderer,Button &button1,Button &button2,SDL_Texture* texture1,SDL_Texture* texture2,Character* sprite){
+    if(sprite->isvisible)
+        SDL_SetRenderDrawColor(renderer, button1.second_color.r, button1.second_color.g,
+                               button1.second_color.b, SDL_ALPHA_OPAQUE);
+    else {
+        SDL_SetRenderDrawColor(renderer, button1.first_color.r, button1.first_color.g,
+                               button1.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+
+    SDL_RenderFillRect(renderer, &button1.rect);
+    int texture1_w, texture1_h;
+    SDL_QueryTexture(texture1, nullptr, nullptr, &texture1_w, &texture1_h);
+    double scale1 = std::min(
+            (double)button1.rect.w / texture1_w,
+            (double)button1.rect.h / texture1_h
+    );
+    int new1_w = texture1_w * scale1;
+    int new1_h = texture1_h * scale1;
+    SDL_Rect textPosition1 = {
+            button1.rect.x + (button1.rect.w - new1_w) / 2,
+            button1.rect.y + (button1.rect.h - new1_h) / 2,
+            new1_w, new1_h
+    };
+    SDL_RenderCopy(renderer, texture1, nullptr, &textPosition1);
+
+    if (!sprite->isvisible) {
+        SDL_SetRenderDrawColor(renderer, button2.second_color.r, button2.second_color.g,
+                               button2.second_color.b, SDL_ALPHA_OPAQUE);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, button2.first_color.r, button2.first_color.g,
+                               button2.first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button2.rect);
+    int texture2_w, texture2_h;
+    SDL_QueryTexture(texture2, nullptr, nullptr, &texture2_w, &texture2_h);
+    double scale2 = std::min(
+            (double)button2.rect.w / texture2_w,
+            (double)button2.rect.h / texture2_h
+    );
+    int new2_w = texture2_w * scale2;
+    int new2_h = texture2_h * scale2;
+    SDL_Rect textPosition2 = {
+            button2.rect.x + (button2.rect.w - new2_w) / 2,
+            button2.rect.y + (button2.rect.h - new2_h) / 2,
+            new2_w, new2_h
+    };
+    SDL_RenderCopy(renderer, texture2, nullptr, &textPosition2);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button1.rect);
+    SDL_RenderDrawRect(renderer,&button2.rect);
+}
+
+void Handle_event_for_show_button(SDL_Event &e , Button &button,Character* sprite){
+    if(e.type== SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            if(Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h))
+                sprite->isvisible = true;
+        }
+    }
+}
+
+void Handle_event_for_hide_button(SDL_Event &e , Button &button,Character* sprite){
+    if(e.type== SDL_MOUSEBUTTONDOWN){
+        if(e.button.button == SDL_BUTTON_LEFT){
+            if(Is_mouse_on(button.rect.x,button.rect.y,button.rect.w,button.rect.h))
+                sprite->isvisible= false;
+        }
+    }
+}
+
+void Draw_name_of_character(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_positionX(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_size(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+void Draw_direction(SDL_Renderer* renderer,InformationOfCharacter &information,SDL_Texture* texture){
+    SDL_Rect rect =information.rect;
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            rect.x + (rect.w - texture_w) / 2,
+            rect.y + (rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+}
+
+void Draw_sound_panel(SDL_Renderer* renderer){
+    SDL_Rect rect = {0,95,1030,Get_height()};
+    SDL_SetRenderDrawColor(renderer,white.r,white.g,white.b,SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer,&rect);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&rect);
+}
+
+void Draw_report_button(SDL_Renderer* renderer,Button* button,SDL_Texture* texture){
+    if (Is_mouse_on(button->rect.x, button->rect.y, button->rect.w, button->rect.h)) {
+        SDL_SetRenderDrawColor(renderer, button->second_color.r, button->second_color.g,
+                               button->second_color.b, SDL_ALPHA_OPAQUE);
+    } else if(!button->is_mouse_click_on) {
+        SDL_SetRenderDrawColor(renderer, button->first_color.r, button->first_color.g,
+                               button->first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    if(button->is_mouse_click_on){
+        SDL_SetRenderDrawColor(renderer, button->third_color.r, button->third_color.g,
+                               button->third_color.b, SDL_ALPHA_OPAQUE);
+    }
+    else {
+        SDL_SetRenderDrawColor(renderer, button->first_color.r, button->first_color.g,
+                               button->first_color.b, SDL_ALPHA_OPAQUE);
+    }
+    SDL_RenderFillRect(renderer, &button->rect);
+    int texture_w, texture_h;
+    SDL_QueryTexture(texture, nullptr, nullptr, &texture_w, &texture_h);
+    SDL_Rect textPosition = {
+            button->rect.x + (button->rect.w - texture_w) / 2,
+            button->rect.y + (button->rect.h - texture_h) / 2,
+            texture_w, texture_h
+    };
+    SDL_RenderCopy(renderer, texture, nullptr, &textPosition);
+    SDL_SetRenderDrawColor(renderer,200,200,200,SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer,&button->rect);
 }

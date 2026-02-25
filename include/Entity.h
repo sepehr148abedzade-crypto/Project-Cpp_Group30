@@ -24,6 +24,14 @@ enum InputType {
     INPUT_TEXT,
     INPUT_BOOLEAN
 };
+enum DropdownType {
+    DROPDOWN_COSTUME,
+    DROPDOWN_SOUND,
+    DROPDOWN_EFFECT,
+    DROPDOWN_TOUCHING,
+    DROPDOWN_FUNCTION,
+    DROPDOWN_CUSTOM
+};
 
 enum Block_category {
     CAT_MOTION,
@@ -68,6 +76,19 @@ struct InputField {
     InputType type;
     std::string defaultValue;
     std:: vector <std:: string> options;
+    DropdownType dropdownType;
+    bool isOpen = false;
+};
+struct InputValue {
+    enum Type { DIRECT_VALUE, BLOCK_REFERENCE };
+    Type type;
+    string directValue;
+    int refChainIndex;
+    int refBlockIndex;
+    int selectedOptionIndex = 0;
+    bool isOpen = false;
+
+    InputValue() : type(DIRECT_VALUE), directValue(""), refChainIndex(-1), refBlockIndex(-1) {}
 };
 enum BlockType {
     Simple_Block,
@@ -88,6 +109,15 @@ struct BlockTemplate {
     std::vector<InputField> inputs;
 };
 
+struct Costume{
+    std::string name;
+    SDL_Texture* texture;
+    const char* path;
+};
+
+extern Costume cat1;
+extern Costume cat2;
+
 struct Character{
     std::string name;
     double x = 0;
@@ -100,28 +130,41 @@ struct Character{
     bool is_mouse_on = false;
     std::string monologue;
     std::string think;
-    SDL_Texture* texture= nullptr;
     const char* path;
-    std::vector<SDL_Texture*> costumes;
-    int currentCostumeIndex;
+    std::vector<Costume*> costumes;
+    int currentCostumeIndex = 0;
 };
 
 extern Character cat;
 extern Character cat_running;
-extern Character now_sprite;
+extern Character* now_sprite;
 
-struct Blocks{
+struct Blocks {
     string id;
     SDL_Rect rect;
     BlockType type;
     SDL_Texture* image;
-    vector<string> values;
+    vector<InputValue> inputs;
     bool is_editing;
     int active_value_index = -1;
-    vector<Blocks*> children;
     Blocks* parent;
     Blocks* next;
     Blocks* prev;
+    vector<Blocks*> childBlocks;
+    int parentChainIndex = -1;
+    int parentBlockIndex = -1;
+    int parentInputIndex = -1;
+    struct {
+        int parentChainIndex = -1;
+        int parentBlockIndex = -1;
+        int parentInputIndex = -1;
+    } prevRelationship;
+    string output;
+    bool outputBool;
+    bool hasOutput = false;
+    Uint32 outputDisplayTime = 0;
+    bool isDisplayingOutput = false;
+    bool needsEvaluation = true;
 };
 
 struct Backdrop {
@@ -141,10 +184,27 @@ struct BackdropItem{
 struct BackdropMenu{
     SDL_Rect BackDropCircle;
     bool is_open;
+};struct HitResult {
+    int chainIndex;
+    int blockIndex;
+    bool isOnInput;
+    int inputIndex;
+    bool isOnChildBlock;
+    int childBlockIndex;
 };
 
 
-
+struct InformationOfCharacter{
+    SDL_Rect rect;
+    bool active = false;
+    std::string text;
+    double* linkedValue;
+};
+extern InformationOfCharacter name_of_sprite;
+extern InformationOfCharacter positionX;
+extern InformationOfCharacter positionY;
+extern InformationOfCharacter direction;
+extern InformationOfCharacter size;
 struct Button{
     SDL_Rect rect={0,0,0,0};
     int radius ;
@@ -157,12 +217,29 @@ struct Button{
 };
 extern Button Load_button;
 extern Button Top_button;
-extern Button categories[8];
+extern Button categories[9];
 extern Button flag_button;
 extern Button stop_button;
+extern Button Sounds_button;
+extern Button Backdrop_button;
+extern Button Back_button;
+extern Button code_button;
+extern Button show_button;
+extern Button hide_button;
+extern Button run_sound_button;
+extern Button volumeUp_button;
+extern Button volumeDown_button;
+extern Button increase_frequency_button;
+extern Button Timer_button;
+extern Button next_costume_button;
+extern Button size_button;
+extern Button costume_number_button;
+extern Button volume_button;
+extern Button frequency_button;
+extern Button decrease_frequency_button;
 //extern std::vector<Blocks> active_blocks;
- extern vector<vector<Blocks>> blockChains;
- extern int draggedChainIndex ;
+extern vector<vector<Blocks>> blockChains;
+extern int draggedChainIndex ;
 extern int executingChainIndex;
 extern int executingBlockIndex;
 extern Uint32 executionStartTime;
@@ -178,7 +255,30 @@ extern std::map<std::string, SDL_Texture*> blockLibrary;
 void Init_Button();
 void Init_flag_button();
 void Init_stop_button();
+void Init_sound_button();
+void Init_Backdrop_button();
+void Init_Back_button();
+void Init_code_button();
+void Init_hide_button();
+void Init_show_button();
+void Init_sprite_box(Character &sprite);
+void Init_positionX_box(Character &sprite);
+void Init_positionY_box(Character &sprite);
+void Init_direction_box(Character &sprite);
+void Init_size_box(Character &sprite);
 void Init_Load_button();
 void Init_code_button(SDL_Renderer* renderer, TTF_Font* font);
-
+void Init_costume();
+void Init_structOfCharacter();
+void Init_run_sound_button();
+void Init_volumeUp_button();
+void Init_volumeDown_button();
+void Init_increase_frequency_button();
+void Init_decrease_frequency_button();
+void Init_timer_button();
+void Init_next_costume_button();
+void Init_size_button();
+void Init_costume_number_button();
+void Init_volume_button();
+void Init_frequency_button();
 #endif //ENTITY_H
