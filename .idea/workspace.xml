@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="CMakePresetLoader">{
+  &quot;useNewFormat&quot;: true
+}</component>
+  <component name="CMakeProjectFlavorService">
+    <option name="flavorId" value="CMakePlainProjectFlavor" />
+  </component>
+  <component name="CMakeReloadState">
+    <option name="reloaded" value="true" />
+  </component>
+  <component name="CMakeRunConfigurationManager">
+    <generated>
+      <config projectName="Project_Cpp_Group30" targetName="Project_Cpp_Group30" />
+    </generated>
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="add picture">
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/Entity.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Entity.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/Graphic_Element.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Graphic_Element.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/Asset_Loader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Asset_Loader.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/looks_functions.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/looks_functions.cpp" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="Fasanghari" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;sepehr148abedzade-crypto&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/sepehr148abedzade-crypto/Project-Cpp_Group30.git&quot;,
+    &quot;accountId&quot;: &quot;0f0279e0-eaf8-4086-86f3-cb0557f14c51&quot;
+  }
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Welcometeamate.cpp" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectApplicationVersion">
+    <option name="ide" value="CLion" />
+    <option name="majorVersion" value="2025" />
+    <option name="minorVersion" value="2.4" />
+    <option name="productBranch" value="Classic" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="392YB7Owpb2Lt02m4fYNTYZC7va" />
+  <component name="ProjectStatusUIService">{
+  &quot;uiKindId&quot;: &quot;Widget&quot;
+}</component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "C/C++ File.main.cpp.executor": "Run",
+    "CMake Application.Project_Cpp_Group30.executor": "Run",
+    "CMake Debug.Project_Cpp_Group30.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "Merging Fasanghari",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "CLionExternalConfigurable",
+    "structure.view.defaults.are.configured": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\sepeh\CLionProjects\Project-Cpp_Group30\include" />
+      <recent name="C:\Users\sepeh\CLionProjects\Project-Cpp_Group30\sources" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="Project_Cpp_Group30" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project_Cpp_Group30" TARGET_NAME="Project_Cpp_Group30" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project_Cpp_Group30" RUN_TARGET_NAME="Project_Cpp_Group30">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="" />
+      <created>1769895493954</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1769895493954</updated>
+      <workItem from="1769895495272" duration="1419000" />
+      <workItem from="1769897712295" duration="25000" />
+      <workItem from="1770059041892" duration="1570000" />
+      <workItem from="1770062143694" duration="632000" />
+      <workItem from="1770063343300" duration="897000" />
+      <workItem from="1770070812972" duration="32000" />
+      <workItem from="1770114658338" duration="4000" />
+      <workItem from="1770114950999" duration="22000" />
+      <workItem from="1770504370618" duration="90000" />
+      <workItem from="1770579553929" duration="364000" />
+      <workItem from="1770585607015" duration="38000" />
+      <workItem from="1770585930281" duration="4000" />
+      <workItem from="1770647934754" duration="189000" />
+      <workItem from="1770654051957" duration="102000" />
+      <workItem from="1770732526218" duration="3616000" />
+      <workItem from="1770736192413" duration="391000" />
+      <workItem from="1770736956154" duration="11000" />
+      <workItem from="1770737085455" duration="1871000" />
+      <workItem from="1770743282681" duration="24451000" />
+      <workItem from="1770803935465" duration="9000" />
+      <workItem from="1770804100275" duration="14183000" />
+      <workItem from="1771060566004" duration="8780000" />
+      <workItem from="1771069622815" duration="225000" />
+      <workItem from="1771069924274" duration="184000" />
+      <workItem from="1771070134178" duration="937000" />
+    </task>
+    <task id="LOCAL-00001" summary="create Welcometeamate.cpp">
+      <option name="closed" value="true" />
+      <created>1769896369740</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1769896369740</updated>
+    </task>
+    <task id="LOCAL-00002" summary="create Welcometeamate.cpp">
+      <option name="closed" value="true" />
+      <created>1770062356842</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1770062356843</updated>
+    </task>
+    <task id="LOCAL-00003" summary="create Welcometeamate.cpp">
+      <option name="closed" value="true" />
+      <created>1770063485652</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1770063485652</updated>
+    </task>
+    <task id="LOCAL-00004" summary="training push &amp; commit">
+      <option name="closed" value="true" />
+      <created>1770733544085</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1770733544085</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Big &amp; important change">
+      <option name="closed" value="true" />
+      <created>1770737786693</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1770737786693</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Big &amp; important change">
+      <option name="closed" value="true" />
+      <created>1770744644070</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1770744644070</updated>
+    </task>
+    <task id="LOCAL-00007" summary="define constant variable in constants.h">
+      <option name="closed" value="true" />
+      <created>1770751343314</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1770751343314</updated>
+    </task>
+    <task id="LOCAL-00008" summary="define SDL_Functions in Game.cpp &amp; Game.h">
+      <option name="closed" value="true" />
+      <created>1770753265535</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1770753265535</updated>
+    </task>
+    <task id="LOCAL-00009" summary="define constant variable in constants.h &amp; constants.cpp (2)">
+      <option name="closed" value="true" />
+      <created>1770753950790</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1770753950790</updated>
+    </task>
+    <task id="LOCAL-00010" summary="define struct in Entity.cpp &amp; Entity.h">
+      <option name="closed" value="true" />
+      <created>1770757289436</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1770757289436</updated>
+    </task>
+    <task id="LOCAL-00011" summary="define functions &#10;create Loading window(0.5)&#10;cleaning code in all file&#10;and create main struct of program">
+      <option name="closed" value="true" />
+      <created>1770818449530</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1770818449531</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VCPKGProject">
+    <isAutomaticCheckingOnLaunch value="false" />
+    <isAutomaticFoundErrors value="true" />
+    <isAutomaticReloadCMake value="true" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/master" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="HEAD" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="create Welcometeamate.cpp" />
+    <MESSAGE value="training push &amp; commit" />
+    <MESSAGE value="Big &amp; important change" />
+    <MESSAGE value="define constant variable in constants.h" />
+    <MESSAGE value="define SDL_Functions in Game.cpp &amp; Game.h" />
+    <MESSAGE value="define constant variable in constants.h &amp; constants.cpp (2)" />
+    <MESSAGE value="define struct in Entity.cpp &amp; Entity.h" />
+    <MESSAGE value="define functions &#10;create Loading window(0.5)&#10;cleaning code in all file&#10;and create main struct of program" />
+    <MESSAGE value="change NULL to nullptr" />
+    <option name="LAST_COMMIT_MESSAGE" value="change NULL to nullptr" />
+  </component>
+</project>

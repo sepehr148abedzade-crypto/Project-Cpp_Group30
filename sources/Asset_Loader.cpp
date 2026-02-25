@@ -103,7 +103,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap["set_y"] = {92, 45,Simple_Block,CAT_MOTION,"set y to ",{},{{70, INPUT_NUMBER, "0"}}};
 
-    blockMap["say"] = {165,45,Simple_Block,CAT_LOOK,"say",{},{{80,INPUT_TEXT,"2"}}};
+    blockMap["say"] = {165,45,Simple_Block,CAT_LOOK,"say",{},{{80,INPUT_TEXT,"salam"}}};
 
     blockMap["say_seconds"]= {200,45,Simple_Block,CAT_LOOK,"say",{"for","saconds"},{{70,INPUT_TEXT,"hello!"},{140,INPUT_NUMBER,"2"}}};
 /////////////////////// LOOK
@@ -115,7 +115,10 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap["hide"]={120,45,Simple_Block,CAT_LOOK,"hide",{},{}};
 
-    blockMap["switch_costume"]={160 , 45 ,Simple_Block,CAT_LOOK,"Switch custom to",{},{{100,INPUT_DROPDOWN,"costume1"}}};
+    blockMap["switch_costume"] = {
+        160, 45, Simple_Block, CAT_LOOK, "Switch costume to", {},
+        {{100, INPUT_DROPDOWN, "costume1", {}, DROPDOWN_COSTUME}}
+    };
 
     blockMap ["next_costume"] = {140 , 45 , Simple_Block,CAT_LOOK,"next costume",{},{}};
 
@@ -123,23 +126,32 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     blockMap["set_size"] = {140, 45 ,Simple_Block,CAT_LOOK,"set size to",{"%"},{{100,INPUT_NUMBER,"100"}}};
 
-    blockMap ["change_effect"] = {180, 45 , Simple_Block,CAT_LOOK,"change",{"effect by"},{{70,INPUT_DROPDOWN,"color"},{140 , INPUT_NUMBER,"25"}}};
+    blockMap["change_effect"] = {
+        180, 45, Simple_Block, CAT_LOOK, "change", {"effect by"},
+        {
+                {70, INPUT_DROPDOWN, "color", {}, DROPDOWN_EFFECT},
+                {140, INPUT_NUMBER, "25"}
+        }
+    };
 ////////////////// EVENTS
-    blockMap ["play_sound"] = {160 ,45,Simple_Block,CAT_SOUND,"play sound",{"until done"},{{80,INPUT_DROPDOWN,"Meow"}} };
+    blockMap["play_sound"] = {
+        160, 45, Simple_Block, CAT_SOUND, "play sound", {"until done"},
+        {{80, INPUT_DROPDOWN, "Meow", {}, DROPDOWN_SOUND}}
+    };
 
     blockMap["start_sound"]= {160 ,45 , Simple_Block,CAT_SOUND,"start sound",{},{{80 , INPUT_DROPDOWN,"Meow"}}};
 
     blockMap["stop_all"] = {120 , 45 , Simple_Block,CAT_SOUND,"stop all sounds",{},{}};
 
-    blockMap["change_s_effect"]= {180 , 45 , Simple_Block,CAT_SOUND,"change",{"effect by"},{{70,INPUT_DROPDOWN,"pitch"},{140,INPUT_NUMBER,"10"}}};
+    //blockMap["change_s_effect"]= {180 , 45 , Simple_Block,CAT_SOUND,"change",{"effect by"},{{70,INPUT_DROPDOWN,"pitch"},{140,INPUT_NUMBER,"10"}}};
 
-    blockMap["set_s_effect"]= {180 , 45 , Simple_Block,CAT_SOUND,"set",{"effect by"},{{70,INPUT_DROPDOWN,"pitch"},{140,INPUT_NUMBER,"10"}}};
+    //blockMap["set_s_effect"]= {180 , 45 , Simple_Block,CAT_SOUND,"set",{"effect by"},{{70,INPUT_DROPDOWN,"pitch"},{140,INPUT_NUMBER,"10"}}};
 
      blockMap["clear_sound"] = {120 , 45 , Simple_Block,CAT_SOUND,"clear sound effects",{},{}};
 
      blockMap["change_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"change volume by",{},{{80, INPUT_NUMBER,"-10"}}};
 
-     blockMap["set_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"set volume to",{"%"},{{80, INPUT_NUMBER,"100"}}};
+     blockMap["set_volume"] ={160 , 45 , Simple_Block, CAT_SOUND,"set volume to",{"%"},{{20, INPUT_NUMBER,"100"}}};
      //control
      blockMap["wait_second"]={160 , 45 , Simple_Block,CAT_CONTROL,"wait",{"seconds"},{{80, INPUT_NUMBER,"1"}}};
 
@@ -151,7 +163,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
             CAT_CONTROL,
             "if",
             {},
-            {{50, INPUT_BOOLEAN, ""}}   // شرط
+            {{50, INPUT_BOOLEAN, ""}}
     };
 
     blockMap["forever"]= {
@@ -184,7 +196,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"+"},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["subtract"] = {
@@ -193,7 +205,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"-"},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["multiply"] = {
@@ -202,7 +214,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"*"},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["divide"] = {
@@ -211,7 +223,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"/"},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["pick_random"] = {
@@ -229,7 +241,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "round",
         {},
-        {{60, INPUT_NUMBER, ""}}
+        {{60, INPUT_NUMBER, "1.13"}}
     };
 
     blockMap["join"] = {
@@ -264,7 +276,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"mod"},
-        {{40 , INPUT_NUMBER, ""},{80,INPUT_NUMBER,""}}
+        {{40 , INPUT_NUMBER, "1"},{80,INPUT_NUMBER,"1"}}
     };
     blockMap["greater_than"] = {
         100, 26,
@@ -272,7 +284,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {">"},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["less_than"] = {
@@ -281,7 +293,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"<"},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["equal"] = {
@@ -290,7 +302,7 @@ bool LoadAllAssets(SDL_Renderer* renderer){
         CAT_OPERATORS,
         "",
         {"="},
-        {{30, INPUT_NUMBER, ""}, {70, INPUT_NUMBER, ""}}
+        {{30, INPUT_NUMBER, "1"}, {70, INPUT_NUMBER, "1"}}
     };
 
     blockMap["and"] = {
@@ -321,13 +333,10 @@ bool LoadAllAssets(SDL_Renderer* renderer){
     };
 
     blockMap["touching"] = {
-        140, 26,
-        Bool_Block,
-        CAT_SENSING,
-        "touching",
-        {},
-        {{80, INPUT_DROPDOWN, "mouse-pointer"}}
+        140, 26, Bool_Block, CAT_SENSING, "touching", {},
+        {{80, INPUT_DROPDOWN, "mouse-pointer", {}, DROPDOWN_TOUCHING}}
     };
+
     blockMap["contains"] = {
         100, 26,
         Bool_Block,
@@ -338,12 +347,11 @@ bool LoadAllAssets(SDL_Renderer* renderer){
 
     };
     blockMap["function"] = {
-        100, 26,
-        Expression_Block,
-        CAT_OPERATORS,
-        "",
-        {"of"},
-        {{20 , INPUT_DROPDOWN,"abs"},{50, INPUT_NUMBER, ""}}
+        100, 26, Expression_Block, CAT_OPERATORS, "", {"of"},
+        {
+                {20, INPUT_DROPDOWN, "abs", {}, DROPDOWN_FUNCTION},
+                {50, INPUT_NUMBER, ""}
+        }
 
     };
     return true;

@@ -32,11 +32,9 @@ void set_size_to(SDL_Renderer* renderer,double size,Character* sprite){
 void show_character(Character* sprite){
     sprite->isvisible = true;
 }
-
 void hide_character(Character* sprite){
     sprite->isvisible = false;
 }
-
 void say_a_for_t_seconds(std::string message,Character* sprite){
     sprite->monologue = message;
 }

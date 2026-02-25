@@ -24,6 +24,14 @@ enum InputType {
     INPUT_TEXT,
     INPUT_BOOLEAN
 };
+enum DropdownType {
+    DROPDOWN_COSTUME,
+    DROPDOWN_SOUND,
+    DROPDOWN_EFFECT,
+    DROPDOWN_TOUCHING,
+    DROPDOWN_FUNCTION,
+    DROPDOWN_CUSTOM
+};
 
 enum Block_category {
     CAT_MOTION,
@@ -68,6 +76,19 @@ struct InputField {
     InputType type;
     std::string defaultValue;
     std:: vector <std:: string> options;
+    DropdownType dropdownType;
+    bool isOpen = false;
+};
+struct InputValue {
+    enum Type { DIRECT_VALUE, BLOCK_REFERENCE };
+    Type type;
+    string directValue;
+    int refChainIndex;
+    int refBlockIndex;
+    int selectedOptionIndex = 0;
+    bool isOpen = false;
+
+    InputValue() : type(DIRECT_VALUE), directValue(""), refChainIndex(-1), refBlockIndex(-1) {}
 };
 enum BlockType {
     Simple_Block,
@@ -87,7 +108,6 @@ struct BlockTemplate {
     std::vector<std::string> labels;
     std::vector<InputField> inputs;
 };
-
 struct Costume{
     std::string name;
     SDL_Texture* texture;
@@ -154,18 +174,32 @@ extern sprite_button bear_buttonUnderstage;
 extern sprite_button fish_buttonUnderstage;
 extern sprite_button emoji_buttonUnderstage;
 
-struct Blocks{
+struct Blocks {
     string id;
     SDL_Rect rect;
     BlockType type;
     SDL_Texture* image;
-    vector<string> values;
+    vector<InputValue> inputs;
     bool is_editing;
     int active_value_index = -1;
-    vector<Blocks*> children;
     Blocks* parent;
     Blocks* next;
     Blocks* prev;
+    vector<Blocks*> childBlocks;
+    int parentChainIndex = -1;
+    int parentBlockIndex = -1;
+    int parentInputIndex = -1;
+    struct {
+        int parentChainIndex = -1;
+        int parentBlockIndex = -1;
+        int parentInputIndex = -1;
+    } prevRelationship;
+    string output;
+    bool outputBool;
+    bool hasOutput = false;
+    Uint32 outputDisplayTime = 0;
+    bool isDisplayingOutput = false;
+    bool needsEvaluation = true;
 };
 
 struct Backdrop {
@@ -185,6 +219,13 @@ struct BackdropItem{
 struct BackdropMenu{
     SDL_Rect BackDropCircle;
     bool is_open;
+};struct HitResult {
+    int chainIndex;
+    int blockIndex;
+    bool isOnInput;
+    int inputIndex;
+    bool isOnChildBlock;
+    int childBlockIndex;
 };
 
 struct InformationOfCharacter{

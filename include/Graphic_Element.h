@@ -11,7 +11,7 @@
 #include <Game.h>
 
 
-
+extern bool flag_active;
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
@@ -35,7 +35,6 @@ SDL_Texture* MakeTextureEditable(SDL_Renderer* renderer, SDL_Texture* sourceTex)
 
 struct Button;
 
-int calculatingWidthBlock (BlockTemplate& BT,vector<string>&value,TTF_Font* font );
 int Draw_label(int current_x,SDL_Renderer* renderer,TTF_Font* font ,string text, int y,SDL_Color color );
 
 SDL_Color GetBlockColor(Block_category cat);
@@ -59,7 +58,6 @@ void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);
-void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT,vector<string>& values , SDL_Color color,TTF_Font*font, Blocks* block );
 void Draw_Character_Show_Bar(SDL_Renderer* renderer);
 void Draw_Information_of_Character(SDL_Renderer* renderer);
 void Draw_Stage_Bar(SDL_Renderer* renderer, TTF_Font* font);
@@ -72,11 +70,11 @@ void Handle_event_for_timer_button(SDL_Event &e,Button* button);
 void Handle_event_for_size_button(SDL_Event &e,Button* button);
 void Handle_event_for_costume_number_button(SDL_Event &e,Button* button);
 void Handle_event_for_next_costume_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite);
-void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character* sprite);
+void Draw_size_report(SDL_Renderer* renderer,TTF_Font* font,Character *sprite);
 void Draw_time_report(SDL_Renderer* renderer,TTF_Font* font,Uint32 time);
 void Draw_costume_report(SDL_Renderer* renderer,TTF_Font* font,Character* sprite);
-void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
-void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character &sprite);
+void Draw_talking_box(SDL_Renderer* renderer,TTF_Font* font,Character *sprite);
+void Draw_thinking_box(SDL_Renderer* renderer,TTF_Font* font,Character *sprite);
 void DrawBackdropPanel(SDL_Renderer* renderer, TTF_Font* font);
 void DrawBackdropThumbnail(SDL_Renderer* renderer, SDL_Texture* tex, SDL_Rect area);
 void Draw_Image_Editor(SDL_Renderer* renderer, TTF_Font* font, SDL_Texture* currentTex, string itemName);
@@ -85,9 +83,7 @@ void DrawBackdropSubMenu(SDL_Renderer* renderer);
 void Draw_Backdrop_List_Sidebar(SDL_Renderer* renderer, TTF_Font* font);
 void UpdateMenuState();
 void DrawBackdropLibrary(SDL_Renderer* renderer, TTF_Font* font);
-void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<string>& values, SDL_Color color,TTF_Font*font,Blocks* block);
-void Draw_Character_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
-void Handle_event_for_Character_button(SDL_Event &e,Button* button);
+void Draw_C_Blocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate&BT,vector<InputValue>& inputs, SDL_Color color,TTF_Font*font,Blocks* block);
 void Draw_sound_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
 void Draw_Backdrop_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
 void Draw_Back_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
@@ -117,13 +113,23 @@ void Draw_direction(SDL_Renderer* renderer,InformationOfCharacter &information,S
 void Draw_report_button(SDL_Renderer* renderer,Button* button,SDL_Texture* texture);
 void Draw_Character_panel(SDL_Renderer* renderer);
 void Draw_sound_panel(SDL_Renderer* renderer);
-void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
-void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
-                   BlockTemplate& BT, vector<string>& values,SDL_Color color, TTF_Font* font, Blocks* block);
 void Draw_sprite_button(SDL_Renderer* renderer,Button* button,SDL_Texture* picture,SDL_Texture* text);
 void Handle_event_for_choose_sprite_in_Character_panel(SDL_Event &e,Button* button,sprite_button* sprite);
 void Draw_sprite_button_under_stage(SDL_Renderer* renderer,sprite_button* button ,SDL_Texture* text);
 void Handle_event_for_choose_now_sprite(SDL_Event &e,sprite_button* button);
 void Handle_event_for_go_to_front_layer_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite);
 void Handle_event_for_drag_button(SDL_Event &e,SDL_Renderer* renderer,Button* button,Character* sprite);
+void DrawExpressionBlock(SDL_Renderer* renderer, int x, int y, int w, int h,BlockTemplate& BT, vector<InputValue>& inputs,SDL_Color color, TTF_Font* font, Blocks* block);
+void DrawBoolBlock(SDL_Renderer* renderer, int x, int y, int w, int h,
+                   BlockTemplate& BT, vector<InputValue>& inputs,SDL_Color color, TTF_Font* font, Blocks* block);
+void Draw_Character_button(SDL_Renderer* renderer,Button &button,SDL_Texture* texture);
+void Handle_event_for_Character_button(SDL_Event &e,Button* button);
+string InputValueToString(InputValue& val);
+double GetInputAsNumber(InputValue& val, vector<vector<Blocks>>& chains);
+string GetInputAsString(InputValue& val, vector<vector<Blocks>>& chains);
+void CheckInputClick(int mx, int my);
+int calculatingWidthBlock(BlockTemplate& BT, vector<InputValue>& inputs, TTF_Font* font, int parentChainIndex , int parentBlockIndex );
+void DrawSimpleBlocks(SDL_Renderer* renderer,int x , int y , int w , int h ,BlockTemplate& BT, vector<InputValue>& inputs, SDL_Color color,TTF_Font*font, Blocks* block );
+vector<string> GetDropdownOptions(DropdownType type);
+void DrawBlockOutput(SDL_Renderer* renderer, TTF_Font* font, Blocks& block);
 #endif //GRAPHIC_ELEMENT_H

@@ -51,5 +51,6 @@ void Render();
 void Clean();
 void SDL_wait_key();
 void Executing_Motion_Blocks(Blocks& block,Character& sprite );
-
+void UpdateAllChildPositions(int parentChain, int parentBlock);
+void EvaluateBlock(Blocks& block);
 #endif //GAME_H
