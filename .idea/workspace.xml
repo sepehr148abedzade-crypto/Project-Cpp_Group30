@@ -24,14 +24,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4f6ca09f-958c-49e2-bc44-6bab6ad88c1f" name="Changes" comment="add picture">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/ProjectManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/sources/ProjectManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/Entity.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Entity.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/Game.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Game.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/Graphic_Element.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Graphic_Element.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/Asset_Loader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Asset_Loader.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/Paint_Editor.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/Paint_Editor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/constants.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Game.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sources/Graphic_Element.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Graphic_Element.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sources/looks_functions.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/looks_functions.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/Paint_Editor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/Paint_Editor.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sources/constants.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/sources/constants.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

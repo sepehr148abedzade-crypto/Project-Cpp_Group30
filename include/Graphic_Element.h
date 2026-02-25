@@ -11,7 +11,10 @@
 #include <Game.h>
 
 
-extern bool flag_active;
+extern bool isCharacterSubMenuOpen;
+extern int btn_cx;
+extern int btn_cy;
+extern int radius;
 extern SDL_Texture* LoadText(SDL_Renderer* renderer, TTF_Font* font, std::string text, SDL_Color color);
 extern std::vector<BackdropItem> libraryItems;
 extern bool isLibraryOpen;
@@ -25,8 +28,9 @@ extern std::vector<Backdrop> projectBackdrops;
 extern int selectedBackdropIndex;
 extern int backdropScrollY;
 
-void ApplyPen(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
-void ApplyEraser(SDL_Texture* target, int x, int y,SDL_Renderer* renderer);
+void Update_Character_Menu_State();
+void Draw_Character_Floating_Buttons(SDL_Renderer* renderer);
+
 void ApplyFill(SDL_Texture* target,SDL_Renderer* renderer);
 void ApplyTextToTexture(SDL_Texture* target, string text, int x, int y, SDL_Renderer* renderer, TTF_Font* font);
 SDL_Texture* GetCurrentLayer();
@@ -54,7 +58,6 @@ void DrawLineOnTexture(SDL_Texture* target, int x1, int y1, int x2, int y2, SDL_
 void ApplyPen(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void DrawCircleOnTexture(SDL_Texture* target, int centerX, int centerY, int radius, SDL_Renderer* renderer, bool fill);
 void ClearCanvas(SDL_Texture* target, SDL_Renderer* renderer);
-void ApplyEraser(SDL_Texture* target, int x, int y, SDL_Renderer* renderer);
 void ApplyFill(SDL_Texture* target, SDL_Renderer* renderer);
 void Draw_Menu_Blocks(SDL_Renderer* renderer,TTF_Font* font);
 void Draw_RunningBar(SDL_Renderer* renderer);

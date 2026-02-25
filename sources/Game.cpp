@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "iomanip"
+#include <windows.h>
 #include "TextureManager.h"
 #include "iostream"
 #include "SDL2/SDL_ttf.h"
@@ -95,14 +96,6 @@ int lineStartX = -1, lineStartY = -1;
 int textClickX = -1, textClickY = -1;
 int textX = 0, textY = 0;
 int circleStartX = -1, circleStartY = -1;
-
-bool isTypingText = false;
-bool isDrawingLine = false;
-bool isDrawingCircle = false;
-bool isSaveModalOpen = false;
-bool isTyping = false;
-bool stop = false;
-
 string saveInputText;
 string textToDraw;
 string textInput;
@@ -1244,7 +1237,6 @@ void HandleLibraryClick(int mx, int my) {
     }
 }
 
-
 void HandleBlockEvent(SDL_Event& e) {
     int mx, my;
     SDL_GetMouseState(&mx, &my);
@@ -1603,6 +1595,7 @@ void HandleBlockEvent(SDL_Event& e) {
         isDraggingToInput = false;
     }
 }
+
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e) {
     if (e.type == SDL_MOUSEWHEEL && !isLibraryOpen) {
         if (mx < 110 && currentTab == BACKDROPS) {
@@ -1757,22 +1750,51 @@ void HandleCanvasMouseUp(int mx, int my) {
 }
 
 void HandleContinuousDrawing(int mx, int my) {
-    if (currentTab != BACKDROPS || selectedBackdropIndex < 0 || isDrawingLine || isDrawingCircle || isTyping) return;
-
-    SDL_Texture* target = projectBackdrops[selectedBackdropIndex].drawingLayer;
-    int lx = mx - 330, ly = my - 280;
-    if (lx < 0 || lx > 600 || ly < 0 || ly > 380) {
-        lastMouseX = lastMouseY = -1;
+    if (mx < 330 || mx > 930 || my < 280 || my > 660) {
+        lastMouseX = -1;
+        lastMouseY = -1;
         return;
     }
 
-    int fx, fy;
-    MapMouseToCanvas(mx, my, &fx, &fy, target);
-    bool isEraser = (globalEditor.activeTool == TOOL_ERASER);
-    if (globalEditor.activeTool == TOOL_PEN || isEraser) {
-        if (lastMouseX != -1) DrawLineOnTexture(target, lastMouseX, lastMouseY, fx, fy, renderer, isEraser);
-        else isEraser ? ApplyEraser(target, fx, fy, renderer) : ApplyPen(target, fx, fy, renderer);
-        lastMouseX = fx; lastMouseY = fy;
+    SDL_Texture* target = nullptr;
+    if (currentTab == COSTUMES && now_sprite && !now_sprite->costumes.empty()) {
+        target = now_sprite->costumes[now_sprite->currentCostumeIndex]->drawingLayer;
+    } else if (currentTab == BACKDROPS && !projectBackdrops.empty()) {
+        target = projectBackdrops[selectedBackdropIndex].drawingLayer;
+    }
+
+    if (!target) return;
+
+    int relX = mx - 330;
+    int relY = my - 280;
+
+    if (globalEditor.activeTool == TOOL_PEN || globalEditor.activeTool == TOOL_ERASER) {
+        SDL_SetRenderTarget(renderer, target);
+
+        if (globalEditor.activeTool == TOOL_ERASER) {
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        } else {
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+        }
+
+        if (lastMouseX != -1 && lastMouseY != -1) {
+            int prevRelX = lastMouseX - 330;
+            int prevRelY = lastMouseY - 280;
+
+            for (int i = -globalEditor.brushSize; i <= globalEditor.brushSize; i++) {
+                SDL_RenderDrawLine(renderer, prevRelX + i, prevRelY, relX + i, relY);
+                SDL_RenderDrawLine(renderer, prevRelX, prevRelY + i, relX, relY + i);
+            }
+        } else {
+            SDL_Rect r = { relX - globalEditor.brushSize, relY - globalEditor.brushSize, globalEditor.brushSize * 2, globalEditor.brushSize * 2 };
+            SDL_RenderFillRect(renderer, &r);
+        }
+
+        SDL_SetRenderTarget(renderer, NULL);
+        lastMouseX = mx;
+        lastMouseY = my;
     }
 }
 
@@ -1823,112 +1845,346 @@ void SaveToLibrary(string name, SDL_Renderer* renderer) {
     SDL_StopTextInput();
 }
 
+void FlipCostumeHorizontal(Costume* costume) {
+    if (!costume || !costume->texture) return;
+
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* tempTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetTextureBlendMode(tempTex, SDL_BLENDMODE_BLEND);
+
+    SDL_SetRenderTarget(renderer, tempTex);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_HORIZONTAL);
+
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = tempTex;
+}
+
+void FlipCostumeVertical(Costume* costume) {
+    if (!costume || !costume->texture) return;
+
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* tempTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetTextureBlendMode(tempTex, SDL_BLENDMODE_BLEND);
+
+    SDL_SetRenderTarget(renderer, tempTex);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
+
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = tempTex;
+}
+
+void FlipHorizontal(Costume* costume) {
+    if (!costume || !costume->texture) return;
+
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!target) return;
+
+    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, target);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_HORIZONTAL);
+
+    SDL_SetRenderTarget(renderer, NULL);
+
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = target;
+}
+
+void FlipVertical(Costume* costume) {
+    if (!costume || !costume->texture) return;
+
+    int w, h;
+    SDL_QueryTexture(costume->texture, NULL, NULL, &w, &h);
+
+    SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!target) return;
+
+    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, target);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_RenderCopyEx(renderer, costume->texture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
+
+    SDL_SetRenderTarget(renderer, NULL);
+
+    SDL_DestroyTexture(costume->texture);
+    costume->texture = target;
+}
+
+void AddNewCharacterFromFile(SDL_Renderer* renderer, const std::string& filePath) {
+    SDL_Surface* surface = IMG_Load(filePath.c_str());
+    if (!surface) return;
+    Character newChar;
+    newChar.name = "Sprite " + std::to_string(allCharacters.size() + 1);
+    Costume* newCostume = new Costume();
+    newCostume->name = "costume1";
+    newCostume->texture = SDL_CreateTextureFromSurface(renderer, surface);
+    int w, h;
+    SDL_QueryTexture(newCostume->texture, NULL, NULL, &w, &h);
+    newChar.width = w;
+    newChar.height = h;
+    newCostume->drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 600, 380);
+    SDL_SetTextureBlendMode(newCostume->drawingLayer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, newCostume->drawingLayer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer, NULL);
+    newChar.costumes.push_back(newCostume);
+    allCharacters.push_back(newChar);
+    now_sprite = &allCharacters.back();
+    SDL_FreeSurface(surface);
+}
+
+
+void ImportCharacterImage(SDL_Renderer* renderer) {
+    OPENFILENAMEA ofn;
+    char szFile[260] = { 0 };
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL; // یا GetActiveWindow()
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = "Images\0*.png;*.jpg;*.jpeg;*.bmp\0All\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+    if (GetOpenFileNameA(&ofn)) {
+        SDL_Surface* surface = IMG_Load(ofn.lpstrFile);
+        if (surface) {
+            Character newChar;
+            newChar.name = "Sprite " + to_string(allCharacters.size() + 1);
+            newChar.x = 640;
+            newChar.y = 360;
+            newChar.size = 0.5;
+            newChar.isvisible = true;
+
+            Costume* newCostume = new Costume();
+            newCostume->name = "costume1";
+            newCostume->texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+            int w, h;
+            SDL_QueryTexture(newCostume->texture, NULL, NULL, &w, &h);
+            newChar.width = w;
+            newChar.height = h;
+
+            newCostume->drawingLayer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 600, 380);
+            SDL_SetTextureBlendMode(newCostume->drawingLayer, SDL_BLENDMODE_BLEND);
+
+            SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+            SDL_SetRenderTarget(renderer, newCostume->drawingLayer);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderTarget(renderer, oldTarget);
+
+            newChar.costumes.push_back(newCostume);
+            newChar.currentCostumeIndex = 0;
+
+            allCharacters.push_back(newChar);
+            now_sprite = &allCharacters.back();
+            SDL_FreeSurface(surface);
+        }
+    }
+}
+
 void Get_event() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) stop = true;
         Handle_event_for_code_button(e);
-        Handle_event_for_motion_sprite(e,now_sprite);
-        Handle_event_for_flag_button(e,flag_button);
-        Handle_event_for_stop_button(e,stop_button);
-        Handle_event_for_show_button(e,show_button,now_sprite);
-        Handle_event_for_hide_button(e,hide_button,now_sprite);
-        Handle_event_for_Back_button(e,&Back_button);
-        Handle_event_for_Backdrop_button(e,&Backdrop_button);
-        Handle_event_for_sound_button(e,&Sounds_button);
-        Handle_event_for_Character_button(e,&Character_button);
-        Handle_event_for_Code_button(e,&code_button);
-        Handle_event_for_choose_now_sprite(e,&cat_buttonUnderstage);
-        Handle_event_for_choose_now_sprite(e,&dog_buttonUnderstage);
-        Handle_event_for_choose_now_sprite(e,&fish_buttonUnderstage);
-        Handle_event_for_choose_now_sprite(e,&balloon_buttonUnderstage);
-        Handle_event_for_choose_now_sprite(e,&bear_buttonUnderstage);
-        Handle_event_for_choose_now_sprite(e,&apple_buttonUnderstage);
-        if(currentTab == CHARACTER){
-            Handle_event_for_choose_sprite_in_Character_panel(e,&cat_button,&cat_buttonUnderstage);
-            Handle_event_for_choose_sprite_in_Character_panel(e,&dog_button,&dog_buttonUnderstage);
-            Handle_event_for_choose_sprite_in_Character_panel(e,&fish_button,&fish_buttonUnderstage);
-            Handle_event_for_choose_sprite_in_Character_panel(e,&balloon_button,&balloon_buttonUnderstage);
-            Handle_event_for_choose_sprite_in_Character_panel(e,&bear_button,&bear_buttonUnderstage);
-            Handle_event_for_choose_sprite_in_Character_panel(e,&apple_button,&apple_buttonUnderstage);
-            Handle_event_for_choose_sprite_in_Character_panel(e,&emoji_button,&emoji_buttonUnderstage);
+        Handle_event_for_motion_sprite(e, now_sprite);
+        Handle_event_for_flag_button(e, flag_button);
+        Handle_event_for_stop_button(e, stop_button);
+        Handle_event_for_show_button(e, show_button, now_sprite);
+        Handle_event_for_hide_button(e, hide_button, now_sprite);
+        Handle_event_for_Back_button(e, &Back_button);
+        Handle_event_for_Backdrop_button(e, &Backdrop_button);
+        Handle_event_for_sound_button(e, &Sounds_button);
+        Handle_event_for_Character_button(e, &Character_button);
+        Handle_event_for_Code_button(e, &code_button);
+        Handle_event_for_choose_now_sprite(e, &cat_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e, &dog_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e, &fish_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e, &balloon_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e, &bear_buttonUnderstage);
+        Handle_event_for_choose_now_sprite(e, &apple_buttonUnderstage);
+        if (currentTab == CHARACTER) {
+            Handle_event_for_choose_sprite_in_Character_panel(e, &cat_button, &cat_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e, &dog_button, &dog_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e, &fish_button, &fish_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e, &balloon_button, &balloon_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e, &bear_button, &bear_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e, &apple_button, &apple_buttonUnderstage);
+            Handle_event_for_choose_sprite_in_Character_panel(e, &emoji_button, &emoji_buttonUnderstage);
         }
-        if(currentTab == SOUNDS) {
+        if (currentTab == SOUNDS) {
             Handle_event_for_run_button(e, &run_sound_button);
             Handle_event_for_volumeUp_button(e, &volumeUp_button);
             Handle_event_for_volumeDown_button(e, &volumeDown_button);
             Handle_event_for_increaseFrequency_button(e, &increase_frequency_button);
             Handle_event_for_decreaseFrequency_button(e, &decrease_frequency_button);
         }
-        if(currentTab == CODE) {
+        if (currentTab == CODE) {
             Handle_event_for_timer_button(e, &Timer_button);
             Handle_event_for_next_costume_button(e, renderer, &next_costume_button, now_sprite);
             Handle_event_for_costume_number_button(e, &costume_number_button);
             Handle_event_for_size_button(e, &size_button);
-            Handle_event_for_drag_button(e,renderer,&drag_button,now_sprite);
-            Handle_event_for_go_to_front_layer_button(e,renderer,&go_to_front_layer_button,now_sprite);
+            Handle_event_for_drag_button(e, renderer, &drag_button, now_sprite);
+            Handle_event_for_go_to_front_layer_button(e, renderer, &go_to_front_layer_button, now_sprite);
         }
         int mx, my;
         Uint32 mouseState = SDL_GetMouseState(&mx, &my);
         bool isLeftPressed = (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT));
+
+        if (isSaveModalOpen) {
+            HandleKeyboardInput(e);
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+                int mW = 400, mH = 200;
+                int mX = (Get_width() - mW) / 2;
+                int mY = (Get_height() - mH) / 2;
+
+                if (mx >= mX + 280 && mx <= mX + 380 && my >= mY + 140 && my <= mY + 180) {
+                    SaveToLibrary(saveInputText, renderer);
+                    isSaveModalOpen = false;
+                    saveInputText = "";
+                    SDL_StopTextInput();
+                } else if (mx >= mX + 170 && mx <= mX + 270 && my >= mY + 140 && my <= mY + 180) {
+                    isSaveModalOpen = false;
+                    saveInputText = "";
+                    SDL_StopTextInput();
+                }
+            }
+            continue;
+        }
 
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (isLibraryOpen) {
                 if (mx >= 20 && mx <= 120 && my >= 10 && my <= 50) isLibraryOpen = false;
                 else HandleLibraryClick(mx, my);
             } else {
+                double distUpload = sqrt(pow(mx - (Get_width() - 130), 2) + pow(my - (Get_height() - 100 - 42), 2));
+                if (distUpload <= 18) {
+                    ImportCharacterImage(renderer);
+                }
+
                 Handle_Tab_Switch(mx, my);
                 Handle_Backdrop_Selection(mx, my);
                 Handle_Backdrop_Menu_Clicks(mx, my);
-                HandleToolSelection(mx, my);
-                HandleColorSelection(mx, my);
-                HandleBrushSizeSelection(mx, my);
-                HandleCanvasMouseDown(mx, my);
+
+                double distPaint = sqrt(pow(mx - (Get_width() - 130), 2) + pow(my - (Get_height() - 100), 2));
+                if (distPaint <= 18) currentTab = COSTUMES;
+
+                if (currentTab == COSTUMES || currentTab == BACKDROPS) {
+                    if (my >= 95 && my <= 205) {
+                        HandleColorSelection(mx, my);
+                        HandleBrushSizeSelection(mx, my);
+
+                        if (currentTab == COSTUMES && now_sprite != nullptr && !now_sprite->costumes.empty()) {
+                            Costume *curr = now_sprite->costumes[now_sprite->currentCostumeIndex];
+                            if (my >= 160 && my <= 190) {
+                                if (mx >= 350 && mx <= 450) FlipHorizontal(curr);
+                                else if (mx >= 460 && mx <= 560) FlipVertical(curr);
+                                else if (mx >= 570 && mx <= 620) {
+                                    now_sprite->size += 0.05;
+                                    if (now_sprite->size > 3.0) now_sprite->size = 3.0;
+                                } else if (mx >= 630 && mx <= 680) {
+                                    now_sprite->size -= 0.05;
+                                    if (now_sprite->size < 0.05) now_sprite->size = 0.05;
+                                }
+                            }
+                        }
+                    }
+                    else if (mx >= 115 && mx <= 225 && my >= 220) {
+                        HandleToolSelection(mx, my);
+                    }
+                    else if (mx >= 330 && mx <= 930 && my >= 280 && my <= 660) {
+                        HandleCanvasMouseDown(mx, my);
+                    }
+                }
             }
         }
 
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            HandleCanvasMouseDown(mx,my);
+            if (currentTab == COSTUMES || currentTab == BACKDROPS) {
+                HandleCanvasMouseUp(mx, my);
+            }
         }
 
         if (isLeftPressed && !isLibraryOpen && !isSaveModalOpen) {
-            HandleContinuousDrawing(mx, my);
+        if (currentTab == COSTUMES || currentTab == BACKDROPS) {
+        if (mx >= 330 && mx <= 930 && my >= 280 && my <= 660) {
+        HandleContinuousDrawing(mx, my);
+        } else {
+        lastMouseX = -1;
+        lastMouseY = -1;
         }
+        }
+        }
+
+        if (currentTab == CODE && !isLibraryOpen && !isSaveModalOpen) {
         HandleBlockEvent(e);
+        }
+
         HandleKeyboardInput(e);
-    }
-}
+        }
+        }
+
 void Draw_Stage_Content(SDL_Renderer* renderer) {
-    int sw = Get_width();
-    int stageW = 486;
-    int stageH = 352;
-    int stageX = sw - stageW - 10;
-    int stageY = 95;
-    SDL_Rect stageArea = { stageX, stageY, stageW, stageH };
+    SDL_Rect stageArea = stage;
 
     if (!projectBackdrops.empty() && selectedBackdropIndex >= 0 && selectedBackdropIndex < (int)projectBackdrops.size()) {
         SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].texture, NULL, &stageArea);
         SDL_RenderCopy(renderer, projectBackdrops[selectedBackdropIndex].drawingLayer, NULL, &stageArea);
     }
 
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderDrawRect(renderer, &stageArea);
+    int centerX = stageArea.x + (stageArea.w / 2);
+    int centerY = stageArea.y + (stageArea.h / 2);
 
     for (auto& ch : allCharacters) {
-        if (ch.isvisible) { //!ch.costumes.empty()
-            int centerX = stageArea.x + (stageArea.w / 2);
-            int centerY = stageArea.y + (stageArea.h / 2);
-            int rSize = (ch.size > 0) ? ch.size : 100;
-            int  Xpos = centerX + ch.x - (rSize / 2);
-            int YPos = centerY + ch.y - (rSize / 2);
-            SDL_Rect charPos =
-                {
-                    Xpos,
-                    YPos,
+        if (ch.isvisible && !ch.costumes.empty()) {
+
+            int rSize = (int)(ch.size * 500);
+            if (rSize <= 0) rSize = 1;
+
+            ch.width = (double)rSize;
+            ch.height = (double)rSize;
+
+            SDL_Rect charPos = {
+                    centerX + (int)ch.x - (rSize / 2),
+                    centerY + (int)ch.y - (rSize / 2),
                     rSize,
                     rSize
             };
-           // SDL_RenderCopyEx(renderer, ch.costumes[ch.currentCostumeIndex], NULL, &charPos, (double)ch.degree, NULL, SDL_FLIP_NONE);
+
+            SDL_RenderCopyEx(renderer,
+                             ch.costumes[ch.currentCostumeIndex]->texture,
+                             NULL,
+                             &charPos,
+                             (double)ch.degree,
+                             NULL,
+                             SDL_FLIP_NONE);
         }
     }
 }
@@ -1986,10 +2242,13 @@ void Update() {
     UpdateMenuState();
     UpdateExecution();
     UpdateOutputDisplay();
+    Update_Character_Menu_State();
 
     SDL_SetRenderDrawColor(renderer, 229, 240, 255, 255);
     SDL_RenderClear(renderer);
+
     Draw_flag_and_stop_button(renderer, flag_button, stop_button, green_flag, stop_sign);
+
     if (isLibraryOpen) {
         DrawBackdropLibrary(renderer, main_font);
     } else {
@@ -2007,16 +2266,6 @@ void Update() {
             Draw_report_button(renderer,&frequency_button,frequency_value);
             Draw_frequency_text(renderer,frequency_text);
         }
-        if(currentTab == CHARACTER){
-            Draw_Character_panel(renderer);
-            Draw_sprite_button(renderer,&cat_button,cat.costumes[0]->texture,cat_text);
-            Draw_sprite_button(renderer,&dog_button,dog.costumes[0]->texture,dog_text);
-            Draw_sprite_button(renderer,&bear_button,bear.costumes[0]->texture,bear_text);
-            Draw_sprite_button(renderer,&fish_button,fish.costumes[0]->texture,fish_text);
-            Draw_sprite_button(renderer,&balloon_button,balloon.costumes[0]->texture,balloon_text);
-            Draw_sprite_button(renderer,&apple_button,red_apple.costumes[0]->texture,apple_text);
-            Draw_sprite_button(renderer,&emoji_button,emoji.costumes[0]->texture,emoji_text);
-        }
         if (currentTab == CODE) {
             Draw_RunningBar(renderer);
             Draw_CodeBar(renderer);
@@ -2027,8 +2276,6 @@ void Update() {
             Draw_report_button(renderer, &size_button, size_button_text);
             Draw_report_button(renderer, &next_costume_button, next_costume_text);
             Draw_report_button(renderer, &costume_number_button, costume_number_text);
-            Draw_report_button(renderer, &drag_button, drag_text);
-            Draw_report_button(renderer, &go_to_front_layer_button, go_to_front_layer_text);
         } else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
             Draw_Backdrop_List_Sidebar(renderer, main_font);
 
@@ -2079,6 +2326,7 @@ void Update() {
         Draw_report_informationOfCharacter_box(renderer, size);
         Draw_report_informationOfCharacter_box(renderer, positionX);
         Draw_report_informationOfCharacter_box(renderer, positionY);
+
         Draw_X_text(renderer, X_text);
         Draw_Y_text(renderer, Y_text);
         Draw_size_text(renderer, size_text);
@@ -2110,10 +2358,116 @@ void Update() {
         if (is_timer) timer(renderer, report_font);
         if (is_size_on) Draw_size_report(renderer, report_font, now_sprite);
         if (is_costume_number_on) Draw_costume_report(renderer, report_font, now_sprite);
-    }
-        if (isSaveModalOpen) {
-            DrawSaveModal(renderer, main_font);
+
+        Draw_Code_button(renderer, code_button, code_text);
+        Draw_sound_button(renderer, Sounds_button, Sound_text);
+        Draw_Backdrop_button(renderer, Backdrop_button, Backdrop_text);
+        Draw_Back_button(renderer, Back_button, Back_text);
+
+        if (currentTab == SOUNDS) {
+            Draw_sound_panel(renderer);
+            Draw_sounds_functions_button(renderer, run_sound_button, Run_text);
+            Draw_sounds_functions_button(renderer, volumeUp_button, volumeUp_text);
+            Draw_sounds_functions_button(renderer, volumeDown_button, volumeDown_text);
+            Draw_sounds_functions_button(renderer, increase_frequency_button, increase_frequency_text);
+            Draw_sounds_functions_button(renderer, decrease_frequency_button, decrease_frequency_text);
+            Draw_report_button(renderer, &volume_button, volume_value);
+            Draw_volume_text(renderer, volume_text);
+            Draw_report_button(renderer, &frequency_button, frequency_value);
+            Draw_frequency_text(renderer, frequency_text);
         }
+        else if (currentTab == CODE) {
+            Draw_RunningBar(renderer);
+            Draw_CodeBar(renderer);
+            Draw_CodeBar_Item(renderer, categories);
+            Draw_Menu_Blocks(renderer, code_bar_font);
+            DrawALLBlocks(renderer, code_bar_font);
+            Draw_report_button(renderer, &Timer_button, Timer_text);
+            Draw_report_button(renderer, &size_button, size_button_text);
+            Draw_report_button(renderer, &next_costume_button, next_costume_text);
+            Draw_report_button(renderer, &costume_number_button, costume_number_text);
+            Draw_report_button(renderer, &drag_button, drag_text);
+            Draw_report_button(renderer, &go_to_front_layer_button, go_to_front_layer_text);
+        }
+        if(currentTab == CHARACTER){
+            Draw_Character_panel(renderer);
+            Draw_sprite_button(renderer,&cat_button,cat.costumes[0]->texture,cat_text);
+            Draw_sprite_button(renderer,&dog_button,dog.costumes[0]->texture,dog_text);
+            Draw_sprite_button(renderer,&bear_button,bear.costumes[0]->texture,bear_text);
+            Draw_sprite_button(renderer,&fish_button,fish.costumes[0]->texture,fish_text);
+            Draw_sprite_button(renderer,&balloon_button,balloon.costumes[0]->texture,balloon_text);
+            Draw_sprite_button(renderer,&apple_button,red_apple.costumes[0]->texture,apple_text);
+            Draw_sprite_button(renderer,&emoji_button,emoji.costumes[0]->texture,emoji_text);
+        }
+        else if (currentTab == BACKDROPS || currentTab == COSTUMES) {
+            Draw_Backdrop_List_Sidebar(renderer, main_font);
+
+            if (currentTab == COSTUMES && now_sprite != nullptr) {
+                Draw_Image_Editor(renderer, main_font, nullptr, now_sprite->name);
+
+                SDL_Rect flipH_rect = { 350, 160, 100, 30 };
+                SDL_Rect flipV_rect = { 460, 160, 100, 30 };
+                SDL_Rect sizeUp_rect = { 570, 160, 50, 30 };
+                SDL_Rect sizeDown_rect = { 630, 160, 50, 30 };
+
+                SDL_SetRenderDrawColor(renderer, 77, 151, 255, 255);
+                SDL_RenderFillRect(renderer, &flipH_rect);
+                SDL_RenderFillRect(renderer, &flipV_rect);
+                SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
+                SDL_RenderFillRect(renderer, &sizeUp_rect);
+                SDL_SetRenderDrawColor(renderer, 200, 50, 50, 255);
+                SDL_RenderFillRect(renderer, &sizeDown_rect);
+
+                SDL_Texture* hTxt = LoadText(renderer, main_font, "Flip H", {255,255,255});
+                SDL_Texture* vTxt = LoadText(renderer, main_font, "Flip V", {255,255,255});
+                SDL_Texture* pTxt = LoadText(renderer, main_font, "+", {255,255,255});
+                SDL_Texture* mTxt = LoadText(renderer, main_font, "-", {255,255,255});
+                SDL_RenderCopy(renderer, hTxt, NULL, &flipH_rect);
+                SDL_RenderCopy(renderer, vTxt, NULL, &flipV_rect);
+                SDL_RenderCopy(renderer, pTxt, NULL, &sizeUp_rect);
+                SDL_RenderCopy(renderer, mTxt, NULL, &sizeDown_rect);
+                SDL_DestroyTexture(hTxt); SDL_DestroyTexture(vTxt);
+                SDL_DestroyTexture(pTxt); SDL_DestroyTexture(mTxt);
+
+                if (!now_sprite->costumes.empty()) {
+                    Costume* currentCostume = now_sprite->costumes[now_sprite->currentCostumeIndex];
+                    if (currentCostume && currentCostume->texture) {
+                        int texW, texH;
+                        SDL_QueryTexture(currentCostume->texture, NULL, NULL, &texW, &texH);
+                        float editorScale = 0.5f;
+                        int finalW = (int)(texW * editorScale);
+                        int finalH = (int)(texH * editorScale);
+                        SDL_Rect destRect = { 330 + (600 / 2) - (finalW / 2), 420 - (finalH / 2), finalW, finalH };
+                        SDL_RenderCopy(renderer, currentCostume->texture, NULL, &destRect);
+
+                        SDL_SetRenderDrawColor(renderer, globalEditor.currentColor.r, globalEditor.currentColor.g, globalEditor.currentColor.b, 255);
+                        int curX, curY;
+                        SDL_GetMouseState(&curX, &curY);
+                        if (isDrawingCircle && globalEditor.activeTool == TOOL_CIRCLE) {
+                            int rVal = (int)sqrt(pow(curX - circleStartX, 2) + pow(curY - circleStartY, 2));
+                            for (int a = 0; a < 360; a++) {
+                                float r1 = a * M_PI / 180.0f; float r2 = (a + 1) * M_PI / 180.0f;
+                                SDL_RenderDrawLine(renderer, circleStartX + (int)(rVal * cos(r1)), circleStartY + (int)(rVal * sin(r1)),
+                                                   circleStartX + (int)(rVal * cos(r2)), circleStartY + (int)(rVal * sin(r2)));
+                            }
+                        }
+                        else if (isDrawingLine && globalEditor.activeTool == TOOL_LINE) SDL_RenderDrawLine(renderer, lineStartX, lineStartY, curX, curY);
+                        else if (isDrawingRect && globalEditor.activeTool == TOOL_RECT) {
+                            SDL_Rect r = { min(lineStartX, curX), min(lineStartY, curY), abs(curX - lineStartX), abs(curY - lineStartY) };
+                            SDL_RenderDrawRect(renderer, &r);
+                        }
+                    }
+                }
+            }
+            else if (currentTab == BACKDROPS && !projectBackdrops.empty() && selectedBackdropIndex >= 0) {
+                Draw_Image_Editor(renderer, main_font, projectBackdrops[selectedBackdropIndex].texture, projectBackdrops[selectedBackdropIndex].name);
+            }
+        }
+
+        if (isBackdropMenuOpen) DrawBackdropSubMenu(renderer);
+        Draw_Character_Floating_Buttons(renderer);
+    }
+    if (isSaveModalOpen) DrawSaveModal(renderer, main_font);
     SDL_RenderPresent(renderer);
 }
 void Render(){

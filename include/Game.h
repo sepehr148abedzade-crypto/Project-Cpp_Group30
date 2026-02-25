@@ -12,7 +12,6 @@ typedef struct _TTF_Font TTF_Font;
 extern bool stop ;
 extern bool isBackdropMenuOpen;
 
-
 SDL_Texture* LoadText(SDL_Renderer* renderer,TTF_Font* font,std::string text,SDL_Color color);
 SDL_Texture* ConvertToEditable(SDL_Texture* source, SDL_Renderer* renderer);
 
@@ -39,7 +38,12 @@ void ApplyTextToLayer();
 void HandleContinuousDrawing(int mx, int my);
 void HandleCanvasMouseUp(int mx, int my);
 void HandleCanvasMouseDown(int mx, int my);
+void FlipCostumeVertical(Costume* costume);
+void FlipCostumeHorizontal(Costume* costume);
+void FlipHorizontal(Costume* costume);
+void FlipVertical(Costume* costume);
 void Handle_Scroll_Events(int mx, int my, const SDL_Event& e);
+void HandleSaveModalClick(int mx, int my);
 void Handle_Tab_Switch(int mx, int my);
 void Handle_Backdrop_Selection(int mx, int my);
 void Handle_Backdrop_Menu_Clicks(int mx, int my);
@@ -49,6 +53,8 @@ void Draw_Stage_Content(SDL_Renderer* renderer);
 void Update();
 void Render();
 void Clean();
+void ImportCharacterImage(SDL_Renderer* renderer);
+void AddNewCharacterFromFile(SDL_Renderer* renderer, const std::string& filePath);
 void SDL_wait_key();
 void Executing_Motion_Blocks(Blocks& block,Character& sprite );
 void UpdateAllChildPositions(int parentChain, int parentBlock);

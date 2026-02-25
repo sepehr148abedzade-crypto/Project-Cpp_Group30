@@ -112,6 +112,7 @@ struct Costume{
     std::string name;
     SDL_Texture* texture;
     const char* path;
+    SDL_Texture* drawingLayer;
 };
 
 extern Costume cat1;
@@ -148,6 +149,13 @@ struct Character{
     const char* path;
     std::vector<Costume*> costumes;
     int currentCostumeIndex = 0;
+
+    Costume* getCurrentCostume() {
+        if (!costumes.empty() && currentCostumeIndex >= 0 && currentCostumeIndex < costumes.size()) {
+            return costumes[currentCostumeIndex];
+        }
+        return nullptr;
+    }
 };
 
 extern Character cat;
@@ -174,7 +182,7 @@ extern sprite_button bear_buttonUnderstage;
 extern sprite_button fish_buttonUnderstage;
 extern sprite_button emoji_buttonUnderstage;
 
-struct Blocks {
+struct Blocks{
     string id;
     SDL_Rect rect;
     BlockType type;
